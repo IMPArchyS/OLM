@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+    db:
+        image: postgres:15
+        restart: always
+        ports:
+            - "5432:5432"
+        environment:
+            - POSTGRES_PASSWORD=imp
+            - POSTGRES_USER=imp
+            - POSTGRES_DB= ovlcentral
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+
+    backend:
+        build: ./backend
+        ports:
+            - "8000:8000"
+        environment:
+            DB_DRIVER: postgresql
+            DB_HOST: db
+            DB_PORT: "5432"
+            DB_USER: imp
+            DB_PASSWORD: imp
+            DB_PATH: ovlcentral
+            JWT_SECRET_KEY: supersecretkey
+            JWT_ALGORITHM: HS256
+        depends_on:
+            - db
+        volumes:
+            - ./backend/app:/app/app
+            - ./backend/app/migrations:/app/migrations
+
+volumes:
+    pgdata:
