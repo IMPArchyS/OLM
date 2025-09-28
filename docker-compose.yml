@@ -2,30 +2,36 @@ version: "3.8"
 
 services:
     db:
+        container_name: postgres_db
         image: postgres:15
         restart: always
         ports:
             - "5432:5432"
         environment:
-            - POSTGRES_PASSWORD=imp
-            - POSTGRES_USER=imp
-            - POSTGRES_DB= ovlcentral
+            POSTGRES_PASSWORD: imp
+            POSTGRES_USER: imp
+            POSTGRES_DB: ovlcentral
         volumes:
             - pgdata:/var/lib/postgresql/data
-
+    pgadmin:
+        container_name: pgadmin
+        image: dpage/pgadmin4
+        restart: always
+        ports:
+            - "5050:8081"
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@admin.com
+            PGADMIN_DEFAULT_PASSWORD: ovladmin
+            PGADMIN_LISTEN_PORT: 8081
+        depends_on:
+            - db
     backend:
         build: ./backend
+        container_name: fastapi_backend
         ports:
             - "8000:8000"
-        environment:
-            DB_DRIVER: postgresql
-            DB_HOST: db
-            DB_PORT: "5432"
-            DB_USER: imp
-            DB_PASSWORD: imp
-            DB_PATH: ovlcentral
-            JWT_SECRET_KEY: supersecretkey
-            JWT_ALGORITHM: HS256
+        env_file:
+            - .env
         depends_on:
             - db
         volumes:
