@@ -11,6 +11,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# app.include_router()
+
 
 @app.get("/")
 async def root() -> dict[str, str]:
