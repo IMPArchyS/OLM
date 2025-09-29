@@ -3,7 +3,6 @@ from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from .tool import Tool
-    from .workspace import Workspace
 
 
 class Reservation(SQLModel, table=True):

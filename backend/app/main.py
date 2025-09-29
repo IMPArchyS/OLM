@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.routers import workspace_router
+
 app = FastAPI()
 
 app.add_middleware(
@@ -11,7 +13,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# app.include_router()
+app.include_router(workspace_router.router)
 
 
 @app.get("/")
