@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
-import app.model.hw_reservations
+from app.models import Reservation, Tool, Workspace
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -28,7 +28,7 @@ target_metadata = SQLModel.metadata
 # ... etc.
 
 DB_DRIVER = os.getenv("DB_DRIVER", "postgresql")
-DB_HOST = os.getenv("DB_HOST", "db")
+DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_USER = os.getenv("DB_USER", "imp")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "imp")
