@@ -10,8 +10,6 @@ class WorkspaceService:
         self.tool_repository = tool_repository
 
     def get_workspace_by_id(self, workspace_id: int) -> Optional[Workspace]:
-        if (workspace_id <= 0):
-            raise ValueError(f"id must be greater than 0, id was {workspace_id}")
         return self.workspace_repository.get_workspace_by_id(workspace_id)
 
     def get_all_workspaces(self) -> list[Workspace]:

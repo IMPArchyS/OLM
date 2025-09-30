@@ -33,13 +33,10 @@ def get_all_workspaces(service: WsService) -> List[Workspace]:
 
 @router.get("/{workspace_id}", response_model=Workspace)
 def get_workspace_by_id(workspace_id: int, service: WsService) -> Workspace | None:
-    try:
-        ws = service.get_workspace_by_id(workspace_id)
-        if ws is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Workspace with id {workspace_id} not found")
-        return ws
-    except ValueError as ex:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ex))
+    ws = service.get_workspace_by_id(workspace_id)
+    if ws is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Workspace with id {workspace_id} not found")
+    return ws
 
 
 @router.post("/", response_model=Workspace, status_code=status.HTTP_201_CREATED)

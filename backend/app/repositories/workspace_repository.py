@@ -18,6 +18,7 @@ class WorkspaceRepository:
     def create_workspace(self, workspace: Workspace) -> Workspace:
         self.db_session.add(workspace)
         self.db_session.commit()
+        self.db_session.refresh(workspace)
         return workspace
 
     def update_workspace(self, workspace: Workspace) -> Workspace:
