@@ -1,5 +1,6 @@
 from typing import List, Optional
-from sqlmodel import Session, select
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
 from app.models.workspace import Workspace
 
 
@@ -8,12 +9,12 @@ class WorkspaceRepository:
         self.db_session = db_session
 
     def get_workspace_by_id(self, workspace_id: int) -> Optional[Workspace]:
-        statement = select(Workspace).where(Workspace.id == workspace_id)
-        return self.db_session.exec(statement).first()
+        statement = select(Workspace).options(selectinload(Workspace.tools)).where(Workspace.id == workspace_id)
+        return self.db_session.execute(statement).scalar_one_or_none()
 
     def get_all_workspaces(self) -> List[Workspace]:
         statement = select(Workspace)
-        return list(self.db_session.exec(statement).all())
+        return list(self.db_session.execute(statement).scalars().all())
 
     def create_workspace(self, workspace: Workspace) -> Workspace:
         self.db_session.add(workspace)

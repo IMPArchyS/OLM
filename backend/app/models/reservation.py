@@ -1,15 +1,20 @@
-from typing import TYPE_CHECKING
-from sqlmodel import Field, Relationship, SQLModel
+from datetime import datetime
+from typing import TYPE_CHECKING, Optional
+from sqlalchemy import ForeignKey, DateTime
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.core.config import Base
 
 if TYPE_CHECKING:
-    from .tool import Tool
+    from app.models.tool import Tool
 
 
-class Reservation(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
-    start_time: str | None = None
-    end_time: str | None = None
+class Reservation(Base):
+    __tablename__ = "reservation"
+    
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    start_time: Mapped[datetime] = mapped_column(DateTime, default=None)
+    end_time: Mapped[datetime] = mapped_column(DateTime, default=None)
     # relationships
-    user_id: int | None = None
-    tool_id: int = Field(foreign_key="tool.id")
-    tool: "Tool" = Relationship(back_populates="reservations")
+    user_id: Mapped[Optional[int]] = mapped_column(default=None)
+    tool_id: Mapped[int] = mapped_column(ForeignKey("tool.id"))
+    tool: Mapped["Tool"] = relationship(back_populates="reservations")

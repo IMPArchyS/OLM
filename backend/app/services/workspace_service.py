@@ -1,7 +1,8 @@
 from typing import Optional
 from app.repositories.workspace_repository import WorkspaceRepository
 from app.repositories.tool_repository import ToolRepository
-from app.models.workspace import Workspace, WorkspaceCreate, WorkspaceUpdate
+from app.models.workspace import Workspace
+from app.schemas.workspace_bodies import WorkspaceCreate, WorkspaceUpdate
 
 
 class WorkspaceService:

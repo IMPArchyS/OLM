@@ -1,5 +1,6 @@
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 import os
-from sqlmodel import Session, SQLModel, create_engine
 
 DB_DRIVER = os.getenv("DB_DRIVER", "postgresql")
 DB_HOST = os.getenv("DB_HOST", "db")  # Change to "db" for Docker
@@ -11,15 +12,15 @@ DB_NAME = os.getenv("DB_NAME", "ovlcentral")
 # Build the connection URL
 DATABASE_URL = f"{DB_DRIVER}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-# Create the engine
-engine = create_engine(
-    DATABASE_URL,
-    echo=True,  # Set to False in production
-    pool_pre_ping=True,  # Validates connections before use
-    pool_recycle=300,    # Recycle connections every 5 minutes
-)
+engine = create_engine(DATABASE_URL, echo=True)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+class Base(DeclarativeBase):
+    pass
 
 def get_session():
-    """Dependency function to get database session for FastAPI."""
-    with Session(engine) as session:
-        yield session
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

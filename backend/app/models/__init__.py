@@ -1,9 +1,5 @@
-from .reservation import Reservation
-from .tool import Tool
-from .workspace import Workspace
-
-Reservation.model_rebuild()
-Tool.model_rebuild()
-Workspace.model_rebuild()
+from app.models.reservation import Reservation
+from app.models.tool import Tool
+from app.models.workspace import Workspace
 
 __all__ = ["Reservation", "Tool", "Workspace"]
