@@ -37,6 +37,18 @@ services:
         volumes:
             - ./backend/app:/app/app
             - ./backend/app/migrations:/app/migrations
+    frontend:
+        build: ./frontend
+        container_name: vue_frontend
+        ports:
+            - "5173:5173"
+        volumes:
+            - ./frontend:/app
+            - /app/node_modules # prevents local node_modules from overwriting container's
+        environment:
+            - VITE_API_URL=http://localhost:8000
+        depends_on:
+            - backend
 
 volumes:
     pgdata:
