@@ -1,2 +1,3 @@
-# OVL-central
+# OLM
+
 Final Thesis project
