@@ -24,10 +24,17 @@ class Schema(SchemaBase, table=True):
     # relationships
     software_id: int = Field(foreign_key="software.id")
     software: "Software" = Relationship(back_populates="schemas")
-
+    
     device_types: list["DeviceType"] = Relationship(back_populates="schema_obj", cascade_delete=True)
     reserved_experiments: list["ReservedExperiment"] = Relationship(back_populates="schema_obj", cascade_delete=True)
 
 
 class SchemaCreate(SchemaBase):
-    pass 
+    pass
+
+
+class SchemaPublic(SchemaBase):
+    id: int 
+    created_at: datetime
+    modified_at: datetime
+    deleted_at: datetime | None

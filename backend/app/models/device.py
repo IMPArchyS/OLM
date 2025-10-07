@@ -37,3 +37,10 @@ class Device(DeviceBase, table=True):
 
 class DeviceCreate(DeviceBase):
     pass
+
+
+class DevicePublic(DeviceBase):
+    id: int
+    created_at: datetime
+    modified_at: datetime
+    deleted_at: datetime | None

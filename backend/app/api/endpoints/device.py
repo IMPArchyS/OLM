@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
-from app.models.device import Device, DeviceCreate
+from app.models.device import Device, DeviceCreate, DevicePublic
 from app.models.device_type import DeviceType, DeviceTypeCreate
 from app.models.device_software import DeviceSoftware
 from app.models.software import Software
@@ -12,8 +12,8 @@ from app.models.schema import Schema
 from app.models.server import Server
 
 
-
 router = APIRouter()
+
 
 @router.get("/")
 def get_all(db: DbSession): 
@@ -21,7 +21,7 @@ def get_all(db: DbSession):
     return db.exec(stmt).all()
 
 
-@router.get("/{id}")
+@router.get("/{id}", response_model=DevicePublic)
 def get_by_id(db: DbSession, id: int): 
     stmt = select(Device).where(Device.id == id)
     return db.exec(stmt).one_or_none()

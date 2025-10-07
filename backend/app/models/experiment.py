@@ -36,9 +36,17 @@ class Experiment(ExperimentBase, table=True):
     
     software_id: int | None = Field(default=None, foreign_key="software.id")
     software: "Software" = Relationship(back_populates="experiments")
-
+    
     reserved_experiments: list["ReservedExperiment"] = Relationship(back_populates="experiment", cascade_delete=True)
 
 
 class ExperimentCreate(ExperimentBase):
     pass
+
+
+class ExperimentPublic(ExperimentBase):
+    id: int
+    has_schema: bool
+    created_at: datetime
+    modified_at: datetime
+    deleted_at: datetime | None

@@ -12,7 +12,6 @@ from app.models.schema import Schema
 from app.models.server import Server
 
 
-
 router = APIRouter()
 
 

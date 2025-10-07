@@ -7,13 +7,13 @@ from app.models.device_type import DeviceType, DeviceTypeCreate
 from app.models.device_software import DeviceSoftware
 from app.models.software import Software
 from app.models.experiment import Experiment
-from app.models.reserved_experiment import ReservedExperiment
+from app.models.reserved_experiment import ReservedExperiment, ReservedExperimentCreate, ReservedExperimentPublic
 from app.models.schema import Schema
 from app.models.server import Server
 
 
-
 router = APIRouter()
+
 
 @router.get("/")
 def get_all(db: DbSession): 
@@ -21,10 +21,20 @@ def get_all(db: DbSession):
     return db.exec(stmt).all()
 
 
-@router.get("/{id}")
+@router.get("/{id}", response_model=ReservedExperimentPublic)
 def get_by_id(db: DbSession, id: int): 
     stmt = select(ReservedExperiment).where(ReservedExperiment.id == id)
     return db.exec(stmt).one_or_none()
+
+
+@router.post("/")
+def create(db: DbSession, reserved_experiment: ReservedExperimentCreate):
+    db_reserved_exp = ReservedExperiment.model_validate(reserved_experiment)
+    db.add(db_reserved_exp)
+    db.commit()
+    db.refresh(db_reserved_exp)
+    return db_reserved_exp
+
 
 @router.delete("/{id}")
 def delete(db: DbSession, id: int):

@@ -6,11 +6,10 @@ from app.models.device import Device
 from app.models.device_type import DeviceType
 from app.models.device_software import DeviceSoftware
 from app.models.software import Software
-from app.models.experiment import Experiment, ExperimentCreate
+from app.models.experiment import Experiment, ExperimentCreate, ExperimentPublic
 from app.models.reserved_experiment import ReservedExperiment
 from app.models.schema import Schema
 from app.models.server import Server, ServerCreate
-
 
 
 router = APIRouter()
@@ -22,7 +21,7 @@ def get_all(db: DbSession):
     return db.exec(stmt).all()
 
 
-@router.get("/{id}")
+@router.get("/{id}", response_model=ExperimentPublic)
 def get_by_id(db: DbSession, id: int):
     stmt = select(Experiment).where(Experiment.id == id)
     return db.exec(stmt).one_or_none()

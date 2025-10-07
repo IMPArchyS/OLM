@@ -4,7 +4,7 @@ from sqlmodel import Field, Relationship, SQLModel
 from app.models.utils import now
 
 if TYPE_CHECKING:
-    from app.models.device import Device
+    from app.models.device import Device, DevicePublic
     from app.models.experiment import Experiment
 
 
@@ -13,7 +13,8 @@ class ServerBase(SQLModel):
     ip_address: str = Field(index=True, unique=True)
     api_domain: str = Field(index=True, unique=True)
     websocket_port: int = Field(index=True, unique=True)
-    
+
+
 class Server(ServerBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     available: bool = Field(default=False)
@@ -29,3 +30,18 @@ class Server(ServerBase, table=True):
 
 class ServerCreate(ServerBase):
     pass
+
+
+class ServerPublic(ServerBase):
+    id: int
+    available: bool 
+    production: bool 
+    enabled: bool
+    created_at: datetime 
+    modified_at: datetime 
+    deleted_at: datetime | None
+
+
+class ServerPubDetailed(ServerPublic):
+    devices: List["DevicePublic"] = []
+    experiments: List["Experiment"] = []

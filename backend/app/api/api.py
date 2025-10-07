@@ -35,8 +35,8 @@ api_router.include_router(
 
 api_router.include_router(
     software.router,
-    prefix="/api/device",
-    tags=["Devices"],
+    prefix="/api/software",
+    tags=["Softwares"],
 )
 
 api_router.include_router(
