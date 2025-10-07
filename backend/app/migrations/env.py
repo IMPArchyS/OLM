@@ -3,9 +3,17 @@ from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
+from sqlmodel import SQLModel
 
-from app.core.config import Base
-from app.models import Reservation, Tool, Workspace
+from app.core.config import settings
+from app.models.device import Device
+from app.models.device_type import DeviceType
+from app.models.experiment import Experiment
+from app.models.software import Software
+from app.models.server import Server
+from app.models.device_software import DeviceSoftware
+from app.models.schema import Schema
+from app.models.reserved_experiment import ReservedExperiment
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,25 +28,17 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = Base.metadata
+target_metadata = SQLModel.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-DB_DRIVER = os.getenv("DB_DRIVER", "postgresql")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_USER = os.getenv("DB_USER", "imp")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "imp")
-DB_PATH = os.getenv("DB_PATH", "ovlcentral")
 
-# Build the connection URL
-DB_URL = f"{DB_DRIVER}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_PATH}"
 
 # Override SQLAlchemy URL in Alembic config
-config.set_main_option("sqlalchemy.url", DB_URL)
+config.set_main_option("sqlalchemy.url", settings.SQLALCHEMY_DATABASE_URI)
 
 
 def run_migrations_offline() -> None:

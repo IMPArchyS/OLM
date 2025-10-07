@@ -1,26 +1,39 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
-import os
+from pydantic import computed_field
+from pydantic_core import MultiHostUrl
+from pydantic_settings import BaseSettings, SettingsConfigDict
+def is_empty(value: str | None) -> bool:
+    return value is None or value == ""
 
-DB_DRIVER = os.getenv("DB_DRIVER", "postgresql")
-DB_HOST = os.getenv("DB_HOST", "db")  # Change to "db" for Docker
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_USER = os.getenv("DB_USER", "imp")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "imp")
-DB_NAME = os.getenv("DB_NAME", "ovlcentral")
 
-# Build the connection URL
-DATABASE_URL = f"{DB_DRIVER}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_ignore_empty=True,
+        extra="ignore",
+    )
 
-engine = create_engine(DATABASE_URL, echo=True)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    DB_DRIVER: str = "postgresql"
+    DB_HOST: str = "localhost"
+    DB_USER: str | None = None
+    DB_PASSWORD: str | None = None
+    DB_PORT: str | int | None = None
+    DB_PATH: str | None = None
 
-class Base(DeclarativeBase):
-    pass
+    @computed_field
+    @property
+    def SQLALCHEMY_DATABASE_URI(self) -> str:
+        host = f"/{self.DB_HOST}" if self.DB_DRIVER == "sqlite" else self.DB_HOST
+        port = int(self.DB_PORT) if self.DB_PORT is not None else None
+        return str(
+            MultiHostUrl.build(
+                scheme=self.DB_DRIVER,
+                username=self.DB_USER,
+                password=self.DB_PASSWORD,
+                host=host,
+                port=port,
+                path=self.DB_PATH,
+            )
+        )
 
-def get_session():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+
+settings = Settings()

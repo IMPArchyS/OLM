@@ -10,7 +10,7 @@ services:
         environment:
             POSTGRES_PASSWORD: imp
             POSTGRES_USER: imp
-            POSTGRES_DB: ovlcentral
+            POSTGRES_DB: olmcentral
         volumes:
             - pgdata:/var/lib/postgresql/data
     pgadmin:
@@ -21,7 +21,7 @@ services:
             - "5050:8081"
         environment:
             PGADMIN_DEFAULT_EMAIL: admin@admin.com
-            PGADMIN_DEFAULT_PASSWORD: ovladmin
+            PGADMIN_DEFAULT_PASSWORD: olmadmin
             PGADMIN_LISTEN_PORT: 8081
         depends_on:
             - db
@@ -44,7 +44,7 @@ services:
             - "5173:5173"
         volumes:
             - ./frontend:/app
-            - /app/node_modules # prevents local node_modules from overwriting container's
+            - /app/node_modules
         environment:
             - VITE_API_URL=http://localhost:8000
         depends_on:
