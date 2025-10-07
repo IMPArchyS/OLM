@@ -9,10 +9,15 @@ if TYPE_CHECKING:
     from app.models.reserved_experiment import ReservedExperiment
     from app.models.device_type import DeviceType
 
-class Schema(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+
+class SchemaBase(SQLModel):
     name: str = Field(index=True, unique=True)
     note: str = Field(default=None, index=True)
+
+
+class Schema(SchemaBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
     deleted_at: datetime | None = Field(default=None)
@@ -22,3 +27,7 @@ class Schema(SQLModel, table=True):
 
     device_types: list["DeviceType"] = Relationship(back_populates="schema_obj", cascade_delete=True)
     reserved_experiments: list["ReservedExperiment"] = Relationship(back_populates="schema_obj", cascade_delete=True)
+
+
+class SchemaCreate(SchemaBase):
+    pass 

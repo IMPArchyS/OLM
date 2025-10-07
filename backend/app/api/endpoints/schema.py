@@ -8,7 +8,7 @@ from app.models.device_software import DeviceSoftware
 from app.models.software import Software
 from app.models.experiment import Experiment
 from app.models.reserved_experiment import ReservedExperiment
-from app.models.schema import Schema
+from app.models.schema import Schema, SchemaCreate
 from app.models.server import Server
 
 
@@ -25,6 +25,16 @@ def get_all(db: DbSession):
 def get_by_id(db: DbSession, id: int): 
     stmt = select(Schema).where(Schema.id == id)
     return db.exec(stmt).one_or_none()
+
+
+@router.post("/")
+def create(db: DbSession, schema: SchemaCreate):
+    db_schema = Schema.model_validate(schema)
+    db.add(db_schema)
+    db.commit()
+    db.refresh(db_schema)
+    return db_schema
+
 
 @router.delete("/{id}")
 def delete(db: DbSession, id: int):

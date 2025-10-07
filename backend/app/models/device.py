@@ -11,9 +11,14 @@ if TYPE_CHECKING:
     from app.models.server import Server
     from app.models.experiment import Experiment
 
-class Device(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+
+class DeviceBase(SQLModel):
     name: str = Field(index=True)
+
+
+class Device(DeviceBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
     deleted_at: datetime | None = Field(default=None)
@@ -28,3 +33,7 @@ class Device(SQLModel, table=True):
     experiments: List["Experiment"] = Relationship(back_populates="device", cascade_delete=True)
     
     reserved_experiments: List["ReservedExperiment"] = Relationship(back_populates="device", cascade_delete=True)
+
+
+class DeviceCreate(DeviceBase):
+    pass
