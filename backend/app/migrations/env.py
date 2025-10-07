@@ -6,7 +6,6 @@ from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
 from app.core.config import settings
-from app.models.server import Server
 from app.models.device import Device
 from app.models.device_type import DeviceType
 from app.models.experiment import Experiment

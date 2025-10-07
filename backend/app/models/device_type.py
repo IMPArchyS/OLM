@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, List
 from sqlmodel import Field, Relationship, SQLModel
 from app.models.utils import now
+from app.models.schema import Schema
 
 if TYPE_CHECKING:
     from app.models.device import Device
@@ -18,3 +19,6 @@ class DeviceType(SQLModel, table=True):
     # Relationships
     devices: List["Device"] = Relationship(back_populates="device_type")
     experiments: List["Experiment"] = Relationship(back_populates="device_type")
+    
+    schema_id: int = Field(foreign_key="schema.id")
+    schema_obj: Schema = Relationship(back_populates="device_types")

@@ -7,6 +7,7 @@ from app.models.device_software import DeviceSoftware
 if TYPE_CHECKING:
     from app.models.device import Device
     from app.models.experiment import Experiment
+    from app.models.schema import Schema
 
 
 class Software(SQLModel, table=True):
@@ -17,3 +18,4 @@ class Software(SQLModel, table=True):
     # relationships
     devices: List["Device"] = Relationship(back_populates="softwares", link_model=DeviceSoftware)
     experiments: List["Experiment"] = Relationship(back_populates="software")
+    schemas: List["Schema"] = Relationship(back_populates="software")
