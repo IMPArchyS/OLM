@@ -23,7 +23,7 @@ def get_all(db: DbSession):
 
 
 @router.get("/{id}")
-def get(db: DbSession, id: int):
+def get_by_id(db: DbSession, id: int):
     stmt = select(Experiment).where(Experiment.id == id)
     return db.exec(stmt).one_or_none()
 
@@ -39,7 +39,7 @@ def create(db: DbSession, experiment: ExperimentCreate):
 
 @router.delete("/{id}")
 def delete(db: DbSession, id: int):
-    db_experiment = get(db, id)
+    db_experiment = get_by_id(db, id)
     if not db_experiment:
         return None
     db.delete(db_experiment)

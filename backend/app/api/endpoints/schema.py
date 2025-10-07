@@ -19,3 +19,18 @@ router = APIRouter()
 def get_all(db: DbSession): 
     stmt = select(Schema)
     return db.exec(stmt).all()
+
+
+@router.get("/{id}")
+def get_by_id(db: DbSession, id: int): 
+    stmt = select(Schema).where(Schema.id == id)
+    return db.exec(stmt).one_or_none()
+
+@router.delete("/{id}")
+def delete(db: DbSession, id: int):
+    db_schema = get_by_id(db, id)
+    if not db_schema:
+        return None
+    db.delete(db_schema)
+    db.commit()
+    return db_schema

@@ -20,8 +20,8 @@ class DeviceType(DeviceTypeBase, table=True):
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
     # Relationships
-    devices: List["Device"] = Relationship(back_populates="device_type")
-    experiments: List["Experiment"] = Relationship(back_populates="device_type")
+    devices: List["Device"] = Relationship(back_populates="device_type", cascade_delete=True)
+    experiments: List["Experiment"] = Relationship(back_populates="device_type", cascade_delete=True)
     
     schema_id: int = Field(foreign_key="schema.id")
     schema_obj: Schema = Relationship(back_populates="device_types")

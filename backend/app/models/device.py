@@ -25,6 +25,6 @@ class Device(SQLModel, table=True):
     server: "Server" = Relationship(back_populates="devices")
     
     softwares: List["Software"] = Relationship(back_populates="devices", link_model=DeviceSoftware)
-    experiments: List["Experiment"] = Relationship(back_populates="device")
+    experiments: List["Experiment"] = Relationship(back_populates="device", cascade_delete=True)
     
-    reserved_experiments: List["ReservedExperiment"] = Relationship(back_populates="device")
+    reserved_experiments: List["ReservedExperiment"] = Relationship(back_populates="device", cascade_delete=True)

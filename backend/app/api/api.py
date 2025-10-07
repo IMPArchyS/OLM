@@ -7,6 +7,7 @@ from app.api.endpoints import (
     experiment,
     reserved_experiment,
     schema,
+    software,
     admin
 )
 
@@ -33,6 +34,18 @@ api_router.include_router(
 )
 
 api_router.include_router(
+    software.router,
+    prefix="/api/device",
+    tags=["Devices"],
+)
+
+api_router.include_router(
+    schema.router,
+    prefix="/api/schema",
+    tags=["Schemas"],
+)
+
+api_router.include_router(
     experiment.router,
     prefix="/api/experiment",
     tags=["Experiments"],
@@ -42,12 +55,6 @@ api_router.include_router(
     reserved_experiment.router,
     prefix="/api/reserved_experiment",
     tags=["Reserved Experiments"],
-)
-
-api_router.include_router(
-    schema.router,
-    prefix="/api/schema",
-    tags=["Schemas"],
 )
 
 api_router.include_router(

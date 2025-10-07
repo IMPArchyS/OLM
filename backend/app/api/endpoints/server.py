@@ -22,7 +22,7 @@ def get_all(db: DbSession):
 
 
 @router.get("/{id}")
-def get(db: DbSession, id: int):
+def get_by_id(db: DbSession, id: int):
     stmt = select(Server).where(Server.id == id)
     return db.exec(stmt).one_or_none()
 
@@ -38,7 +38,7 @@ def create(db: DbSession, server: ServerCreate):
 
 @router.delete("/{id}")
 def delete(db: DbSession, id: int):
-    db_server = get(db, id)
+    db_server = get_by_id(db, id)
     if not db_server:
         return None
     db.delete(db_server)

@@ -19,3 +19,18 @@ router = APIRouter()
 def get_all(db: DbSession): 
     stmt = select(Device)
     return db.exec(stmt).all()
+
+
+@router.get("/{id}")
+def get_by_id(db: DbSession, id: int): 
+    stmt = select(Device).where(Device.id == id)
+    return db.exec(stmt).one_or_none()
+
+@router.delete("/{id}")
+def delete(db: DbSession, id: int):
+    db_device = get_by_id(db, id)
+    if not db_device:
+        return None
+    db.delete(db_device)
+    db.commit()
+    return db_device

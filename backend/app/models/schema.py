@@ -20,5 +20,5 @@ class Schema(SQLModel, table=True):
     software_id: int = Field(foreign_key="software.id")
     software: "Software" = Relationship(back_populates="schemas")
 
-    device_types: list["DeviceType"] = Relationship(back_populates="schema_obj")
-    reserved_experiments: list["ReservedExperiment"] = Relationship(back_populates="schema_obj")
+    device_types: list["DeviceType"] = Relationship(back_populates="schema_obj", cascade_delete=True)
+    reserved_experiments: list["ReservedExperiment"] = Relationship(back_populates="schema_obj", cascade_delete=True)
