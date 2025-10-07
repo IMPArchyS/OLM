@@ -50,3 +50,11 @@ class ExperimentPublic(ExperimentBase):
     created_at: datetime
     modified_at: datetime
     deleted_at: datetime | None
+
+
+class ExperimentUpdate(ExperimentBase):
+    has_schema: bool
+    server_id: int
+    device_type_id: int | None
+    device_id: int | None
+    software_id: int | None

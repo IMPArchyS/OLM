@@ -38,3 +38,7 @@ class SchemaPublic(SchemaBase):
     created_at: datetime
     modified_at: datetime
     deleted_at: datetime | None
+
+
+class SchemaUpdate(SchemaBase):
+    software_id: int

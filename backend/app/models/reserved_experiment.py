@@ -50,3 +50,11 @@ class ReservedExperimentPublic(ReservedExperimentBase):
     created_at: datetime
     modified_at: datetime
     deleted_at: datetime | None
+
+
+class ReservedExperimentUpdate(ReservedExperimentBase):
+    filled: bool
+    remote_id: int | None
+    experiment_id: int
+    device_id: int | None
+    schema_id: int | None

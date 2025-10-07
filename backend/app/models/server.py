@@ -45,3 +45,9 @@ class ServerPublic(ServerBase):
 class ServerPubDetailed(ServerPublic):
     devices: List["DevicePublic"] = []
     experiments: List["Experiment"] = []
+
+
+class ServerUpdate(ServerBase):
+    available: bool
+    production: bool
+    enabled: bool 
