@@ -7,12 +7,15 @@ if TYPE_CHECKING:
     from app.models.device import Device
     from app.models.experiment import Experiment
 
-class Server(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+
+class ServerBase(SQLModel):
     name: str = Field(index=True)
     ip_address: str = Field(index=True, unique=True)
     api_domain: str = Field(index=True, unique=True)
     websocket_port: int = Field(index=True, unique=True)
+    
+class Server(ServerBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
     available: bool = Field(default=False)
     production: bool = Field(default=False)
     enabled: bool = Field(default=False)
@@ -22,3 +25,7 @@ class Server(SQLModel, table=True):
     # Relationships
     devices: List["Device"] = Relationship(back_populates="server")
     experiments: List["Experiment"] = Relationship(back_populates="server")
+
+
+class ServerCreate(ServerBase):
+    pass

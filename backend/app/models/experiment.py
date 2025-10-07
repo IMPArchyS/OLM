@@ -11,11 +11,15 @@ if TYPE_CHECKING:
     from app.models.device import Device
     from app.models.reserved_experiment import ReservedExperiment
 
-class Experiment(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+class ExperimentBase(SQLModel):
     commands: dict[str, Any] | None = Field(default=None, sa_type=JSON)
     experiment_commands: dict[str, Any] | None = Field(default=None, sa_type=JSON)
     output_arguments: dict[str, Any] | None = Field(default=None, sa_type=JSON)
+
+
+class Experiment(ExperimentBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    
     has_schema: bool = Field(default=False, index=True)
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
@@ -33,4 +37,8 @@ class Experiment(SQLModel, table=True):
     software_id: int | None = Field(default=None, foreign_key="software.id")
     software: "Software" = Relationship(back_populates="experiments")
 
-    reserved_experiments: list["ReservedExperiment"] = Relationship(back_populates="experiment")
+    reserved_experiments: list["ReservedExperiment"] = Relationship(back_populates="experiment", cascade_delete=True)
+
+
+class ExperimentCreate(ExperimentBase):
+    pass

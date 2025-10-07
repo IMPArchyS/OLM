@@ -9,11 +9,14 @@ if TYPE_CHECKING:
     from app.models.experiment import Experiment
 
 
-class DeviceType(SQLModel, table=True):
+class DeviceTypeBase(SQLModel):
+    name: str = Field(index=True, unique=True)
+
+
+class DeviceType(DeviceTypeBase, table=True):
     __tablename__ = "device_type" # type: ignore
     
     id: int | None = Field(default=None, primary_key=True)
-    name: str = Field(index=True, unique=True)
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
     # Relationships
@@ -22,3 +25,7 @@ class DeviceType(SQLModel, table=True):
     
     schema_id: int = Field(foreign_key="schema.id")
     schema_obj: Schema = Relationship(back_populates="device_types")
+
+
+class DeviceTypeCreate(DeviceTypeBase):
+    pass

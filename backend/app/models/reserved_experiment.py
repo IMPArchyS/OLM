@@ -26,8 +26,8 @@ class ReservedExperiment(SQLModel, table=True):
     experiment_id: int = Field(foreign_key="experiment.id")
     experiment: "Experiment" = Relationship(back_populates="reserved_experiments")
 
-    device_id: int = Field(foreign_key="device.id")
+    device_id: int | None = Field(foreign_key="device.id")
     device: "Device" = Relationship(back_populates="reserved_experiments")
-    
-    schema_id: int = Field(foreign_key="schema.id")
+
+    schema_id: int | None = Field(foreign_key="schema.id")
     schema_obj: "Schema" = Relationship(back_populates="reserved_experiments")
