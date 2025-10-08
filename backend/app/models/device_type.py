@@ -38,4 +38,4 @@ class DeviceTypePublic(DeviceTypeBase):
 
 
 class DeviceTypeUpdate(DeviceTypeBase):
-    schema_id: int | None
+    schema_id: int | None = None 

@@ -53,8 +53,8 @@ class ExperimentPublic(ExperimentBase):
 
 
 class ExperimentUpdate(ExperimentBase):
-    has_schema: bool | None
-    server_id: int | None
-    device_type_id: int | None
-    device_id: int | None
-    software_id: int | None
+    has_schema: bool | None = None 
+    server_id: int | None = None 
+    device_type_id: int | None = None 
+    device_id: int | None = None 
+    software_id: int | None = None 

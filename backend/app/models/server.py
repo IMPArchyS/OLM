@@ -48,6 +48,6 @@ class ServerPubDetailed(ServerPublic):
 
 
 class ServerUpdate(ServerBase):
-    available: bool | None
-    production: bool | None
-    enabled: bool | None
+    available: bool | None = None
+    production: bool | None = None 
+    enabled: bool | None = None 

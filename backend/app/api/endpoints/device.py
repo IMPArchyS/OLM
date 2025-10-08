@@ -45,6 +45,13 @@ def update(db: DbSession, id: int, device: DeviceUpdate):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {id} not found!")
     reserved_device_data = device.model_dump(exclude_unset=True)
     db_device.sqlmodel_update(reserved_device_data)
+    
+    if not db.get(DeviceType, device.device_type_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device Type with {device.device_type_id} not found!")    
+    
+    if not db.get(Server, device.server_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {device.server_id} not found!")    
+    
     db.add(db_device)
     db.commit()
     db.refresh(db_device)

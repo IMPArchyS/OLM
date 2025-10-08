@@ -45,6 +45,16 @@ def update(db: DbSession, id: int, reserved_experiment: ReservedExperimentUpdate
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Reserved Experiment with {id} not found!")
     reserved_exp_data = reserved_experiment.model_dump(exclude_unset=True)
     db_reserved_exp.sqlmodel_update(reserved_exp_data)
+    
+    if not db.get(Experiment, reserved_experiment.experiment_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {reserved_experiment.experiment_id} not found!")
+    
+    if not db.get(Device, reserved_experiment.device_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {reserved_experiment.device_id} not found!")    
+    
+    if not db.get(Schema, reserved_experiment.schema_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Schema with {reserved_experiment.schema_id} not found!")    
+    
     db.add(db_reserved_exp)
     db.commit()
     db.refresh(db_reserved_exp)
