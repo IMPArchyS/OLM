@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, HTTPException, Response, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
@@ -25,7 +25,7 @@ def get_all(db: DbSession):
 def get_by_id(db: DbSession, id: int): 
     db_reserved_exp = db.get(ReservedExperiment, id)
     if not db_reserved_exp:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Reserved Experiment with {id} not found!")
     return db_reserved_exp
 
 
@@ -42,7 +42,7 @@ def create(db: DbSession, reserved_experiment: ReservedExperimentCreate):
 def update(db: DbSession, id: int, reserved_experiment: ReservedExperimentUpdate):
     db_reserved_exp = db.get(ReservedExperiment, id)
     if not db_reserved_exp:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Reserved Experiment with {id} not found!")
     reserved_exp_data = reserved_experiment.model_dump(exclude_unset=True)
     db_reserved_exp.sqlmodel_update(reserved_exp_data)
     db.add(db_reserved_exp)
@@ -55,7 +55,7 @@ def update(db: DbSession, id: int, reserved_experiment: ReservedExperimentUpdate
 def delete(db: DbSession, id: int):
     db_reserved_exp = db.get(ReservedExperiment, id)
     if not db_reserved_exp:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Reserved Experiment with {id} not found!")
     db.delete(db_reserved_exp)
     db.commit()
     return db_reserved_exp

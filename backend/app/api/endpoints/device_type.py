@@ -25,7 +25,7 @@ def get_all(db: DbSession):
 def get_by_id(db: DbSession, id: int):
     db_device_type = db.get(DeviceType, id)
     if not db_device_type:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device Type with {id} not found!")
     return db_device_type
 
 
@@ -42,7 +42,7 @@ def create(db: DbSession, device_type: DeviceTypeCreate):
 def update(db: DbSession, id: int, device_type: DeviceTypeUpdate):
     db_device_type = db.get(DeviceType, id)
     if not db_device_type:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device Type with {id} not found!")
     device_type_data = device_type.model_dump(exclude_unset=True)
     db_device_type.sqlmodel_update(device_type_data)
     db.add(db_device_type)
@@ -55,7 +55,7 @@ def update(db: DbSession, id: int, device_type: DeviceTypeUpdate):
 def delete(db: DbSession, id: int):
     db_device_type = db.get(DeviceType, id)
     if not db_device_type:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)  
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device Type with {id} not found!")  
     db.delete(db_device_type)
     db.commit()
     return db_device_type

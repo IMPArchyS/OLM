@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, HTTPException, Response, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
@@ -28,7 +28,7 @@ def get_all(db: DbSession):
 def get_by_id(db: DbSession, id: int):
     db_server = db.get(Server, id)
     if not db_server:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
     return db_server
 
 
@@ -45,7 +45,7 @@ def create(db: DbSession, server: ServerCreate):
 def update(db: DbSession, id: int, server: ServerUpdate):
     db_server = db.get(Server, id)
     if not db_server:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
     server_data = server.model_dump(exclude_unset=True)
     db_server.sqlmodel_update(server_data)
     db.add(db_server)
@@ -58,7 +58,7 @@ def update(db: DbSession, id: int, server: ServerUpdate):
 def delete(db: DbSession, id: int):
     db_server = db.get(Server, id)
     if not db_server:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
     db.delete(db_server)
     db.commit()
     return db_server

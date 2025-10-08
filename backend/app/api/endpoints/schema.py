@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
@@ -25,7 +25,7 @@ def get_all(db: DbSession):
 def get_by_id(db: DbSession, id: int): 
     db_schema = db.get(Schema, id)
     if not db_schema:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Schema with {id} not found!")
     return db_schema
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -41,8 +41,12 @@ def create(db: DbSession, schema: SchemaCreate):
 def update(db: DbSession, id: int, schema: SchemaUpdate):
     db_schema = db.get(Schema, id)
     if not db_schema:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Schema with {id} not found!")
     schema_data = schema.model_dump(exclude_unset=True)
+    
+    if not db.get(Software, schema.software_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Software with {schema.software_id} not found!")
+        
     db_schema.sqlmodel_update(schema_data)
     db.add(db_schema)
     db.commit()
@@ -54,7 +58,7 @@ def update(db: DbSession, id: int, schema: SchemaUpdate):
 def delete(db: DbSession, id: int):
     db_schema = db.get(Schema, id)
     if not db_schema:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Schema with {id} not found!")
     db.delete(db_schema)
     db.commit()
     return db_schema

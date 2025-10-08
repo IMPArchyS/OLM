@@ -25,7 +25,7 @@ def get_all(db: DbSession):
 def get_by_id(db: DbSession, id: int): 
     db_software = db.get(Software, id)
     if not db_software:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Software with {id} not found!")
     return db_software
 
 
@@ -42,7 +42,7 @@ def create(db: DbSession, software: SoftwareCreate):
 def update(db: DbSession, id: int, software: SoftwareUpdate):
     db_software = db.get(Software, id)
     if not db_software:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Software with {id} not found!")
     software_data = software.model_dump(exclude_unset=True)
     db_software.sqlmodel_update(software_data)
     db.add(db_software)
@@ -55,7 +55,7 @@ def update(db: DbSession, id: int, software: SoftwareUpdate):
 def delete(db: DbSession, id: int):
     db_software = db.get(Software, id)
     if not db_software:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Software with {id} not found!")
     db.delete(db_software)
     db.commit()
     return db_software

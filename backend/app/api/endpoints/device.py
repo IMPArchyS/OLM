@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, HTTPException, Response, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
@@ -25,7 +25,7 @@ def get_all(db: DbSession):
 def get_by_id(db: DbSession, id: int): 
     db_device = db.get(Device, id)
     if not db_device:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {id} not found!")
     return db_device
 
 
@@ -42,7 +42,7 @@ def create(db: DbSession, device: DeviceCreate):
 def update(db: DbSession, id: int, device: DeviceUpdate):
     db_device = db.get(Device, id)
     if not db_device:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {id} not found!")
     reserved_device_data = device.model_dump(exclude_unset=True)
     db_device.sqlmodel_update(reserved_device_data)
     db.add(db_device)
@@ -55,7 +55,7 @@ def update(db: DbSession, id: int, device: DeviceUpdate):
 def delete(db: DbSession, id: int):
     db_device = db.get(Device, id)
     if not db_device:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {id} not found!")
     db.delete(db_device)
     db.commit()
     return db_device

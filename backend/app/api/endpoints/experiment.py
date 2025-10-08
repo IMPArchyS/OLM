@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, HTTPException, Response, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
@@ -25,7 +25,7 @@ def get_all(db: DbSession):
 def get_by_id(db: DbSession, id: int):
     db_experiment = db.get(Experiment, id)
     if not db_experiment:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {id} not found!")
     return db_experiment
 
 
@@ -42,7 +42,7 @@ def create(db: DbSession, experiment: ExperimentCreate):
 def update(db: DbSession, id: int, experiment: ExperimentUpdate):
     db_experiment = db.get(Experiment, id)
     if not db_experiment:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {id} not found!")
     experiment_data = experiment.model_dump(exclude_unset=True)
     db_experiment.sqlmodel_update(experiment_data)
     db.add(db_experiment)
@@ -55,7 +55,7 @@ def update(db: DbSession, id: int, experiment: ExperimentUpdate):
 def delete(db: DbSession, id: int):
     db_experiment = db.get(Experiment, id)
     if not db_experiment:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {id} not found!")
     db.delete(db_experiment)
     db.commit()
     return db_experiment

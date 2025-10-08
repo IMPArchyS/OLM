@@ -40,5 +40,7 @@ class SchemaPublic(SchemaBase):
     deleted_at: datetime | None
 
 
-class SchemaUpdate(SchemaBase):
-    software_id: int | None
+class SchemaUpdate(SQLModel):
+    name: str | None = None
+    note: str | None = None 
+    software_id: int | None = None
