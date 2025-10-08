@@ -29,7 +29,7 @@ def get_by_id(db: DbSession, id: int):
     return db_experiment
 
 
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, experiment: ExperimentCreate):
     db_experiment = Experiment.model_validate(experiment)
     db.add(db_experiment)
@@ -51,7 +51,7 @@ def update(db: DbSession, id: int, experiment: ExperimentUpdate):
     return db_experiment
 
 
-@router.delete("/{id}")
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete(db: DbSession, id: int):
     db_experiment = db.get(Experiment, id)
     if not db_experiment:

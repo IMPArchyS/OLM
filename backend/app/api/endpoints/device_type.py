@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
@@ -23,13 +23,13 @@ def get_all(db: DbSession):
 
 @router.get("/{id}", response_model=DeviceTypePublic)
 def get_by_id(db: DbSession, id: int):
-    db_device_type = db.get(ReservedExperiment, id)
+    db_device_type = db.get(DeviceType, id)
     if not db_device_type:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return db_device_type
 
 
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, device_type: DeviceTypeCreate):
     db_device_type = DeviceType.model_validate(device_type)
     db.add(db_device_type)
@@ -40,9 +40,9 @@ def create(db: DbSession, device_type: DeviceTypeCreate):
 
 @router.patch("/{id}", response_model=DeviceTypeUpdate)
 def update(db: DbSession, id: int, device_type: DeviceTypeUpdate):
-    db_device_type = db.get(ReservedExperiment, id)
+    db_device_type = db.get(DeviceType, id)
     if not db_device_type:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     device_type_data = device_type.model_dump(exclude_unset=True)
     db_device_type.sqlmodel_update(device_type_data)
     db.add(db_device_type)
@@ -51,11 +51,11 @@ def update(db: DbSession, id: int, device_type: DeviceTypeUpdate):
     return db_device_type
 
 
-@router.delete("/{id}")
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete(db: DbSession, id: int):
-    db_device_type = db.get(ReservedExperiment, id)
+    db_device_type = db.get(DeviceType, id)
     if not db_device_type:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)  
     db.delete(db_device_type)
     db.commit()
     return db_device_type

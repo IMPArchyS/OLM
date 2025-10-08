@@ -32,7 +32,7 @@ def get_by_id(db: DbSession, id: int):
     return db_server
 
 
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, server: ServerCreate):
     db_server = Server.model_validate(server)
     db.add(db_server)
@@ -54,7 +54,7 @@ def update(db: DbSession, id: int, server: ServerUpdate):
     return db_server
 
 
-@router.delete("/{id}")
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete(db: DbSession, id: int):
     db_server = db.get(Server, id)
     if not db_server:

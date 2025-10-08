@@ -28,7 +28,7 @@ def get_by_id(db: DbSession, id: int):
         return Response(status_code=status.HTTP_404_NOT_FOUND)
     return db_schema
 
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, schema: SchemaCreate):
     db_schema = Schema.model_validate(schema)
     db.add(db_schema)
@@ -50,7 +50,7 @@ def update(db: DbSession, id: int, schema: SchemaUpdate):
     return db_schema
 
 
-@router.delete("/{id}")
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete(db: DbSession, id: int):
     db_schema = db.get(Schema, id)
     if not db_schema:

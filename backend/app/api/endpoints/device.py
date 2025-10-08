@@ -29,7 +29,7 @@ def get_by_id(db: DbSession, id: int):
     return db_device
 
 
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, device: DeviceCreate):
     db_device = Device.model_validate(device)
     db.add(db_device)
@@ -51,7 +51,7 @@ def update(db: DbSession, id: int, device: DeviceUpdate):
     return db_device
 
 
-@router.delete("/{id}")
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete(db: DbSession, id: int):
     db_device = db.get(Device, id)
     if not db_device:

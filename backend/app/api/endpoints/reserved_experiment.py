@@ -29,7 +29,7 @@ def get_by_id(db: DbSession, id: int):
     return db_reserved_exp
 
 
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, reserved_experiment: ReservedExperimentCreate):
     db_reserved_exp = ReservedExperiment.model_validate(reserved_experiment)
     db.add(db_reserved_exp)
@@ -51,7 +51,7 @@ def update(db: DbSession, id: int, reserved_experiment: ReservedExperimentUpdate
     return db_reserved_exp
 
 
-@router.delete("/{id}")
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete(db: DbSession, id: int):
     db_reserved_exp = db.get(ReservedExperiment, id)
     if not db_reserved_exp:

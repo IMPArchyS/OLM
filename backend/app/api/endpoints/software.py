@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
@@ -25,11 +25,11 @@ def get_all(db: DbSession):
 def get_by_id(db: DbSession, id: int): 
     db_software = db.get(Software, id)
     if not db_software:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return db_software
 
 
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, software: SoftwareCreate):
     db_software = Software.model_validate(software)
     db.add(db_software)
@@ -42,7 +42,7 @@ def create(db: DbSession, software: SoftwareCreate):
 def update(db: DbSession, id: int, software: SoftwareUpdate):
     db_software = db.get(Software, id)
     if not db_software:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     software_data = software.model_dump(exclude_unset=True)
     db_software.sqlmodel_update(software_data)
     db.add(db_software)
@@ -51,11 +51,11 @@ def update(db: DbSession, id: int, software: SoftwareUpdate):
     return db_software
 
 
-@router.delete("/{id}")
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete(db: DbSession, id: int):
     db_software = db.get(Software, id)
     if not db_software:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     db.delete(db_software)
     db.commit()
     return db_software
