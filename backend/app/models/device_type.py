@@ -37,5 +37,5 @@ class DeviceTypePublic(DeviceTypeBase):
     modified_at: datetime
 
 
-class DeviceTypeUpdate():
-    schema_id: int
+class DeviceTypeUpdate(DeviceTypeBase):
+    schema_id: int | None

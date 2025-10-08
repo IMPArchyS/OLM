@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
@@ -9,7 +9,7 @@ from app.models.software import Software
 from app.models.experiment import Experiment
 from app.models.reserved_experiment import ReservedExperiment
 from app.models.schema import Schema
-from app.models.server import Server, ServerCreate, ServerPublic, ServerPubDetailed
+from app.models.server import Server, ServerCreate, ServerPublic, ServerPubDetailed, ServerUpdate
 
 
 ServerPubDetailed.model_rebuild()
@@ -26,8 +26,10 @@ def get_all(db: DbSession):
 
 @router.get("/{id}", response_model=ServerPublic)
 def get_by_id(db: DbSession, id: int):
-    stmt = select(Server).where(Server.id == id)
-    return db.exec(stmt).one_or_none()
+    db_server = db.get(Server, id)
+    if not db_server:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    return db_server
 
 
 @router.post("/")
@@ -39,11 +41,24 @@ def create(db: DbSession, server: ServerCreate):
     return db_server
 
 
+@router.patch("/{id}", response_model=ServerUpdate)
+def update(db: DbSession, id: int, server: ServerUpdate):
+    db_server = db.get(Server, id)
+    if not db_server:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    server_data = server.model_dump(exclude_unset=True)
+    db_server.sqlmodel_update(server_data)
+    db.add(db_server)
+    db.commit()
+    db.refresh(db_server)
+    return db_server
+
+
 @router.delete("/{id}")
 def delete(db: DbSession, id: int):
-    db_server = get_by_id(db, id)
+    db_server = db.get(Server, id)
     if not db_server:
-        return None
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
     db.delete(db_server)
     db.commit()
     return db_server

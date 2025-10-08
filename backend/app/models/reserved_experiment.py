@@ -53,8 +53,8 @@ class ReservedExperimentPublic(ReservedExperimentBase):
 
 
 class ReservedExperimentUpdate(ReservedExperimentBase):
-    filled: bool
+    filled: bool | None
     remote_id: int | None
-    experiment_id: int
+    experiment_id: int | None
     device_id: int | None
     schema_id: int | None

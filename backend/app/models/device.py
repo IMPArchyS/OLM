@@ -46,6 +46,7 @@ class DevicePublic(DeviceBase):
     deleted_at: datetime | None
 
 
-class DeviceUpdate(DeviceBase):
-    device_type_id: int
-    server_id: int
+class DeviceUpdate(SQLModel):
+    name: str | None = None
+    device_type_id: int | None = None
+    server_id: int | None = None

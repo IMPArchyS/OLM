@@ -1,11 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
 from app.models.device import Device
 from app.models.device_type import DeviceType, DeviceTypeCreate
 from app.models.device_software import DeviceSoftware
-from app.models.software import Software, SoftwareCreate, SoftwarePublic
+from app.models.software import Software, SoftwareCreate, SoftwarePublic, SoftwareUpdate
 from app.models.experiment import Experiment
 from app.models.reserved_experiment import ReservedExperiment
 from app.models.schema import Schema
@@ -23,8 +23,10 @@ def get_all(db: DbSession):
 
 @router.get("/{id}", response_model=SoftwarePublic)
 def get_by_id(db: DbSession, id: int): 
-    stmt = select(Software).where(Software.id == id)
-    return db.exec(stmt).one_or_none()
+    db_software = db.get(Software, id)
+    if not db_software:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    return db_software
 
 
 @router.post("/")
@@ -36,11 +38,24 @@ def create(db: DbSession, software: SoftwareCreate):
     return db_software
 
 
+@router.patch("/{id}", response_model=SoftwareUpdate)
+def update(db: DbSession, id: int, software: SoftwareUpdate):
+    db_software = db.get(Software, id)
+    if not db_software:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    software_data = software.model_dump(exclude_unset=True)
+    db_software.sqlmodel_update(software_data)
+    db.add(db_software)
+    db.commit()
+    db.refresh(db_software)
+    return db_software
+
+
 @router.delete("/{id}")
 def delete(db: DbSession, id: int):
-    db_software = get_by_id(db, id)
+    db_software = db.get(Software, id)
     if not db_software:
-        return None
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
     db.delete(db_software)
     db.commit()
     return db_software

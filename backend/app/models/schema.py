@@ -41,4 +41,4 @@ class SchemaPublic(SchemaBase):
 
 
 class SchemaUpdate(SchemaBase):
-    software_id: int
+    software_id: int | None

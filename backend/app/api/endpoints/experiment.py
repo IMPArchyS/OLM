@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
@@ -6,7 +6,7 @@ from app.models.device import Device
 from app.models.device_type import DeviceType
 from app.models.device_software import DeviceSoftware
 from app.models.software import Software
-from app.models.experiment import Experiment, ExperimentCreate, ExperimentPublic
+from app.models.experiment import Experiment, ExperimentCreate, ExperimentPublic, ExperimentUpdate
 from app.models.reserved_experiment import ReservedExperiment
 from app.models.schema import Schema
 from app.models.server import Server, ServerCreate
@@ -23,8 +23,10 @@ def get_all(db: DbSession):
 
 @router.get("/{id}", response_model=ExperimentPublic)
 def get_by_id(db: DbSession, id: int):
-    stmt = select(Experiment).where(Experiment.id == id)
-    return db.exec(stmt).one_or_none()
+    db_experiment = db.get(Experiment, id)
+    if not db_experiment:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    return db_experiment
 
 
 @router.post("/")
@@ -36,11 +38,24 @@ def create(db: DbSession, experiment: ExperimentCreate):
     return db_experiment
 
 
+@router.patch("/{id}", response_model=ExperimentPublic)
+def update(db: DbSession, id: int, experiment: ExperimentUpdate):
+    db_experiment = db.get(Experiment, id)
+    if not db_experiment:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    experiment_data = experiment.model_dump(exclude_unset=True)
+    db_experiment.sqlmodel_update(experiment_data)
+    db.add(db_experiment)
+    db.commit()
+    db.refresh(db_experiment)
+    return db_experiment
+
+
 @router.delete("/{id}")
 def delete(db: DbSession, id: int):
-    db_experiment = get_by_id(db, id)
+    db_experiment = db.get(Experiment, id)
     if not db_experiment:
-        return None
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
     db.delete(db_experiment)
     db.commit()
     return db_experiment

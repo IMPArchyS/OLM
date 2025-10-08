@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
@@ -8,7 +8,7 @@ from app.models.device_software import DeviceSoftware
 from app.models.software import Software
 from app.models.experiment import Experiment
 from app.models.reserved_experiment import ReservedExperiment
-from app.models.schema import Schema, SchemaCreate, SchemaPublic
+from app.models.schema import Schema, SchemaCreate, SchemaPublic, SchemaUpdate
 from app.models.server import Server
 
 
@@ -23,9 +23,10 @@ def get_all(db: DbSession):
 
 @router.get("/{id}", response_model=SchemaPublic)
 def get_by_id(db: DbSession, id: int): 
-    stmt = select(Schema).where(Schema.id == id)
-    return db.exec(stmt).one_or_none()
-
+    db_schema = db.get(Schema, id)
+    if not db_schema:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    return db_schema
 
 @router.post("/")
 def create(db: DbSession, schema: SchemaCreate):
@@ -36,11 +37,24 @@ def create(db: DbSession, schema: SchemaCreate):
     return db_schema
 
 
+@router.patch("/{id}", response_model=SchemaUpdate)
+def update(db: DbSession, id: int, schema: SchemaUpdate):
+    db_schema = db.get(Schema, id)
+    if not db_schema:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    schema_data = schema.model_dump(exclude_unset=True)
+    db_schema.sqlmodel_update(schema_data)
+    db.add(db_schema)
+    db.commit()
+    db.refresh(db_schema)
+    return db_schema
+
+
 @router.delete("/{id}")
 def delete(db: DbSession, id: int):
-    db_schema = get_by_id(db, id)
+    db_schema = db.get(Schema, id)
     if not db_schema:
-        return None
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
     db.delete(db_schema)
     db.commit()
     return db_schema
