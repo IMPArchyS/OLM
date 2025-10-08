@@ -107,7 +107,7 @@ def seed(db: DbSession):
     # 8. Create ReservedExperiment (depends on Experiment, Device, Schema)
     if experiment.id is None:
         raise ValueError("Experiment ID cannot be None")
-
+    
     reserved_experiment = ReservedExperiment(
         input={"temperature_range": "20-30"},
         output={"readings": []},

@@ -2,6 +2,6 @@
 
 <template>
     <div class="card">
-        <h2>Queue Experiments</h2>
+        <h2>Schemas</h2>
     </div>
 </template>

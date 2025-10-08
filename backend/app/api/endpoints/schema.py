@@ -28,6 +28,7 @@ def get_by_id(db: DbSession, id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Schema with {id} not found!")
     return db_schema
 
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, schema: SchemaCreate):
     db_schema = Schema.model_validate(schema)
