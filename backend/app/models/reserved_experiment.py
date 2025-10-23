@@ -40,7 +40,9 @@ class ReservedExperiment(ReservedExperimentBase, table=True):
 
 
 class ReservedExperimentCreate(ReservedExperimentBase):
-    pass
+    experiment_id: int
+    device_id: int | None
+    schema_id: int | None
 
 
 class ReservedExperimentPublic(ReservedExperimentBase):

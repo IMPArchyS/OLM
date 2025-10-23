@@ -135,7 +135,6 @@ const toggleSidebarVisibility = () => {
                     <button @click="toggleSidebarVisibility" class="hamburger-btn">
                         <span class="hamburger-icon">☰</span>
                     </button>
-                    <h1 class="page-title">{{ route.meta.title || 'Dashboard' }}</h1>
                 </div>
                 <div class="topbar-actions">
                     <LanguageSelector />
