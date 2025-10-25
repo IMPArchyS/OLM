@@ -2,6 +2,8 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import LanguageSelector from '@/components/LanguageSelector.vue'
+import ThemeSelector from '@/components/ThemeSelector.vue'
+import UserSelector from '@/components/UserSelector.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -137,11 +139,9 @@ const toggleSidebarVisibility = () => {
                     </button>
                 </div>
                 <div class="topbar-actions">
+                    <ThemeSelector />
                     <LanguageSelector />
-                    <div class="user-menu">
-                        <div class="user-avatar">U</div>
-                        <span class="user-name">username</span>
-                    </div>
+                    <UserSelector />
                 </div>
             </header>
 

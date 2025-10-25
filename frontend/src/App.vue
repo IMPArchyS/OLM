@@ -1,5 +1,21 @@
 <script setup lang="ts">
 import MainLayout from '@/layouts/MainLayout.vue'
+import { onMounted } from 'vue'
+import { useThemeStore } from './stores/theme'
+import { useLanguageStore } from './stores/language'
+import { useUserStore } from './stores/user'
+
+const themeStore = useThemeStore()
+const languageStore = useLanguageStore()
+const userStore = useUserStore()
+
+onMounted(() => {
+    themeStore.initTheme()
+    languageStore.initLanguage()
+    userStore.initUser()
+})
+
+userStore.login('JohnDoeUser', 'john.doe@example.com')
 </script>
 
 <template>
@@ -7,6 +23,9 @@ import MainLayout from '@/layouts/MainLayout.vue'
 </template>
 
 <style>
+@import 'tailwindcss';
+@plugin 'daisyui';
+
 /* Global Styles */
 * {
     margin: 0;
