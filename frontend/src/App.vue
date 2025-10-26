@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import MainLayout from '@/layouts/MainLayout.vue'
 import { onMounted } from 'vue'
 import { useThemeStore } from './stores/theme'
 import { useLanguageStore } from './stores/language'
@@ -19,7 +18,7 @@ userStore.login('JohnDoeUser', 'john.doe@example.com')
 </script>
 
 <template>
-    <MainLayout />
+    <router-view />
 </template>
 
 <style>

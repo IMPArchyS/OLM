@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useUserStore } from '@/stores/user'
+import { useRouter } from 'vue-router'
 import { ref } from 'vue'
 
 const userStore = useUserStore()
+const router = useRouter()
 const isOpen = ref(false)
 
 const toggleDropdown = () => {
@@ -29,13 +31,11 @@ const handleLogout = () => {
 }
 
 const handleLogin = () => {
-    console.log('Login clicked')
-    // TODO: Navigate to login page or open login modal
+    router.push({ name: 'login' })
 }
 
 const handleRegister = () => {
-    console.log('Register clicked')
-    // TODO: Navigate to register page or open register modal
+    router.push({ name: 'register' })
 }
 </script>
 

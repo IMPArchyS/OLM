@@ -144,7 +144,7 @@ const {
 
         <!-- Footer (collapse toggle - only visible at >= 920px) -->
         <div
-            v-if="windowWidth >= 920"
+            v-if="windowWidth >= 930"
             :class="[
                 'border-t border-base-content/10 flex items-center',
                 sidebarCollapsed ? 'justify-center p-0' : 'p-5',
