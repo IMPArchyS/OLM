@@ -22,18 +22,18 @@ const showMenuButton = computed(() => {
 
 <template>
     <header
-        class="bg-base-200 border-b border-base-content/10 px-7 py-5 mb-7! flex items-center justify-between"
+        class="bg-base-300 border-b border-base-content/10 pt-1.5! px-7 py-5 mb-7! flex items-center justify-between"
     >
         <div class="flex items-center gap-5">
             <button
                 v-if="showMenuButton"
                 @click="toggleSidebarVisibility"
-                class="btn btn-ghost text-2xl"
+                class="ml-1! p-2.5! clickable text-2xl"
             >
                 ☰
             </button>
         </div>
-        <div class="flex items-center gap-5">
+        <div class="flex items-center">
             <ThemeSelector />
             <LanguageSelector />
             <UserSelector />

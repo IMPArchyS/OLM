@@ -43,7 +43,7 @@ const handleRegister = () => {
     <div class="relative">
         <!-- Logged In: User Dropdown -->
         <div v-if="userStore.isLoggedIn" v-click-outside="closeDropdown">
-            <button @click="toggleDropdown" class="btn btn-ghost gap-2 normal-case" type="button">
+            <button @click="toggleDropdown" class="mr-5! btn btn-ghost normal-case" type="button">
                 <span class="font-medium">{{ userStore.user?.username }}</span>
                 <svg
                     class="w-4 h-4 transition-transform duration-200"
@@ -139,11 +139,9 @@ const handleRegister = () => {
         </div>
 
         <!-- Logged Out: Login & Register Links -->
-        <div v-else class="flex items-center gap-4">
+        <div v-else class="flex items-center gap-4 mr-6!">
             <button @click="handleLogin" class="link link-hover font-medium">Login</button>
-            <button @click="handleRegister" class="link link-hover link-primary font-medium">
-                Register
-            </button>
+            <button @click="handleRegister" class="link link-hover font-medium">Register</button>
         </div>
     </div>
 </template>

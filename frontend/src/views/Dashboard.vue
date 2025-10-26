@@ -22,7 +22,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="card bg-base-300!">
+    <div class="card bg-base-200! border-2 border-base-300">
         <h2>Dashboard</h2>
         <div v-if="loading">Loading...</div>
         <div v-else>

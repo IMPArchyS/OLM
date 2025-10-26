@@ -30,7 +30,7 @@ const {
 <template>
     <aside
         :class="[
-            'bg-base-300 text-base-content flex justify-center flex-col transition-all duration-300 z-100 shrink-0',
+            'bg-slate-600 text-base-content flex justify-center flex-col transition-all duration-300 z-100 shrink-0',
             windowWidth < 720
                 ? 'fixed top-0 left-0 h-screen w-64'
                 : sidebarVisible
@@ -44,7 +44,7 @@ const {
         <!-- Header -->
         <div
             :class="[
-                'p-2! border-b border-base-content/10 flex items-center min-h-[88px]',
+                'bg-slate-700 p-2! border-b border-base-content/10 flex items-center min-h-[88px]',
                 sidebarCollapsed && sidebarVisible && windowWidth >= 720
                     ? 'justify-center'
                     : 'justify-between',
@@ -54,14 +54,14 @@ const {
                 v-show="(!sidebarCollapsed && sidebarVisible) || windowWidth < 720"
                 class="text-base font-semibold leading-tight whitespace-nowrap"
             >
-                <div class="text-base-content">ONLINE LABORATORY</div>
-                <div class="text-base-content/60">MANAGER</div>
+                <div class="text-white">ONLINE LABORATORY</div>
+                <div class="text-gray-200">MANAGER</div>
             </div>
             <div
                 v-show="sidebarCollapsed && sidebarVisible && windowWidth >= 720"
                 class="text-base font-semibold whitespace-nowrap"
             >
-                <div class="text-base-content">OLM</div>
+                <div class="text-white">OLM</div>
             </div>
         </div>
 
@@ -71,7 +71,7 @@ const {
             <div class="mb-7">
                 <div
                     v-show="(!sidebarCollapsed && sidebarVisible) || windowWidth < 720"
-                    class="p-2! font-semibold text-base-content/50 uppercase tracking-wider whitespace-nowrap"
+                    class="p-2! font-semibold text-white uppercase tracking-wider whitespace-nowrap"
                 >
                     LAB
                 </div>
@@ -80,13 +80,13 @@ const {
                         <button
                             @click="navigate(item.route)"
                             :class="[
-                                'flex items-center gap-4 py-1! text-base transition-all border-l-[5px] w-full',
+                                'clickable flex items-center gap-4 py-1! px-1.5! transition-all w-full',
                                 sidebarCollapsed && sidebarVisible && windowWidth >= 720
                                     ? 'justify-center'
                                     : 'justify-start',
                                 isActiveRoute(item.route)
-                                    ? 'bg-base-content/10 border-l-primary text-base-content'
-                                    : 'border-l-transparent text-base-content hover:bg-base-content/10',
+                                    ? 'bg-white/20 border-l-primary text-white'
+                                    : 'border-l-transparent text-white/60 hover:bg-white/20',
                             ]"
                             :title="sidebarCollapsed && windowWidth >= 720 ? item.label : ''"
                         >
@@ -108,7 +108,7 @@ const {
             <div class="mb-7">
                 <div
                     v-show="(!sidebarCollapsed && sidebarVisible) || windowWidth < 720"
-                    class="p-2! font-semibold text-base-content/50 uppercase tracking-wider whitespace-nowrap"
+                    class="p-2! font-semibold text-white uppercase tracking-wider whitespace-nowrap"
                 >
                     SETTINGS
                 </div>
@@ -117,13 +117,13 @@ const {
                         <button
                             @click="navigate(item.route)"
                             :class="[
-                                'flex items-center gap-4 py-1! text-base transition-all border-l-[5px] w-full',
+                                'clickable flex items-center gap-4 py-1! px-1.5! transition-all w-full',
                                 sidebarCollapsed && sidebarVisible && windowWidth >= 720
                                     ? 'justify-center'
                                     : 'justify-start',
                                 isActiveRoute(item.route)
-                                    ? 'bg-base-content/10 border-l-primary text-base-content'
-                                    : 'border-l-transparent text-base-content hover:bg-base-content/10',
+                                    ? 'bg-white/20 border-l-primary text-white'
+                                    : 'border-l-transparent text-white/60 hover:bg-white/20',
                             ]"
                             :title="sidebarCollapsed && windowWidth >= 720 ? item.label : ''"
                         >
@@ -145,19 +145,20 @@ const {
         <!-- Footer (collapse toggle - only visible at >= 920px) -->
         <div
             v-if="windowWidth >= 930"
-            :class="[
-                'border-t border-base-content/10 flex items-center',
-                sidebarCollapsed ? 'justify-center p-0' : 'p-5',
-            ]"
+            :class="['bg-slate-700 flex items-center', sidebarCollapsed ? 'p-0' : '']"
         >
             <button
                 @click="toggleSidebar"
                 :class="[
-                    'btn btn-ghost',
-                    sidebarCollapsed ? 'w-full h-full rounded-none' : 'w-full justify-end',
+                    'clickable flex items-center gap-4 py-1! transition-all w-full text-white/60 hover:text-white hover:bg-black/20 border-l-transparent',
+                    sidebarCollapsed ? 'justify-center h-full rounded-none' : 'justify-end pr-4!',
                 ]"
             >
-                {{ sidebarCollapsed ? '>' : '<' }}
+                <span
+                    class="text-2xl flex items-center justify-center min-w-6 transition-transform duration-300"
+                >
+                    {{ sidebarCollapsed ? '>' : '<' }}
+                </span>
             </button>
         </div>
     </aside>
