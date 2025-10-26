@@ -22,7 +22,7 @@ const {
         <!-- Sidebar -->
         <aside
             :class="[
-                'bg-base-300 text-base-content flex justify-center flex-col transition-all duration-300 z-[100] flex-shrink-0',
+                'bg-base-300 text-base-content flex justify-center flex-col transition-all duration-300 z-100 shrink-0',
                 windowWidth < 720
                     ? 'fixed top-0 left-0 h-screen w-64'
                     : sidebarVisible
@@ -82,10 +82,9 @@ const {
                                 ]"
                                 :title="sidebarCollapsed && windowWidth >= 720 ? item.label : ''"
                             >
-                                <span
-                                    class="text-2xl flex items-center justify-center min-w-[24px]"
-                                    >{{ item.icon }}</span
-                                >
+                                <span class="text-2xl flex items-center justify-center min-w-6">{{
+                                    item.icon
+                                }}</span>
                                 <span
                                     v-show="
                                         (!sidebarCollapsed && sidebarVisible) || windowWidth < 720
@@ -122,10 +121,9 @@ const {
                                 ]"
                                 :title="sidebarCollapsed && windowWidth >= 720 ? item.label : ''"
                             >
-                                <span
-                                    class="text-2xl flex items-center justify-center min-w-[24px]"
-                                    >{{ item.icon }}</span
-                                >
+                                <span class="text-2xl flex items-center justify-center min-w-6">{{
+                                    item.icon
+                                }}</span>
                                 <span
                                     v-show="
                                         (!sidebarCollapsed && sidebarVisible) || windowWidth < 720
@@ -163,7 +161,7 @@ const {
         <!-- Overlay for mobile -->
         <div
             v-if="sidebarVisible && windowWidth < 720"
-            class="fixed inset-0 bg-base-300/40 z-[99]"
+            class="fixed inset-0 bg-base-300/40 z-99"
             @click="sidebarVisible = false"
         ></div>
 

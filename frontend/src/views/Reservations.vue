@@ -61,11 +61,11 @@ const submitReservation = async () => {
 </script>
 
 <template>
-    <div class="card">
+    <div class="card bg-base-300!">
         <h2>Reservations</h2>
         <!-- Device Dropdown -->
         <label for="device">Select Device:</label>
-        <select v-model="selectedDevice" id="device" class="styled-dropdown">
+        <select v-model="selectedDevice" id="device" class="styled-dropdown bg-base-100!">
             <option disabled value="">-- Choose a device --</option>
             <option v-for="device in devices" :key="device.id" :value="device.id">
                 {{ device.name }}

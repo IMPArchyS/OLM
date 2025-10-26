@@ -23,9 +23,6 @@ userStore.login('JohnDoeUser', 'john.doe@example.com')
 </template>
 
 <style>
-@import 'tailwindcss';
-@plugin 'daisyui';
-
 /* Global Styles */
 * {
     margin: 0;
