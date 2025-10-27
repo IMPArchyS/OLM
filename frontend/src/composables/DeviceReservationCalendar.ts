@@ -11,23 +11,17 @@ export interface Device {
 }
 
 export interface Reservation {
-    id: string
+    id: number
+    start: string
+    end: string
     deviceId: number
-    title: string
-    type: 'reservation' | 'maintenance'
-    start: string // ISO datetime
-    end: string // ISO datetime
-    notes?: string
-    userId?: string
+    username?: string
 }
 
 export interface ReservationForm {
     deviceId: number
-    title: string
-    type: 'reservation' | 'maintenance'
     startDate: string
     endDate: string
-    notes: string
 }
 
 interface Props {
@@ -45,11 +39,8 @@ export function useDeviceReservationCalendar(props: Props) {
 
     const reservationForm = ref<ReservationForm>({
         deviceId: 0,
-        title: '',
-        type: 'reservation',
         startDate: '',
         endDate: '',
-        notes: '',
     })
 
     // Fetch reservations from API
@@ -59,7 +50,7 @@ export function useDeviceReservationCalendar(props: Props) {
         loading.value = true
         try {
             const response = await fetch(
-                `http://localhost:8000/api/reservations/?device_id=${props.selectedDeviceId}`,
+                `http://localhost:8000/api/reservation/?device_id=${props.selectedDeviceId}`,
             )
             if (response.ok) {
                 reservations.value = await response.json()
@@ -87,17 +78,12 @@ export function useDeviceReservationCalendar(props: Props) {
     // Convert reservations to FullCalendar events
     const calendarEvents = computed(() => {
         return reservations.value.map((r) => ({
-            id: r.id,
-            title: r.title,
+            id: String(r.id),
+            title: r.username || 'Reserved',
             start: r.start,
             end: r.end,
-            backgroundColor: r.type === 'maintenance' ? '#f87171' : '#34d399',
-            borderColor: r.type === 'maintenance' ? '#dc2626' : '#10b981',
             extendedProps: {
                 deviceId: r.deviceId,
-                type: r.type,
-                notes: r.notes,
-                userId: r.userId,
             },
         }))
     })
@@ -111,11 +97,8 @@ export function useDeviceReservationCalendar(props: Props) {
 
         reservationForm.value = {
             deviceId: props.selectedDeviceId,
-            title: '',
-            type: 'reservation',
             startDate: formatDateTimeLocal(selectInfo.start),
             endDate: formatDateTimeLocal(selectInfo.end),
-            notes: '',
         }
 
         editingReservation.value = null
@@ -124,18 +107,15 @@ export function useDeviceReservationCalendar(props: Props) {
 
     function handleEventClick(clickInfo: EventClickArg) {
         const event = clickInfo.event
-        const reservation = reservations.value.find((r) => r.id === event.id)
+        const reservation = reservations.value.find((r) => r.id === Number(event.id))
 
         if (!reservation) return
 
         editingReservation.value = reservation
         reservationForm.value = {
             deviceId: reservation.deviceId,
-            title: reservation.title,
-            type: reservation.type,
             startDate: formatDateTimeLocal(new Date(reservation.start)),
             endDate: formatDateTimeLocal(new Date(reservation.end)),
-            notes: reservation.notes || '',
         }
 
         reservationModal.value?.showModal()
@@ -143,21 +123,23 @@ export function useDeviceReservationCalendar(props: Props) {
 
     async function saveReservation() {
         try {
+            // Convert datetime-local values to ISO without timezone conversion
+            const startDate = new Date(reservationForm.value.startDate)
+            const endDate = new Date(reservationForm.value.endDate)
+
+            // Format as ISO string in local time (not UTC)
             const reservationData = {
                 device_id: reservationForm.value.deviceId,
-                title: reservationForm.value.title,
-                type: reservationForm.value.type,
-                start: new Date(reservationForm.value.startDate).toISOString(),
-                end: new Date(reservationForm.value.endDate).toISOString(),
-                notes: reservationForm.value.notes,
+                start: formatToISOLocal(startDate),
+                end: formatToISOLocal(endDate),
             }
 
             if (editingReservation.value) {
                 // Update existing
                 const response = await fetch(
-                    `http://localhost:8000/api/reservations/${editingReservation.value.id}/`,
+                    `http://localhost:8000/api/reservation/${editingReservation.value.id}/`,
                     {
-                        method: 'PUT',
+                        method: 'PATCH',
                         headers: {
                             'Content-Type': 'application/json',
                         },
@@ -165,12 +147,18 @@ export function useDeviceReservationCalendar(props: Props) {
                     },
                 )
 
-                if (response.ok) {
-                    await fetchReservations() // Refresh the list
+                if (!response.ok) {
+                    const errorData = await response.json()
+                    alert(
+                        `Failed to update reservation: ${errorData.message || response.statusText}`,
+                    )
+                    return
                 }
+
+                await fetchReservations() // Refresh the list
             } else {
                 // Create new
-                const response = await fetch('http://localhost:8000/api/reservations/', {
+                const response = await fetch('http://localhost:8000/api/reservation/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -178,9 +166,15 @@ export function useDeviceReservationCalendar(props: Props) {
                     body: JSON.stringify(reservationData),
                 })
 
-                if (response.ok) {
-                    await fetchReservations() // Refresh the list
+                if (!response.ok) {
+                    const errorData = await response.json()
+                    alert(
+                        `Failed to create reservation: ${errorData.message || response.statusText}`,
+                    )
+                    return
                 }
+
+                await fetchReservations() // Refresh the list
             }
 
             updateCalendarEvents()
@@ -201,7 +195,7 @@ export function useDeviceReservationCalendar(props: Props) {
 
         try {
             const response = await fetch(
-                `http://localhost:8000/api/reservations/${editingReservation.value.id}/`,
+                `http://localhost:8000/api/reservation/${editingReservation.value.id}/`,
                 {
                     method: 'DELETE',
                 },
@@ -240,6 +234,16 @@ export function useDeviceReservationCalendar(props: Props) {
         return `${year}-${month}-${day}T${hours}:${minutes}`
     }
 
+    function formatToISOLocal(date: Date): string {
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        const hours = String(date.getHours()).padStart(2, '0')
+        const minutes = String(date.getMinutes()).padStart(2, '0')
+        const seconds = String(date.getSeconds()).padStart(2, '0')
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+    }
+
     // FullCalendar configuration
     const calendarOptions = computed<CalendarOptions>(() => ({
         plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
@@ -247,7 +251,7 @@ export function useDeviceReservationCalendar(props: Props) {
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'timeGridDay,timeGridWeek,dayGridMonth,listWeek',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
         },
         slotMinTime: '00:00:00',
         slotMaxTime: '24:00:00',

@@ -13,27 +13,25 @@
         <!-- Reservation Modal -->
         <dialog ref="reservationModal" class="modal">
             <div class="modal-box">
-                <h3 class="font-bold text-lg mb-4">
+                <h3 class="font-bold text-lg my-2! mx-2!">
                     {{ editingReservation ? 'Edit Reservation' : 'New Reservation' }}
                 </h3>
                 <!-- Debug info -->
-                <div v-if="selectedDeviceData" class="text-xs text-base-content/60 mb-2">
+                <div v-if="selectedDeviceData" class="text-xs text-base-content/60 my-2! mx-2!">
                     Device ID: {{ selectedDeviceId }} | Name: {{ selectedDeviceData.name }}
                 </div>
                 <form @submit.prevent="saveReservation" class="space-y-4">
                     <div class="form-control">
-                        <label class="label">
-                            <span class="label-text">Device</span>
-                        </label>
                         <input
                             :value="selectedDeviceData?.name || 'No device selected'"
                             type="text"
                             class="input input-bordered"
                             disabled
+                            hidden
                         />
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-4 px-2!">
                         <div class="form-control">
                             <label class="label">
                                 <span class="label-text">Start Date</span>
@@ -59,7 +57,7 @@
                         </div>
                     </div>
 
-                    <div class="modal-action">
+                    <div class="modal-action px-2! pt-2! pb-3! gap-3!">
                         <button
                             v-if="editingReservation"
                             type="button"
@@ -68,7 +66,13 @@
                         >
                             Delete
                         </button>
-                        <button type="button" @click="closeModal" class="btn">Cancel</button>
+                        <button
+                            type="button"
+                            @click="closeModal"
+                            class="btn text-white bg-gray-500 hover:bg-gray-400"
+                        >
+                            Cancel
+                        </button>
                         <button type="submit" class="btn btn-primary">Save</button>
                     </div>
                 </form>
