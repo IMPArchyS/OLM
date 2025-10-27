@@ -59,7 +59,7 @@ const closeDropdown = () => {
                     <li v-for="lang in languageStore.languages" :key="lang.code">
                         <button
                             @click="selectLanguage(lang.code)"
-                            class="flex items-center gap-3 w-full !p-2"
+                            class="flex items-center gap-3 w-full p-2!"
                             :class="{ active: lang.code === languageStore.currentLanguage.code }"
                         >
                             <span class="text-xl">{{ lang.flag }}</span>

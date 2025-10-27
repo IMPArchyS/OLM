@@ -11,15 +11,15 @@ export interface Language {
 export const useLanguageStore = defineStore('language', () => {
     // Available languages - easy to add more!
     const languages = ref<Language[]>([
-        { code: 'sk', name: 'Slovenčina', flag: '🇸🇰' },
         { code: 'en', name: 'English', flag: '🇬🇧' },
+        { code: 'sk', name: 'Slovenčina', flag: '🇸🇰' },
     ])
 
     const currentLanguage = ref<Language>(
-        languages.value[0] ?? { code: 'sk', name: 'Slovenčina', flag: '🇸🇰' },
+        languages.value[0] ?? { code: 'en', name: 'English', flag: '🇬🇧' },
     )
 
-    // Initialize language from localStorage or default to Slovak
+    // Initialize language from localStorage or default to English
     const initLanguage = () => {
         const savedLangCode = localStorage.getItem('language')
         if (savedLangCode) {
