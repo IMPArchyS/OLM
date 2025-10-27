@@ -8,8 +8,8 @@ if TYPE_CHECKING:
 
 
 class ReservationBase(SQLModel):
-    start: datetime | None = Field(default=None)
-    end: datetime | None = Field(default=None)
+    start: datetime = Field()
+    end: datetime = Field()
 
 class Reservation(ReservationBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -22,7 +22,7 @@ class Reservation(ReservationBase, table=True):
 
 
 class ReservationCreate(ReservationBase):
-    pass
+    device_id: int
 
 
 class ReservationPublic(ReservationBase):
