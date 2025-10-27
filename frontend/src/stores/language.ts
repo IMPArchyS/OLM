@@ -1,6 +1,7 @@
 // stores/language.ts
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 export interface Language {
     code: string
@@ -33,9 +34,8 @@ export const useLanguageStore = defineStore('language', () => {
 
     // Apply language (integrate with i18n here)
     const applyLanguage = (langCode: string) => {
-        // TODO: Integrate with vue-i18n here
-        // Example: i18n.global.locale.value = langCode
         document.documentElement.setAttribute('lang', langCode)
+        // Note: i18n locale change is handled in the component using useI18n
     }
 
     // Set language

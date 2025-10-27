@@ -4,6 +4,8 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
+import skLocale from '@fullcalendar/core/locales/sk'
+import { useI18n } from 'vue-i18n'
 
 export interface Device {
     id: number
@@ -32,6 +34,7 @@ interface Props {
 export function useDeviceReservationCalendar(props: Props) {
     const reservations = ref<Reservation[]>([])
     const loading = ref(false)
+    const { locale, t } = useI18n()
 
     const reservationModal = ref<HTMLDialogElement>()
     const editingReservation = ref<Reservation | null>(null)
@@ -123,11 +126,15 @@ export function useDeviceReservationCalendar(props: Props) {
 
     async function saveReservation() {
         try {
-            // Convert datetime-local values to ISO without timezone conversion
             const startDate = new Date(reservationForm.value.startDate)
             const endDate = new Date(reservationForm.value.endDate)
 
-            // Format as ISO string in local time (not UTC)
+            const now = new Date()
+            if (startDate < now || endDate < now) {
+                alert('Cannot create reservation in the past')
+                return
+            }
+
             const reservationData = {
                 device_id: reservationForm.value.deviceId,
                 start: formatToISOLocal(startDate),
@@ -135,7 +142,6 @@ export function useDeviceReservationCalendar(props: Props) {
             }
 
             if (editingReservation.value) {
-                // Update existing
                 const response = await fetch(
                     `http://localhost:8000/api/reservation/${editingReservation.value.id}/`,
                     {
@@ -202,7 +208,7 @@ export function useDeviceReservationCalendar(props: Props) {
             )
 
             if (response.ok) {
-                await fetchReservations() // Refresh the list
+                await fetchReservations()
                 updateCalendarEvents()
                 closeModal()
             }
@@ -247,11 +253,19 @@ export function useDeviceReservationCalendar(props: Props) {
     // FullCalendar configuration
     const calendarOptions = computed<CalendarOptions>(() => ({
         plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
+        locale: locale.value === 'sk' ? skLocale : 'en',
         initialView: 'timeGridWeek',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
+        },
+        buttonText: {
+            today: t('calendar.today'),
+            month: t('calendar.month'),
+            week: t('calendar.week'),
+            day: t('calendar.day'),
+            list: t('calendar.list'),
         },
         slotMinTime: '00:00:00',
         slotMaxTime: '24:00:00',
@@ -264,8 +278,13 @@ export function useDeviceReservationCalendar(props: Props) {
         events: calendarEvents.value,
         select: handleDateSelect,
         eventClick: handleEventClick,
-        height: 'auto',
+        height: '100%',
         themeSystem: 'standard',
+        selectConstraint: {
+            start: new Date().toISOString(),
+        },
+        stickyHeaderDates: true,
+        stickyFooterScrollbar: true,
     }))
 
     return {

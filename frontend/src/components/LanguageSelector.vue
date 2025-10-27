@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useLanguageStore } from '@/stores/language'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const languageStore = useLanguageStore()
 const isOpen = ref(false)
+const { locale } = useI18n()
 
 const toggleDropdown = () => {
     isOpen.value = !isOpen.value
@@ -11,6 +13,7 @@ const toggleDropdown = () => {
 
 const selectLanguage = (langCode: string) => {
     languageStore.setLanguage(langCode)
+    locale.value = langCode // Update i18n locale
     isOpen.value = false
 }
 
@@ -18,6 +21,14 @@ const selectLanguage = (langCode: string) => {
 const closeDropdown = () => {
     isOpen.value = false
 }
+
+// Watch for language changes from store and update i18n
+watch(
+    () => languageStore.currentLanguage.code,
+    (newCode) => {
+        locale.value = newCode
+    },
+)
 </script>
 
 <template>

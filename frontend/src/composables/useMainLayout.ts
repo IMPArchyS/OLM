@@ -17,15 +17,15 @@ export function useMainLayout() {
     const windowWidth = ref(window.innerWidth)
 
     const navItems: NavItem[] = [
-        { id: 'dashboard', icon: '📊', label: 'Dashboard', route: '/app/dashboard' },
-        { id: 'queue', icon: '⏱️', label: 'Queue experiments', route: '/app/queue' },
-        { id: 'reservations', icon: '📅', label: 'Reservations', route: '/app/reservations' },
-        { id: 'reports', icon: '📄', label: 'Reports', route: '/app/reports' },
+        { id: 'dashboard', icon: '📊', label: 'dashboard', route: '/app/dashboard' },
+        { id: 'queue', icon: '⏱️', label: 'queue_experiments', route: '/app/queue' },
+        { id: 'reservations', icon: '📅', label: 'reservations', route: '/app/reservations' },
+        { id: 'reports', icon: '📄', label: 'reports', route: '/app/reports' },
     ]
 
     const settingsItems: NavItem[] = [
-        { id: 'servers', icon: '🔬', label: 'Servers', route: '/app/servers' },
-        { id: 'schemas', icon: '📋', label: 'Schemas', route: '/app/schemas' },
+        { id: 'servers', icon: '🔬', label: 'servers', route: '/app/servers' },
+        { id: 'schemas', icon: '📋', label: 'schemas', route: '/app/schemas' },
     ]
 
     const isActiveRoute = (routePath: string) => {

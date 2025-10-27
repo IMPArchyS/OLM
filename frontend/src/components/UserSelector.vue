@@ -2,7 +2,9 @@
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const router = useRouter()
 const isOpen = ref(false)
@@ -91,7 +93,7 @@ const handleRegister = () => {
                                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                                     />
                                 </svg>
-                                <span>Update Profile</span>
+                                <span>{{ t('profile.updateProfile') }}</span>
                             </button>
                         </li>
                         <li>
@@ -109,7 +111,7 @@ const handleRegister = () => {
                                         d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
                                     />
                                 </svg>
-                                <span>Update Password</span>
+                                <span>{{ t('profile.updatePassword') }}</span>
                             </button>
                         </li>
                         <li class="border-t border-base-300 mt-1 pt-1">
@@ -130,7 +132,7 @@ const handleRegister = () => {
                                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                                     />
                                 </svg>
-                                <span>Log Out</span>
+                                <span>{{ t('profile.logOut') }}</span>
                             </button>
                         </li>
                     </ul>
@@ -140,8 +142,12 @@ const handleRegister = () => {
 
         <!-- Logged Out: Login & Register Links -->
         <div v-else class="flex items-center gap-4 mr-6!">
-            <button @click="handleLogin" class="link link-hover font-medium">Login</button>
-            <button @click="handleRegister" class="link link-hover font-medium">Register</button>
+            <button @click="handleLogin" class="link link-hover font-medium">
+                {{ t('auth.login') }}
+            </button>
+            <button @click="handleRegister" class="link link-hover font-medium">
+                {{ t('auth.register') }}
+            </button>
         </div>
     </div>
 </template>

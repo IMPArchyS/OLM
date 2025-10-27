@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col max-h-160! bg-base-100">
+    <div class="flex flex-col h-full overflow-hidden bg-base-100">
         <!-- Loading indicator -->
         <div v-if="loading" class="flex justify-center items-center p-8">
             <span class="loading loading-spinner loading-lg"></span>
@@ -59,19 +59,19 @@
 
                     <div class="modal-action px-2! pt-2! pb-3! gap-3!">
                         <button
+                            type="button"
+                            @click="closeModal"
+                            class="btn text-white bg-gray-500 hover:bg-gray-400"
+                        >
+                            Cancel
+                        </button>
+                        <button
                             v-if="editingReservation"
                             type="button"
                             @click="deleteReservation"
                             class="btn btn-error"
                         >
                             Delete
-                        </button>
-                        <button
-                            type="button"
-                            @click="closeModal"
-                            class="btn text-white bg-gray-500 hover:bg-gray-400"
-                        >
-                            Cancel
                         </button>
                         <button type="submit" class="btn btn-primary">Save</button>
                     </div>

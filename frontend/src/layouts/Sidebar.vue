@@ -2,6 +2,9 @@
 import { inject } from 'vue'
 import type { Ref } from 'vue'
 import type { NavItem } from '@/composables/useMainLayout'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface MainLayoutContext {
     sidebarCollapsed: Ref<boolean>
@@ -73,7 +76,7 @@ const {
                     v-show="(!sidebarCollapsed && sidebarVisible) || windowWidth < 720"
                     class="p-2! font-semibold text-white uppercase tracking-wider whitespace-nowrap"
                 >
-                    LAB
+                    {{ t('nav.lab') }}
                 </div>
                 <ul class="p-0">
                     <li v-for="item in navItems" :key="item.id" class="list-none">
@@ -97,7 +100,7 @@ const {
                                 v-show="(!sidebarCollapsed && sidebarVisible) || windowWidth < 720"
                                 class="whitespace-nowrap overflow-hidden text-ellipsis"
                             >
-                                {{ item.label }}
+                                {{ t('nav.' + item.label) }}
                             </span>
                         </button>
                     </li>
@@ -110,7 +113,7 @@ const {
                     v-show="(!sidebarCollapsed && sidebarVisible) || windowWidth < 720"
                     class="p-2! font-semibold text-white uppercase tracking-wider whitespace-nowrap"
                 >
-                    SETTINGS
+                    {{ t('nav.settings') }}
                 </div>
                 <ul class="p-0">
                     <li v-for="item in settingsItems" :key="item.id" class="list-none">
@@ -134,7 +137,7 @@ const {
                                 v-show="(!sidebarCollapsed && sidebarVisible) || windowWidth < 720"
                                 class="whitespace-nowrap overflow-hidden text-ellipsis"
                             >
-                                {{ item.label }}
+                                {{ t('nav.' + item.label) }}
                             </span>
                         </button>
                     </li>
