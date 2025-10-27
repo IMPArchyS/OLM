@@ -8,6 +8,7 @@ from app.api.endpoints import (
     reserved_experiment,
     schema,
     software,
+    reservation,
     admin
 )
 
@@ -19,6 +20,12 @@ api_router.include_router(
     admin.router,
     prefix="/api/admin",
     tags=["Admin"],
+)
+
+api_router.include_router(
+    reservation.router,
+    prefix="/api/reservation",
+    tags=["Reservations"],
 )
 
 api_router.include_router(

@@ -11,6 +11,7 @@ from app.models.device_type import DeviceType
 from app.models.experiment import Experiment
 from app.models.software import Software
 from app.models.server import Server
+from app.models.reservation import Reservation
 from app.models.device_software import DeviceSoftware
 from app.models.schema import Schema
 from app.models.reserved_experiment import ReservedExperiment

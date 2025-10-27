@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from app.models.device_type import DeviceType
     from app.models.server import Server
     from app.models.experiment import Experiment
+    from app.models.reservation import Reservation
 
 
 class DeviceBase(SQLModel):
@@ -31,8 +32,8 @@ class Device(DeviceBase, table=True):
     
     softwares: List["Software"] = Relationship(back_populates="devices", link_model=DeviceSoftware)
     experiments: List["Experiment"] = Relationship(back_populates="device", cascade_delete=True)
-    
     reserved_experiments: List["ReservedExperiment"] = Relationship(back_populates="device", cascade_delete=True)
+    reservations: List["Reservation"] = Relationship(back_populates="device", cascade_delete=True)
 
 
 class DeviceCreate(DeviceBase):

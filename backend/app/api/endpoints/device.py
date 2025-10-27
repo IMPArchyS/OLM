@@ -10,6 +10,7 @@ from app.models.experiment import Experiment
 from app.models.reserved_experiment import ReservedExperiment
 from app.models.schema import Schema
 from app.models.server import Server
+from app.models.reservation import Reservation
 
 
 router = APIRouter()
