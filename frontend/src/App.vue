@@ -15,8 +15,7 @@ onMounted(() => {
     languageStore.initLanguage()
     userStore.initUser()
 
-    // Sync Vuetify theme with store on app load
-    vuetifyTheme.global.name.value = themeStore.theme
+    vuetifyTheme.change(themeStore.theme)
 })
 
 userStore.login('JohnDoeUser', 'john.doe@example.com')

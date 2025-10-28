@@ -13,7 +13,7 @@ const isDark = computed(() => vuetifyTheme.global.name.value === 'dark')
 watch(
     () => themeStore.theme,
     (newTheme) => {
-        vuetifyTheme.global.name.value = newTheme
+        vuetifyTheme.change(newTheme)
     },
     { immediate: true },
 )
@@ -21,7 +21,7 @@ watch(
 // Toggle theme function
 const toggleTheme = () => {
     const newTheme = isDark.value ? 'light' : 'dark'
-    vuetifyTheme.global.name.value = newTheme
+    vuetifyTheme.change(newTheme)
     themeStore.theme = newTheme // Sync with store for persistence
 }
 </script>
