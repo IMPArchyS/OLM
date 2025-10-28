@@ -114,6 +114,14 @@ export function useDeviceReservationCalendar(props: Props) {
 
         if (!reservation) return
 
+        // Check if event is in the past
+        const eventEnd = new Date(reservation.end)
+        const now = new Date()
+        if (eventEnd < now) {
+            alert('Cannot edit past reservations')
+            return
+        }
+
         editingReservation.value = reservation
         reservationForm.value = {
             deviceId: reservation.deviceId,
@@ -278,6 +286,22 @@ export function useDeviceReservationCalendar(props: Props) {
         events: calendarEvents.value,
         select: handleDateSelect,
         eventClick: handleEventClick,
+        // Prevent clicking on past events
+        eventAllow: (dropInfo, draggedEvent) => {
+            const now = new Date()
+            const eventStart = draggedEvent?.start
+            return eventStart ? eventStart >= now : true
+        },
+        // Custom callback to check if event is in the past
+        eventDidMount: (info) => {
+            const eventEnd = info.event.end || info.event.start
+            const now = new Date()
+            if (eventEnd && eventEnd < now) {
+                // Add visual indication for past events
+                info.el.style.opacity = '0.6'
+                info.el.style.cursor = 'not-allowed'
+            }
+        },
         height: '100%',
         themeSystem: 'standard',
         selectConstraint: {
