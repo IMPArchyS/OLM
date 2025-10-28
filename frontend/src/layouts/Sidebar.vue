@@ -38,7 +38,7 @@ const showLabels = computed(() => !isCollapsed.value)
             <!-- Header -->
             <v-sheet
                 color="rgb(51, 65, 85)"
-                class="pa-4 d-flex align-center flex-shrink-0"
+                class="pa-4 d-flex align-center shrink-0"
                 :class="isCollapsed ? 'justify-center' : 'justify-space-between'"
                 height="88"
             >
@@ -193,7 +193,14 @@ const showLabels = computed(() => !isCollapsed.value)
             <!-- Footer Toggle (only visible at >= 930px) -->
             <v-sheet v-if="windowWidth >= 930" color="rgb(51, 65, 85)" style="flex-shrink: 0">
                 <v-divider color="rgb(51, 65, 85)" />
-                <div @click="toggleSidebar" class="toggle-button">
+                <div
+                    @click="toggleSidebar"
+                    class="toggle-button"
+                    :style="{
+                        justifyContent: isCollapsed ? 'center' : 'flex-end',
+                        paddingRight: isCollapsed ? '0' : '16px',
+                    }"
+                >
                     <v-icon :icon="isCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left'" />
                 </div>
             </v-sheet>

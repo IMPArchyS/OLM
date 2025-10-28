@@ -4,7 +4,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-    <v-card>
+    <v-card class="mt-5" color="surface-variant">
         <v-card-title>
             {{ t('schemas.title') }}
         </v-card-title>

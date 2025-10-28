@@ -111,7 +111,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <v-card>
+    <v-card class="mt-5" color="surface-variant">
         <v-card-title>
             {{ t('dashboard.title') }}
         </v-card-title>
