@@ -33,10 +33,10 @@ const {
 <template>
     <v-navigation-drawer
         v-model="sidebarVisible"
-        :rail="sidebarCollapsed && windowWidth >= 720"
-        :temporary="windowWidth < 720"
+        :width="sidebarCollapsed ? 80 : 280"
         color="rgb(71, 85, 105)"
         class="text-white"
+        style="display: flex; flex-direction: column; height: 100vh"
     >
         <!-- Header -->
         <v-sheet
@@ -85,7 +85,7 @@ const {
                         @click="navigate(item.route)"
                         :active="isActiveRoute(item.route)"
                         :title="sidebarCollapsed && windowWidth >= 720 ? item.label : ''"
-                        class="px-1.5 py-1"
+                        class="px-1.5 py-1 sidebar-btn"
                         style="border-left: 3px solid transparent"
                         :style="{
                             justifyContent:
@@ -98,7 +98,9 @@ const {
                             borderLeftColor: isActiveRoute(item.route)
                                 ? 'rgb(var(--v-theme-primary))'
                                 : 'transparent',
-                            color: isActiveRoute(item.route) ? 'white' : 'rgba(255,255,255,0.6)',
+                            color: isActiveRoute(item.route)
+                                ? 'white !important'
+                                : 'rgba(255,255,255,0.6) !important',
                         }"
                     >
                         <template v-slot:prepend>
@@ -140,7 +142,7 @@ const {
                         @click="navigate(item.route)"
                         :active="isActiveRoute(item.route)"
                         :title="sidebarCollapsed && windowWidth >= 720 ? item.label : ''"
-                        class="px-1.5 py-1"
+                        class="px-1.5 py-1 sidebar-btn"
                         style="border-left: 3px solid transparent"
                         :style="{
                             justifyContent:
@@ -153,7 +155,9 @@ const {
                             borderLeftColor: isActiveRoute(item.route)
                                 ? 'rgb(var(--v-theme-primary))'
                                 : 'transparent',
-                            color: isActiveRoute(item.route) ? 'white' : 'rgba(255,255,255,0.6)',
+                            color: isActiveRoute(item.route)
+                                ? 'white !important'
+                                : 'rgba(255,255,255,0.6) !important',
                         }"
                     >
                         <template v-slot:prepend>
@@ -185,6 +189,14 @@ const {
             v-if="windowWidth >= 930"
             color="rgb(51, 65, 85)"
             :class="sidebarCollapsed ? 'pa-0' : ''"
+            style="
+                flex-shrink: 0;
+                margin-top: auto;
+                width: 100%;
+                position: absolute;
+                bottom: 0;
+                left: 0;
+            "
         >
             <v-btn
                 @click="toggleSidebar"

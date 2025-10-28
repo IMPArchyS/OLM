@@ -15,9 +15,7 @@ export const useThemeStore = defineStore('theme', () => {
     }
 
     // Apply theme to document
-    const applyTheme = (newTheme: 'light' | 'dark') => {
-        document.documentElement.setAttribute('data-theme', newTheme)
-    }
+    const applyTheme = (newTheme: 'light' | 'dark') => {}
 
     // Toggle between light and dark
     const toggleTheme = () => {

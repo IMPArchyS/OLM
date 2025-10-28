@@ -3,15 +3,20 @@ import { onMounted } from 'vue'
 import { useThemeStore } from './stores/theme'
 import { useLanguageStore } from './stores/language'
 import { useUserStore } from './stores/user'
+import { useTheme } from 'vuetify'
 
 const themeStore = useThemeStore()
 const languageStore = useLanguageStore()
 const userStore = useUserStore()
+const vuetifyTheme = useTheme()
 
 onMounted(() => {
     themeStore.initTheme()
     languageStore.initLanguage()
     userStore.initUser()
+
+    // Sync Vuetify theme with store on app load
+    vuetifyTheme.global.name.value = themeStore.theme
 })
 
 userStore.login('JohnDoeUser', 'john.doe@example.com')
