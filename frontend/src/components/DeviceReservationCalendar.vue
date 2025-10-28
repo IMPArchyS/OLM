@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onMounted } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import { useDeviceReservationCalendar, type Device } from '../composables/DeviceReservationCalendar'
 
@@ -84,7 +84,7 @@ const props = defineProps<{
 }>()
 
 const {
-    reservationModal,
+    isModalOpen,
     editingReservation,
     fullCalendar,
     reservationForm,
@@ -95,34 +95,6 @@ const {
     updateCalendarEvents,
     closeModal,
 } = useDeviceReservationCalendar(props)
-
-// Control v-dialog with reactive state
-const isModalOpen = ref(false)
-
-// Watch the reservationModal ref to sync with v-dialog
-watch(reservationModal, (modalElement) => {
-    if (modalElement) {
-        const observer = new MutationObserver(() => {
-            isModalOpen.value = modalElement.hasAttribute('open')
-        })
-        observer.observe(modalElement, { attributes: true, attributeFilter: ['open'] })
-    }
-})
-
-// Override closeModal to work with v-dialog
-const closeModalVuetify = () => {
-    isModalOpen.value = false
-    closeModal()
-}
-
-// Update the composable's modal control
-watch(isModalOpen, (newValue) => {
-    if (newValue && reservationModal.value) {
-        reservationModal.value.showModal()
-    } else if (!newValue && reservationModal.value) {
-        reservationModal.value.close()
-    }
-})
 
 onMounted(() => {
     updateCalendarEvents()

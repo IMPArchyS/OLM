@@ -36,7 +36,7 @@ export function useDeviceReservationCalendar(props: Props) {
     const loading = ref(false)
     const { locale, t } = useI18n()
 
-    const reservationModal = ref<HTMLDialogElement>()
+    const isModalOpen = ref(false)
     const editingReservation = ref<Reservation | null>(null)
     const fullCalendar = ref()
 
@@ -105,7 +105,7 @@ export function useDeviceReservationCalendar(props: Props) {
         }
 
         editingReservation.value = null
-        reservationModal.value?.showModal()
+        isModalOpen.value = true
     }
 
     function handleEventClick(clickInfo: EventClickArg) {
@@ -129,7 +129,7 @@ export function useDeviceReservationCalendar(props: Props) {
             endDate: formatDateTimeLocal(new Date(reservation.end)),
         }
 
-        reservationModal.value?.showModal()
+        isModalOpen.value = true
     }
 
     async function saveReservation() {
@@ -235,7 +235,7 @@ export function useDeviceReservationCalendar(props: Props) {
     }
 
     function closeModal() {
-        reservationModal.value?.close()
+        isModalOpen.value = false
         editingReservation.value = null
     }
 
@@ -313,7 +313,7 @@ export function useDeviceReservationCalendar(props: Props) {
 
     return {
         reservations,
-        reservationModal,
+        isModalOpen,
         editingReservation,
         fullCalendar,
         reservationForm,
