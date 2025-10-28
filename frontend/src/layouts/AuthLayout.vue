@@ -19,12 +19,12 @@ provide('mainLayout', {
 </script>
 
 <template>
-    <div class="flex h-screen overflow-hidden">
-        <div class="flex-1 flex flex-col overflow-hidden bg-base-100">
-            <NavBar />
-            <main class="flex-1 px-7! mb-5! overflow-y-auto">
+    <v-app>
+        <NavBar />
+        <v-main>
+            <div class="px-7 mb-5">
                 <router-view />
-            </main>
-        </div>
-    </div>
+            </div>
+        </v-main>
+    </v-app>
 </template>

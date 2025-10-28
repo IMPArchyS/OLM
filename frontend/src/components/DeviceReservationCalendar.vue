@@ -1,91 +1,80 @@
 <template>
-    <div class="flex flex-col h-full overflow-hidden bg-base-100">
+    <div style="display: flex; flex-direction: column; height: 100%; overflow: hidden">
         <!-- Loading indicator -->
-        <div v-if="loading" class="flex justify-center items-center p-8">
-            <span class="loading loading-spinner loading-lg"></span>
+        <div
+            v-if="loading"
+            style="display: flex; justify-content: center; align-items: center; padding: 32px"
+        >
+            <v-progress-circular indeterminate color="primary" size="64" />
         </div>
 
         <!-- FullCalendar -->
-        <div v-else class="flex-1 p-4 overflow-auto">
+        <div v-else style="flex: 1; padding: 16px; overflow: auto">
             <FullCalendar ref="fullCalendar" :options="calendarOptions" />
         </div>
 
         <!-- Reservation Modal -->
-        <dialog ref="reservationModal" class="modal">
-            <div class="modal-box">
-                <h3 class="font-bold text-lg my-2! mx-2!">
+        <v-dialog v-model="isModalOpen" max-width="600px">
+            <v-card>
+                <v-card-title>
                     {{ editingReservation ? 'Edit Reservation' : 'New Reservation' }}
-                </h3>
+                </v-card-title>
+
                 <!-- Debug info -->
-                <div v-if="selectedDeviceData" class="text-xs text-base-content/60 my-2! mx-2!">
+                <v-card-subtitle v-if="selectedDeviceData" class="text-caption">
                     Device ID: {{ selectedDeviceId }} | Name: {{ selectedDeviceData.name }}
-                </div>
-                <form @submit.prevent="saveReservation" class="space-y-4">
-                    <div class="form-control">
-                        <input
-                            :value="selectedDeviceData?.name || 'No device selected'"
-                            type="text"
-                            class="input input-bordered"
-                            disabled
-                            hidden
-                        />
-                    </div>
+                </v-card-subtitle>
 
-                    <div class="grid grid-cols-2 gap-4 px-2!">
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text">Start Date</span>
-                            </label>
-                            <input
-                                v-model="reservationForm.startDate"
-                                type="datetime-local"
-                                class="input input-bordered"
-                                required
-                            />
-                        </div>
+                <v-card-text>
+                    <v-form @submit.prevent="saveReservation">
+                        <v-row>
+                            <v-col cols="12" md="6">
+                                <v-text-field
+                                    v-model="reservationForm.startDate"
+                                    type="datetime-local"
+                                    label="Start Date"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    required
+                                />
+                            </v-col>
 
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text">End Date</span>
-                            </label>
-                            <input
-                                v-model="reservationForm.endDate"
-                                type="datetime-local"
-                                class="input input-bordered"
-                                required
-                            />
-                        </div>
-                    </div>
+                            <v-col cols="12" md="6">
+                                <v-text-field
+                                    v-model="reservationForm.endDate"
+                                    type="datetime-local"
+                                    label="End Date"
+                                    variant="outlined"
+                                    density="comfortable"
+                                    required
+                                />
+                            </v-col>
+                        </v-row>
+                    </v-form>
+                </v-card-text>
 
-                    <div class="modal-action px-2! pt-2! pb-3! gap-3!">
-                        <button
-                            type="button"
-                            @click="closeModal"
-                            class="btn text-white bg-gray-500 hover:bg-gray-400"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            v-if="editingReservation"
-                            type="button"
-                            @click="deleteReservation"
-                            class="btn btn-error"
-                        >
-                            Delete
-                        </button>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </div>
-                </form>
-            </div>
-            <form method="dialog" class="modal-backdrop">
-                <button @click="closeModal">close</button>
-            </form>
-        </dialog>
+                <v-card-actions>
+                    <v-btn color="grey" variant="text" @click="closeModal"> Cancel </v-btn>
+                    <v-spacer />
+                    <v-btn
+                        v-if="editingReservation"
+                        color="error"
+                        variant="text"
+                        @click="deleteReservation"
+                    >
+                        Delete
+                    </v-btn>
+                    <v-btn color="primary" variant="elevated" @click="saveReservation">
+                        Save
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import { useDeviceReservationCalendar, type Device } from '../composables/DeviceReservationCalendar'
 
@@ -107,13 +96,41 @@ const {
     closeModal,
 } = useDeviceReservationCalendar(props)
 
+// Control v-dialog with reactive state
+const isModalOpen = ref(false)
+
+// Watch the reservationModal ref to sync with v-dialog
+watch(reservationModal, (modalElement) => {
+    if (modalElement) {
+        const observer = new MutationObserver(() => {
+            isModalOpen.value = modalElement.hasAttribute('open')
+        })
+        observer.observe(modalElement, { attributes: true, attributeFilter: ['open'] })
+    }
+})
+
+// Override closeModal to work with v-dialog
+const closeModalVuetify = () => {
+    isModalOpen.value = false
+    closeModal()
+}
+
+// Update the composable's modal control
+watch(isModalOpen, (newValue) => {
+    if (newValue && reservationModal.value) {
+        reservationModal.value.showModal()
+    } else if (!newValue && reservationModal.value) {
+        reservationModal.value.close()
+    }
+})
+
 onMounted(() => {
     updateCalendarEvents()
 })
 </script>
 
 <style>
-thead {
-    background: var(--color-base-200) !important;
-}
+/* thead {
+    background: rgb(var(--v-theme-surface-variant)) !important;
+} */
 </style>

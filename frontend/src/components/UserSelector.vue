@@ -9,27 +9,19 @@ const userStore = useUserStore()
 const router = useRouter()
 const isOpen = ref(false)
 
-const toggleDropdown = () => {
-    isOpen.value = !isOpen.value
-}
-
-const closeDropdown = () => {
-    isOpen.value = false
-}
-
 const handleUpdateProfile = () => {
     userStore.updateProfile()
-    closeDropdown()
+    isOpen.value = false
 }
 
 const handleUpdatePassword = () => {
     userStore.updatePassword()
-    closeDropdown()
+    isOpen.value = false
 }
 
 const handleLogout = () => {
     userStore.logout()
-    closeDropdown()
+    isOpen.value = false
 }
 
 const handleLogin = () => {
@@ -42,123 +34,59 @@ const handleRegister = () => {
 </script>
 
 <template>
-    <div class="relative">
+    <div>
         <!-- Logged In: User Dropdown -->
-        <div v-if="userStore.isLoggedIn" v-click-outside="closeDropdown">
-            <button @click="toggleDropdown" class="mr-5! btn btn-ghost normal-case" type="button">
-                <span class="font-medium">{{ userStore.user?.username }}</span>
-                <svg
-                    class="w-4 h-4 transition-transform duration-200"
-                    :class="{ 'rotate-180': isOpen }"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 9l-7 7-7-7"
-                    />
-                </svg>
-            </button>
+        <v-menu v-if="userStore.isLoggedIn" v-model="isOpen" :close-on-content-click="false">
+            <template v-slot:activator="{ props }">
+                <v-btn v-bind="props" variant="text" style="margin-right: 20px">
+                    <span style="font-weight: 500">{{ userStore.user?.username }}</span>
+                    <v-icon
+                        :style="{
+                            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s',
+                        }"
+                    >
+                        mdi-chevron-down
+                    </v-icon>
+                </v-btn>
+            </template>
 
-            <!-- Dropdown Menu -->
-            <transition
-                enter-active-class="transition ease-out duration-200"
-                enter-from-class="opacity-0 translate-y-1"
-                enter-to-class="opacity-100 translate-y-0"
-                leave-active-class="transition ease-in duration-150"
-                leave-from-class="opacity-100 translate-y-0"
-                leave-to-class="opacity-0 translate-y-1"
-            >
-                <div
-                    v-if="isOpen"
-                    class="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-base-100 border border-base-300 z-50"
-                >
-                    <!-- Menu Items -->
-                    <ul class="menu p-2">
-                        <li>
-                            <button @click="handleUpdateProfile" class="flex items-center gap-3">
-                                <svg
-                                    class="w-5 h-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                                    />
-                                </svg>
-                                <span>{{ t('profile.updateProfile') }}</span>
-                            </button>
-                        </li>
-                        <li>
-                            <button @click="handleUpdatePassword" class="flex items-center gap-3">
-                                <svg
-                                    class="w-5 h-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                                    />
-                                </svg>
-                                <span>{{ t('profile.updatePassword') }}</span>
-                            </button>
-                        </li>
-                        <li class="border-t border-base-300 mt-1 pt-1">
-                            <button
-                                @click="handleLogout"
-                                class="flex items-center gap-3 text-error hover:bg-error hover:text-error-content"
-                            >
-                                <svg
-                                    class="w-5 h-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                                    />
-                                </svg>
-                                <span>{{ t('profile.logOut') }}</span>
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            </transition>
-        </div>
+            <v-list>
+                <v-list-item @click="handleUpdateProfile">
+                    <template v-slot:prepend>
+                        <v-icon>mdi-account</v-icon>
+                    </template>
+                    <v-list-item-title>{{ t('profile.updateProfile') }}</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item @click="handleUpdatePassword">
+                    <template v-slot:prepend>
+                        <v-icon>mdi-key</v-icon>
+                    </template>
+                    <v-list-item-title>{{ t('profile.updatePassword') }}</v-list-item-title>
+                </v-list-item>
+
+                <v-divider />
+
+                <v-list-item @click="handleLogout" class="text-error">
+                    <template v-slot:prepend>
+                        <v-icon color="error">mdi-logout</v-icon>
+                    </template>
+                    <v-list-item-title style="color: rgb(var(--v-theme-error))">
+                        {{ t('profile.logOut') }}
+                    </v-list-item-title>
+                </v-list-item>
+            </v-list>
+        </v-menu>
 
         <!-- Logged Out: Login & Register Links -->
-        <div v-else class="flex items-center gap-4 mr-6!">
-            <button @click="handleLogin" class="link link-hover font-medium">
+        <div v-else style="display: flex; align-items: center; gap: 16px; margin-right: 24px">
+            <v-btn @click="handleLogin" variant="text">
                 {{ t('auth.login') }}
-            </button>
-            <button @click="handleRegister" class="link link-hover font-medium">
+            </v-btn>
+            <v-btn @click="handleRegister" variant="text">
                 {{ t('auth.register') }}
-            </button>
+            </v-btn>
         </div>
     </div>
 </template>
-
-<style scoped>
-.menu li button {
-    padding: 0.75rem;
-    transition: all 0.2s ease;
-}
-
-.menu li button:hover {
-    background-color: hsl(var(--b3));
-}
-</style>

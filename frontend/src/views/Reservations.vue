@@ -26,26 +26,30 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="card bg-base-300! p-0! rounded-2xl!">
-        <div class="card-header">
-            <h2 class="text-xl font-semibold py-2.5! px-2.5!">{{ t('reservations.title') }}</h2>
-        </div>
-        <div class="card-body bg-base-200 rounded-b-2xl! px-2.5! pt-2! pb-4!">
+    <v-card>
+        <v-card-title>
+            {{ t('reservations.title') }}
+        </v-card-title>
+        <v-card-text>
             <!-- Device Dropdown -->
-            <label for="device">{{ t('reservations.selectDevice') }}:</label>
-            <select v-model="selectedDevice" id="device" class="select w-full bg-base-100! p-2!">
-                <option disabled :value="null">{{ t('reservations.chooseDevice') }}</option>
-                <option v-for="device in devices" :key="device.id" :value="device.id">
-                    {{ device.name }}
-                </option>
-            </select>
+            <v-select
+                v-model="selectedDevice"
+                :items="devices"
+                item-title="name"
+                item-value="id"
+                :label="t('reservations.selectDevice')"
+                :placeholder="t('reservations.chooseDevice')"
+                variant="outlined"
+                density="comfortable"
+            />
+
             <!-- Calendar view  -->
-            <div v-if="selectedDevice && selectedDeviceData" class="h-[calc(100vh-260px)]">
+            <div v-if="selectedDevice && selectedDeviceData" style="height: calc(100vh - 260px)">
                 <DeviceReservationCalendar
                     :selected-device-id="selectedDevice"
                     :selected-device-data="selectedDeviceData"
                 />
             </div>
-        </div>
-    </div>
+        </v-card-text>
+    </v-card>
 </template>

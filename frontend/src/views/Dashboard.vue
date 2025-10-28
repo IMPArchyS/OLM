@@ -111,22 +111,23 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="card bg-base-300! p-0! rounded-2xl!">
-        <div class="card-header">
-            <h2 class="text-xl font-semibold py-2.5! px-2.5!">{{ t('dashboard.title') }}</h2>
-        </div>
-        <div class="card-body bg-base-200 rounded-b-2xl! px-2.5! pt-2! pb-4!">
-            <div v-if="loading" class="flex justify-center items-center p-8">
-                <span class="loading loading-spinner loading-lg"></span>
+    <v-card>
+        <v-card-title>
+            {{ t('dashboard.title') }}
+        </v-card-title>
+        <v-card-text>
+            <div
+                v-if="loading"
+                style="display: flex; justify-content: center; align-items: center; padding: 32px"
+            >
+                <v-progress-circular indeterminate color="primary" size="64" />
             </div>
-            <div v-else class="space-y-4">
+            <div v-else style="display: flex; flex-direction: column; gap: 16px">
                 <!-- Active Reservation -->
                 <div v-if="activeReservation">
-                    <div class="flex flex-col gap-0 items-start alert alert-success">
-                        <h3 class="text-lg text-white font-bold pl-1!">
-                            {{ t('dashboard.active_reservation') }}
-                        </h3>
-                        <div class="text-sm text-white mb-2! pl-2!">
+                    <v-alert type="success" variant="tonal">
+                        <v-alert-title>{{ t('dashboard.active_reservation') }}</v-alert-title>
+                        <div style="margin-top: 8px">
                             <p>
                                 <strong>{{ t('dashboard.started') }}:</strong>
                                 {{ formatDateTime(activeReservation.start) }}
@@ -140,41 +141,39 @@ onMounted(() => {
                                 {{ activeReservation.username }}
                             </p>
                         </div>
-                    </div>
+                    </v-alert>
                     <ExperimentSandbox :reservation="activeReservation" />
                 </div>
 
                 <!-- Next Reservation -->
-                <div v-else-if="nextReservation" class="alert alert-info">
-                    <div class="flex flex-col w-full">
-                        <h3 class="text-lg text-white font-bold pl-1!">
-                            {{ t('dashboard.next_reservation') }}
-                        </h3>
-                        <div class="text-sm text-white mb-2! pl-2!">
-                            <p>
-                                <strong>{{ t('dashboard.starts') }}:</strong>
-                                {{ formatDateTime(nextReservation.start) }}
-                            </p>
-                            <p>
-                                <strong>{{ t('dashboard.ends') }}:</strong>
-                                {{ formatDateTime(nextReservation.end) }}
-                            </p>
-                            <p v-if="nextReservation.username">
-                                <strong>{{ t('dashboard.user') }}:</strong>
-                                {{ nextReservation.username }}
-                            </p>
-                        </div>
+                <v-alert v-else-if="nextReservation" type="info" variant="tonal">
+                    <v-alert-title>{{ t('dashboard.next_reservation') }}</v-alert-title>
+                    <div style="margin-top: 8px">
+                        <p>
+                            <strong>{{ t('dashboard.starts') }}:</strong>
+                            {{ formatDateTime(nextReservation.start) }}
+                        </p>
+                        <p>
+                            <strong>{{ t('dashboard.ends') }}:</strong>
+                            {{ formatDateTime(nextReservation.end) }}
+                        </p>
+                        <p v-if="nextReservation.username">
+                            <strong>{{ t('dashboard.user') }}:</strong>
+                            {{ nextReservation.username }}
+                        </p>
                     </div>
-                </div>
+                </v-alert>
 
                 <!-- No Reservations -->
-                <div v-else class="text-center py-8">
-                    <p class="text-lg mb-4">{{ t('dashboard.no_reservations') }}</p>
-                    <button @click="goToReservations" class="btn btn-primary">
+                <div v-else style="text-align: center; padding: 32px 0">
+                    <p style="font-size: 18px; margin-bottom: 16px">
+                        {{ t('dashboard.no_reservations') }}
+                    </p>
+                    <v-btn @click="goToReservations" color="primary" variant="elevated">
                         {{ t('dashboard.create_reservation') }}
-                    </button>
+                    </v-btn>
                 </div>
             </div>
-        </div>
-    </div>
+        </v-card-text>
+    </v-card>
 </template>

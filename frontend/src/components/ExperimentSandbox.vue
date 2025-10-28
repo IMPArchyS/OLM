@@ -126,111 +126,111 @@ console.log(experiments)
 </script>
 
 <template>
-    <div class="card bg-base-100 shadow-xl mt-4!">
-        <div class="card-body">
-            <h3 class="card-title">{{ $t('dashboard.ongoing_experiment') }}</h3>
+    <v-card class="mt-4">
+        <v-card-title>{{ $t('dashboard.ongoing_experiment') }}</v-card-title>
 
-            <div v-if="loading" class="flex justify-center p-4">
-                <span class="loading loading-spinner loading-md"></span>
+        <v-card-text>
+            <div v-if="loading" style="display: flex; justify-content: center; padding: 16px">
+                <v-progress-circular indeterminate color="primary" size="48" />
             </div>
 
-            <div v-else-if="error" class="alert alert-error">
-                <span>{{ error }}</span>
-            </div>
+            <v-alert v-else-if="error" type="error" variant="tonal">
+                {{ error }}
+            </v-alert>
 
-            <div v-else-if="experiments.length > 0" class="space-y-4">
+            <div
+                v-else-if="experiments.length > 0"
+                style="display: flex; flex-direction: column; gap: 16px"
+            >
                 <!-- Experiment Selector -->
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">{{ $t('dashboard.select_experiment') }}</span>
-                    </label>
-                    <select v-model="selectedExperimentId" class="select select-bordered w-full">
-                        <option v-for="exp in experiments" :key="exp.id" :value="exp.id">
-                            {{ exp.name }}
-                        </option>
-                    </select>
-                </div>
+                <v-select
+                    v-model="selectedExperimentId"
+                    :items="experiments"
+                    item-title="name"
+                    item-value="id"
+                    :label="$t('dashboard.select_experiment')"
+                    variant="outlined"
+                    density="comfortable"
+                />
 
                 <!-- Schema Selector (only if experiment has schema) -->
-                <div v-if="selectedExperiment?.has_schema" class="form-control">
-                    <label class="label">
-                        <span class="label-text">{{ $t('dashboard.select_schema') }}</span>
-                    </label>
-                    <select class="select select-bordered w-full">
-                        <option value="" disabled selected>
-                            {{ $t('dashboard.no_schemas_available') }}
-                        </option>
-                    </select>
-                </div>
+                <v-select
+                    v-if="selectedExperiment?.has_schema"
+                    :items="[]"
+                    :label="$t('dashboard.select_schema')"
+                    :placeholder="$t('dashboard.no_schemas_available')"
+                    variant="outlined"
+                    density="comfortable"
+                    disabled
+                />
 
                 <!-- Experiment Parameters Section (from experiment_commands) -->
-                <div v-if="experimentCommandEntries.length > 0" class="card bg-base-200">
-                    <div class="card-body p-4">
-                        <h4 class="font-semibold text-lg mb-4">
+                <v-card v-if="experimentCommandEntries.length > 0" variant="tonal">
+                    <v-card-text>
+                        <h4 class="text-lg font-weight-medium mb-4">
                             {{ $t('dashboard.experiment_parameters') }}
                         </h4>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div
+                        <v-row>
+                            <v-col
                                 v-for="[key, value] in experimentCommandEntries"
                                 :key="key"
-                                class="form-control"
+                                cols="12"
+                                md="6"
                             >
-                                <label class="label">
-                                    <span class="label-text">
-                                        {{ key }}
-                                    </span>
-                                </label>
-
-                                <input
+                                <v-text-field
                                     v-model="experimentCommandValues[key]"
-                                    type="text"
-                                    class="input input-bordered w-full"
+                                    :label="key"
                                     :placeholder="key"
+                                    variant="outlined"
+                                    density="comfortable"
                                 />
-                            </div>
-                        </div>
+                            </v-col>
+                        </v-row>
 
-                        <div class="mt-4 flex gap-2 justify-end">
-                            <button class="btn btn-primary">
+                        <div style="display: flex; justify-content: flex-end; margin-top: 16px">
+                            <v-btn color="primary" variant="elevated">
                                 {{ $t('dashboard.run_experiment') }}
-                            </button>
+                            </v-btn>
                         </div>
-                    </div>
-                </div>
+                    </v-card-text>
+                </v-card>
 
                 <!-- Command Selector -->
-                <div v-if="commandEntries.length > 0" class="form-control">
-                    <label class="label">
-                        <span class="label-text">{{ $t('dashboard.select_command') }}</span>
-                    </label>
-                    <select v-model="selectedCommand" class="select select-bordered w-full">
-                        <option v-for="[key, value] in commandEntries" :key="key" :value="key">
-                            {{ key }} - {{ value }}
-                        </option>
-                    </select>
-                </div>
+                <v-select
+                    v-if="commandEntries.length > 0"
+                    v-model="selectedCommand"
+                    :items="
+                        commandEntries.map(([key, value]) => ({
+                            title: `${key} - ${value}`,
+                            value: key,
+                        }))
+                    "
+                    :label="$t('dashboard.select_command')"
+                    variant="outlined"
+                    density="comfortable"
+                />
 
                 <!-- Selected Experiment Details -->
-                <div v-if="selectedExperiment" class="space-y-2">
-                    <div class="card bg-base-200">
-                        <div class="card-body p-4">
-                            <h4 class="font-semibold text-lg">{{ selectedExperiment.name }}</h4>
-                            <p v-if="selectedExperiment.description" class="text-sm">
-                                {{ selectedExperiment.description }}
-                            </p>
-                            <div class="divider my-2"></div>
-                            <pre class="text-xs bg-base-300 p-3 rounded overflow-auto">{{
-                                selectedExperiment
-                            }}</pre>
-                        </div>
-                    </div>
-                </div>
+                <v-card v-if="selectedExperiment" variant="tonal">
+                    <v-card-text>
+                        <h4 class="text-lg font-weight-medium">{{ selectedExperiment.name }}</h4>
+                        <p v-if="selectedExperiment.description" class="text-sm mt-2">
+                            {{ selectedExperiment.description }}
+                        </p>
+                        <v-divider class="my-2" />
+                        <pre
+                            class="text-xs pa-3 rounded"
+                            style="background-color: rgba(0, 0, 0, 0.05); overflow: auto"
+                            >{{ selectedExperiment }}</pre
+                        >
+                    </v-card-text>
+                </v-card>
             </div>
 
-            <div v-else class="alert alert-warning">
-                <span>{{ $t('dashboard.no_experiment_found') }}</span>
-            </div>
-        </div>
-    </div>
+            <v-alert v-else type="warning" variant="tonal">
+                {{ $t('dashboard.no_experiment_found') }}
+            </v-alert>
+        </v-card-text>
+    </v-card>
 </template>

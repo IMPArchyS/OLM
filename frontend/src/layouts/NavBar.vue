@@ -21,22 +21,25 @@ const showMenuButton = computed(() => {
 </script>
 
 <template>
-    <header
-        class="bg-base-300 border-b border-base-content/10 pt-1.5! px-7 py-5 mb-7! flex items-center justify-between"
-    >
-        <div class="flex items-center gap-5">
-            <button
+    <v-app-bar flat class="border-b mb-7 px-7">
+        <template v-slot:prepend>
+            <v-btn
                 v-if="showMenuButton"
                 @click="toggleSidebarVisibility"
-                class="ml-1! p-2.5! clickable text-2xl"
+                icon
+                variant="text"
+                size="large"
             >
-                ☰
-            </button>
-        </div>
-        <div class="flex items-center">
+                <span style="font-size: 24px">☰</span>
+            </v-btn>
+        </template>
+
+        <v-spacer />
+
+        <div style="display: flex; align-items: center">
             <ThemeSelector />
             <LanguageSelector />
             <UserSelector />
         </div>
-    </header>
+    </v-app-bar>
 </template>

@@ -7,18 +7,9 @@ const languageStore = useLanguageStore()
 const isOpen = ref(false)
 const { locale } = useI18n()
 
-const toggleDropdown = () => {
-    isOpen.value = !isOpen.value
-}
-
 const selectLanguage = (langCode: string) => {
     languageStore.setLanguage(langCode)
     locale.value = langCode // Update i18n locale
-    isOpen.value = false
-}
-
-// Close dropdown when clicking outside
-const closeDropdown = () => {
     isOpen.value = false
 }
 
@@ -32,67 +23,38 @@ watch(
 </script>
 
 <template>
-    <div class="relative" v-click-outside="closeDropdown">
-        <!-- Language Button -->
-        <button @click="toggleDropdown" class="btn btn-ghost gap-2 normal-case" type="button">
-            <span class="text-xl">{{ languageStore.currentLanguage.flag }}</span>
-            <span class="font-medium">{{ languageStore.currentLanguage.code.toUpperCase() }}</span>
-            <svg
-                class="w-4 h-4 transition-transform duration-200"
-                :class="{ 'rotate-180': isOpen }"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 9l-7 7-7-7"
-                />
-            </svg>
-        </button>
+    <v-menu v-model="isOpen" :close-on-content-click="false">
+        <template v-slot:activator="{ props }">
+            <v-btn v-bind="props" variant="text">
+                <span style="font-size: 20px; margin-right: 8px">
+                    {{ languageStore.currentLanguage.flag }}
+                </span>
+                <span style="font-weight: 500">
+                    {{ languageStore.currentLanguage.code.toUpperCase() }}
+                </span>
+                <v-icon
+                    :style="{
+                        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s',
+                    }"
+                >
+                    mdi-chevron-down
+                </v-icon>
+            </v-btn>
+        </template>
 
-        <!-- Dropdown Menu -->
-        <transition
-            enter-active-class="transition ease-out duration-200"
-            enter-from-class="opacity-0 translate-y-1"
-            enter-to-class="opacity-100 translate-y-0"
-            leave-active-class="transition ease-in duration-150"
-            leave-from-class="opacity-100 translate-y-0"
-            leave-to-class="opacity-0 translate-y-1"
-        >
-            <div
-                v-if="isOpen"
-                class="absolute right-0 mt-2 rounded-lg shadow-lg bg-base-100 border border-base-300 z-50"
+        <v-list>
+            <v-list-item
+                v-for="lang in languageStore.languages"
+                :key="lang.code"
+                @click="selectLanguage(lang.code)"
+                :active="lang.code === languageStore.currentLanguage.code"
             >
-                <ul class="menu p-2">
-                    <li v-for="lang in languageStore.languages" :key="lang.code">
-                        <button
-                            @click="selectLanguage(lang.code)"
-                            class="flex items-center gap-3 w-full p-2!"
-                            :class="{ active: lang.code === languageStore.currentLanguage.code }"
-                        >
-                            <span class="text-xl">{{ lang.flag }}</span>
-                            <div class="flex flex-col items-start">
-                                <span class="font-medium">{{ lang.name }}</span>
-                            </div>
-                        </button>
-                    </li>
-                </ul>
-            </div>
-        </transition>
-    </div>
+                <template v-slot:prepend>
+                    <span style="font-size: 20px; margin-right: 12px">{{ lang.flag }}</span>
+                </template>
+                <v-list-item-title>{{ lang.name }}</v-list-item-title>
+            </v-list-item>
+        </v-list>
+    </v-menu>
 </template>
-
-<style scoped>
-/* Additional smooth transitions */
-.menu li button {
-    transition: all 0.2s ease;
-}
-
-.menu li button.active {
-    background-color: hsl(var(--p) / 0.1);
-    color: hsl(var(--p));
-}
-</style>
