@@ -87,6 +87,9 @@ export default {
         experiment_commands: 'Príkazy experimentu',
         experiment_parameters: 'Parametre experimentu',
         run_experiment: 'Spustiť experiment',
+        sim_time: 'Simulačný čas',
+        sample_rate: 'Frekvencia vzorkovania',
+        no_commands_available: 'Žiadne príkazy nie sú k dispozícii  ',
     },
     reports: {
         title: 'Reporty',
@@ -99,5 +102,10 @@ export default {
         updateProfile: 'Upraviť profil',
         updatePassword: 'Zmeniť heslo',
         logOut: 'Odhlásiť sa',
+    },
+    experiment_command: {
+        fan_voltage: 'Ventilátor napätie',
+        lamp_voltage: 'Lampa napätie',
+        led_voltage: 'LED napätie',
     },
 }

@@ -87,6 +87,9 @@ export default {
         experiment_commands: 'Experiment Commands',
         experiment_parameters: 'Experiment Parameters',
         run_experiment: 'Run Experiment',
+        sim_time: 'Simulation Time',
+        sample_rate: 'Sample Rate',
+        no_commands_available: 'No commands available',
     },
     reports: {
         title: 'Reports',
@@ -99,5 +102,10 @@ export default {
         updateProfile: 'Update profile',
         updatePassword: 'Update password',
         logOut: 'Log out',
+    },
+    experiment_command: {
+        fan_voltage: 'Fan Voltage',
+        lamp_voltage: 'Lamp Voltage',
+        led_voltage: 'LED Voltage',
     },
 }

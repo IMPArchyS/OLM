@@ -68,46 +68,46 @@ const fetchReservations = async () => {
     }
 }
 
-// onMounted(async () => {
-//     loading.value = true
-//     await fetchReservations()
-//     loading.value = false
+onMounted(async () => {
+    loading.value = true
+    await fetchReservations()
+    loading.value = false
 
-//     // Update current time every second for precise real-time updates
-//     refreshInterval = window.setInterval(() => {
-//         currentTime.value = new Date()
-//     }, 1000)
+    // Update current time every second for precise real-time updates
+    refreshInterval = window.setInterval(() => {
+        currentTime.value = new Date()
+    }, 1000)
 
-//     // Refetch reservations every 5 minutes to get latest data
-//     window.setInterval(() => {
-//         fetchReservations()
-//     }, 300000)
-// })
+    // Refetch reservations every 5 minutes to get latest data
+    window.setInterval(() => {
+        fetchReservations()
+    }, 300000)
+})
 
-// onUnmounted(() => {
-//     if (refreshInterval) {
-//         clearInterval(refreshInterval)
-//     }
-// })
+onUnmounted(() => {
+    if (refreshInterval) {
+        clearInterval(refreshInterval)
+    }
+})
 
 // Dummy reservation for testing
-const addDummyReservation = () => {
-    loading.value = false
-    const now = new Date()
-    const dummyReservation: Reservation = {
-        id: 999,
-        start: new Date(now.getTime() - 10).toISOString(), // starts in 1 minute
-        end: new Date(now.getTime() + 3600000).toISOString(), // ends in 1 hour
-        device_id: 1,
-        username: 'Test User',
-    }
-    reservations.value.push(dummyReservation)
-}
+// const addDummyReservation = () => {
+//     loading.value = false
+//     const now = new Date()
+//     const dummyReservation: Reservation = {
+//         id: 999,
+//         start: new Date(now.getTime() - 10).toISOString(), // starts in 1 minute
+//         end: new Date(now.getTime() + 3600000).toISOString(), // ends in 1 hour
+//         device_id: 1,
+//         username: 'Test User',
+//     }
+//     reservations.value.push(dummyReservation)
+// }
 
-onMounted(() => {
-    reservations.value = []
-    addDummyReservation()
-})
+// onMounted(() => {
+// reservations.value = []
+// addDummyReservation()
+// })
 </script>
 
 <template>
@@ -127,7 +127,7 @@ onMounted(() => {
                 <div v-if="activeReservation">
                     <v-alert type="success" variant="tonal">
                         <v-alert-title>{{ t('dashboard.active_reservation') }}</v-alert-title>
-                        <div style="margin-top: 8px">
+                        <div class="flex flex-row gap-3" style="margin-top: 8px">
                             <p>
                                 <strong>{{ t('dashboard.started') }}:</strong>
                                 {{ formatDateTime(activeReservation.start) }}
@@ -135,10 +135,6 @@ onMounted(() => {
                             <p>
                                 <strong>{{ t('dashboard.ends') }}:</strong>
                                 {{ formatDateTime(activeReservation.end) }}
-                            </p>
-                            <p v-if="activeReservation.username">
-                                <strong>{{ t('dashboard.user') }}:</strong>
-                                {{ activeReservation.username }}
                             </p>
                         </div>
                     </v-alert>
@@ -148,7 +144,7 @@ onMounted(() => {
                 <!-- Next Reservation -->
                 <v-alert v-else-if="nextReservation" type="info" variant="tonal">
                     <v-alert-title>{{ t('dashboard.next_reservation') }}</v-alert-title>
-                    <div style="margin-top: 8px">
+                    <div class="flex flex-row gap-3" style="margin-top: 8px">
                         <p>
                             <strong>{{ t('dashboard.starts') }}:</strong>
                             {{ formatDateTime(nextReservation.start) }}
@@ -156,10 +152,6 @@ onMounted(() => {
                         <p>
                             <strong>{{ t('dashboard.ends') }}:</strong>
                             {{ formatDateTime(nextReservation.end) }}
-                        </p>
-                        <p v-if="nextReservation.username">
-                            <strong>{{ t('dashboard.user') }}:</strong>
-                            {{ nextReservation.username }}
                         </p>
                     </div>
                 </v-alert>

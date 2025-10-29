@@ -15,12 +15,27 @@ interface Experiment {
     description?: string
     device_id: number
     has_schema?: boolean
-    commands?: Record<string, string> // Object with key-value pairs like {"start": "begin_monitoring"}
-    experiment_commands?: Record<string, string> // Object with key-value pairs like {"calibrate": "calibrate_sensor"}
+    commands?: Record<string, CommandSpec>
+    experiment_commands?: Record<string, CommandSpec>
 }
 
-interface ExperimentCommandValues {
-    [key: string]: string | number
+interface Schema {
+    name: string
+}
+
+export interface CommandSpec {
+    type: 'number' | 'select' | 'expression' | 'string'
+    value?: number | string | null
+    unit?: string | null
+}
+
+// Converts backend commands object to CommandSpec format
+function convertCommandsToSpecs(
+    commands: Record<string, { cmd: string }>,
+): Record<string, CommandSpec> {
+    return Object.fromEntries(
+        Object.entries(commands).map(([key, val]) => [key, { type: 'string', value: val.cmd }]),
+    )
 }
 
 const props = defineProps<{ reservation: Reservation }>()
@@ -28,33 +43,38 @@ const props = defineProps<{ reservation: Reservation }>()
 const experiments = ref<Experiment[]>([])
 const selectedExperimentId = ref<number | null>(null)
 const selectedCommand = ref<string>('')
-const experimentCommandValues = ref<ExperimentCommandValues>({})
 const loading = ref(false)
 const error = ref<string | null>(null)
+const experimentCommandValues = ref<Record<string, any>>({})
+
+function runExperiment() {
+    if (!selectedExperiment.value) {
+        console.error('No experiment selected')
+        return
+    }
+    const missing = Object.entries(selectedExperiment.value.experiment_commands || {})
+        .filter(
+            ([key, spec]) =>
+                experimentCommandValues.value[key] === undefined ||
+                experimentCommandValues.value[key] === null ||
+                experimentCommandValues.value[key] === '',
+        )
+        .map(([key]) => key)
+    if (missing.length > 0) {
+        alert('Please fill in all experiment command values: ' + missing.join(', '))
+        return
+    }
+    const payload = {
+        experiment_id: selectedExperiment.value.id,
+        command: selectedCommand.value,
+        values: { ...experimentCommandValues.value },
+    }
+    console.log('Payload to send:', JSON.stringify(payload, null, 2))
+}
 
 const selectedExperiment = computed(() => {
     return experiments.value.find((exp) => exp.id === selectedExperimentId.value) || null
 })
-
-const commandEntries = computed(() => {
-    if (!selectedExperiment.value?.commands) return []
-    return Object.entries(selectedExperiment.value.commands)
-})
-
-const experimentCommandEntries = computed(() => {
-    if (!selectedExperiment.value?.experiment_commands) return []
-    return Object.entries(selectedExperiment.value.experiment_commands)
-})
-
-const initializeExperimentCommandValues = (experiment: Experiment) => {
-    if (!experiment.experiment_commands) return
-
-    const values: ExperimentCommandValues = {}
-    Object.entries(experiment.experiment_commands).forEach(([key, value]) => {
-        values[key] = value
-    })
-    experimentCommandValues.value = values
-}
 
 const fetchExperiments = async (deviceId: number) => {
     loading.value = true
@@ -66,24 +86,27 @@ const fetchExperiments = async (deviceId: number) => {
         if (response.ok) {
             const data = await response.json()
             // Set experiment name to "exp-id-" + id
-            experiments.value = data.map((exp: Experiment) => ({
-                ...exp,
+            experiments.value = data.map((exp: any) => ({
+                id: exp.id,
                 name: `exp-id-${exp.id}`,
+                description: exp.description,
+                device_id: exp.device_id,
+                has_schema: exp.has_schema,
+                commands: exp.commands ? convertCommandsToSpecs(exp.commands) : undefined,
+                experiment_commands: exp.experiment_commands
+                    ? Object.fromEntries(
+                          Object.entries(exp.experiment_commands).map(([key, val]) => [key, val]),
+                      )
+                    : undefined,
             }))
+            console.log('Fetched experiments:', JSON.stringify(experiments.value, null, 2))
 
             if (experiments.value.length === 0) {
                 error.value = 'No experiments found for this device'
             } else if (experiments.value[0]) {
                 // Auto-select the first experiment
                 selectedExperimentId.value = experiments.value[0].id
-                initializeExperimentCommandValues(experiments.value[0])
                 // Auto-select first command if available
-                if (experiments.value[0].commands) {
-                    const commandKeys = Object.keys(experiments.value[0].commands)
-                    if (commandKeys.length > 0) {
-                        selectedCommand.value = commandKeys[0] ?? ''
-                    }
-                }
             }
         } else {
             error.value = `Failed to fetch experiments: ${response.statusText}`
@@ -112,9 +135,17 @@ watch(
 // Watch for experiment selection changes and reinitialize command values
 watch(selectedExperiment, (newExperiment) => {
     if (newExperiment) {
-        initializeExperimentCommandValues(newExperiment)
-        // Auto-select first command
-        if (newExperiment.commands) {
+        // Set default values for experiment commands
+        if (newExperiment?.experiment_commands) {
+            experimentCommandValues.value = Object.fromEntries(
+                Object.entries(newExperiment.experiment_commands).map(([key, spec]) => [
+                    key,
+                    spec.value,
+                ]),
+            )
+        }
+        // Set first command as default
+        if (newExperiment?.commands) {
             const commandKeys = Object.keys(newExperiment.commands)
             if (commandKeys.length > 0) {
                 selectedCommand.value = commandKeys[0] ?? ''
@@ -122,11 +153,10 @@ watch(selectedExperiment, (newExperiment) => {
         }
     }
 })
-console.log(experiments)
 </script>
 
 <template>
-    <v-card class="mt-4">
+    <v-card class="mt-4 overflow-auto!" style="height: calc(100vh - 260px)">
         <v-card-title>{{ $t('dashboard.ongoing_experiment') }}</v-card-title>
 
         <v-card-text>
@@ -161,71 +191,62 @@ console.log(experiments)
                     :placeholder="$t('dashboard.no_schemas_available')"
                     variant="outlined"
                     density="comfortable"
-                    disabled
                 />
-
-                <!-- Experiment Parameters Section (from experiment_commands) -->
-                <v-card v-if="experimentCommandEntries.length > 0" variant="tonal">
-                    <v-card-text>
-                        <h4 class="text-lg font-weight-medium mb-4">
-                            {{ $t('dashboard.experiment_parameters') }}
-                        </h4>
-
-                        <v-row>
-                            <v-col
-                                v-for="[key, value] in experimentCommandEntries"
-                                :key="key"
-                                cols="12"
-                                md="6"
-                            >
-                                <v-text-field
-                                    v-model="experimentCommandValues[key]"
-                                    :label="key"
-                                    :placeholder="key"
-                                    variant="outlined"
-                                    density="comfortable"
-                                />
-                            </v-col>
-                        </v-row>
-
-                        <div style="display: flex; justify-content: flex-end; margin-top: 16px">
-                            <v-btn color="primary" variant="elevated">
-                                {{ $t('dashboard.run_experiment') }}
-                            </v-btn>
-                        </div>
-                    </v-card-text>
-                </v-card>
-
-                <!-- Command Selector -->
                 <v-select
-                    v-if="commandEntries.length > 0"
+                    v-if="selectedExperiment?.commands"
                     v-model="selectedCommand"
-                    :items="
-                        commandEntries.map(([key, value]) => ({
-                            title: `${key} - ${value}`,
-                            value: key,
-                        }))
-                    "
+                    :items="Object.keys(selectedExperiment.commands)"
                     :label="$t('dashboard.select_command')"
+                    :placeholder="$t('dashboard.no_commands_available')"
                     variant="outlined"
                     density="comfortable"
                 />
-
-                <!-- Selected Experiment Details -->
-                <v-card v-if="selectedExperiment" variant="tonal">
-                    <v-card-text>
-                        <h4 class="text-lg font-weight-medium">{{ selectedExperiment.name }}</h4>
-                        <p v-if="selectedExperiment.description" class="text-sm mt-2">
-                            {{ selectedExperiment.description }}
-                        </p>
-                        <v-divider class="my-2" />
-                        <pre
-                            class="text-xs pa-3 rounded"
-                            style="background-color: rgba(0, 0, 0, 0.05); overflow: auto"
-                            >{{ selectedExperiment }}</pre
-                        >
-                    </v-card-text>
-                </v-card>
+                <div v-if="selectedExperiment?.experiment_commands">
+                    <div
+                        v-for="(spec, key) in selectedExperiment.experiment_commands"
+                        :key="key"
+                        style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px"
+                    >
+                        <v-text-field
+                            v-if="spec.type === 'string'"
+                            :label="
+                                spec.unit
+                                    ? `${$t('experiment_command.' + key)} (${spec.unit})`
+                                    : $t('experiment_command.' + key)
+                            "
+                            v-model="experimentCommandValues[key]"
+                            variant="outlined"
+                            density="comfortable"
+                        />
+                        <v-number-input
+                            v-else-if="spec.type === 'number'"
+                            :label="
+                                spec.unit
+                                    ? `${$t('experiment_command.' + key)} (${spec.unit})`
+                                    : $t('experiment_command.' + key)
+                            "
+                            v-model="experimentCommandValues[key]"
+                            :min="0"
+                            variant="outlined"
+                            density="comfortable"
+                        />
+                    </div>
+                </div>
+                <v-number-input
+                    :label="$t('dashboard.sim_time')"
+                    :min="0"
+                    variant="outlined"
+                    density="comfortable"
+                />
+                <v-number-input
+                    :label="$t('dashboard.sample_rate')"
+                    :min="0"
+                    variant="outlined"
+                    density="comfortable"
+                />
+                <v-btn color="primary" variant="elevated" @click="runExperiment">
+                    {{ $t('dashboard.run_experiment') }}
+                </v-btn>
             </div>
 
             <v-alert v-else type="warning" variant="tonal">
