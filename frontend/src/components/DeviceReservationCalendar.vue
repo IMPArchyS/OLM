@@ -76,7 +76,8 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
-import { useDeviceReservationCalendar, type Device } from '../composables/DeviceReservationCalendar'
+import { useDeviceReservationCalendar } from '../composables/DeviceReservationCalendar'
+import type { Device } from '@/types/api'
 
 const props = defineProps<{
     selectedDeviceId?: number | null
@@ -102,7 +103,7 @@ onMounted(() => {
 </script>
 
 <style>
-/* thead {
+thead {
     background: rgb(var(--v-theme-surface-variant)) !important;
-} */
+}
 </style>

@@ -1,33 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-
-interface Reservation {
-    id: number
-    start: string
-    end: string
-    device_id: number
-    username?: string
-}
-
-interface Experiment {
-    id: number
-    name: string
-    description?: string
-    device_id: number
-    has_schema?: boolean
-    commands?: Record<string, CommandSpec>
-    experiment_commands?: Record<string, CommandSpec>
-}
-
-interface Schema {
-    name: string
-}
-
-export interface CommandSpec {
-    type: 'number' | 'select' | 'expression' | 'string'
-    value?: number | string | null
-    unit?: string | null
-}
+import type { CommandSpec, Experiment, Reservation } from '@/types/api'
 
 // Converts backend commands object to CommandSpec format
 function convertCommandsToSpecs(

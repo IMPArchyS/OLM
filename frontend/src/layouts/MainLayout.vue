@@ -1,33 +1,17 @@
 <script setup lang="ts">
-import LanguageSelector from '@/components/LanguageSelector.vue'
-import ThemeSelector from '@/components/ThemeSelector.vue'
-import UserSelector from '@/components/UserSelector.vue'
 import { useMainLayout } from '@/composables/useMainLayout'
 import Sidebar from './Sidebar.vue'
 import NavBar from './NavBar.vue'
 import { provide } from 'vue'
 
-const {
-    sidebarCollapsed,
-    sidebarVisible,
-    windowWidth,
-    navItems,
-    settingsItems,
-    isActiveRoute,
-    navigate,
-    toggleSidebar,
-    toggleSidebarVisibility,
-} = useMainLayout()
+const { sidebarCollapsed, sidebarVisible, windowWidth, toggleSidebar, toggleSidebarVisibility } =
+    useMainLayout()
 
 // Provide the layout state and functions to child components
 provide('mainLayout', {
     sidebarCollapsed,
     sidebarVisible,
     windowWidth,
-    navItems,
-    settingsItems,
-    isActiveRoute,
-    navigate,
     toggleSidebar,
     toggleSidebarVisibility,
 })

@@ -6,25 +6,8 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list'
 import skLocale from '@fullcalendar/core/locales/sk'
 import { useI18n } from 'vue-i18n'
-
-export interface Device {
-    id: number
-    name: string
-}
-
-export interface Reservation {
-    id: number
-    start: string
-    end: string
-    deviceId: number
-    username?: string
-}
-
-export interface ReservationForm {
-    deviceId: number
-    startDate: string
-    endDate: string
-}
+import type { Device, Reservation } from '@/types/api'
+import type { ReservationForm } from '@/types/forms'
 
 interface Props {
     selectedDeviceId?: number | null
@@ -86,7 +69,7 @@ export function useDeviceReservationCalendar(props: Props) {
             start: r.start,
             end: r.end,
             extendedProps: {
-                deviceId: r.deviceId,
+                deviceId: r.device_id,
             },
         }))
     })
@@ -124,7 +107,7 @@ export function useDeviceReservationCalendar(props: Props) {
 
         editingReservation.value = reservation
         reservationForm.value = {
-            deviceId: reservation.deviceId,
+            deviceId: reservation.device_id,
             startDate: formatDateTimeLocal(new Date(reservation.start)),
             endDate: formatDateTimeLocal(new Date(reservation.end)),
         }
