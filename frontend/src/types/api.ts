@@ -1,6 +1,7 @@
 export interface Device {
     id: number
     name: string
+    software?: Software[]
 }
 
 export interface Software {
@@ -46,4 +47,15 @@ export interface Schema {
 export interface ApiError {
     message: string
     code?: string
+}
+
+export interface Server {
+    id: number
+    name: string
+    ip_address: string
+    api_domain: string
+    ws_port: number
+    available: boolean
+    production: boolean
+    enabled: boolean
 }

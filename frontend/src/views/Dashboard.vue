@@ -89,32 +89,14 @@ onUnmounted(() => {
         clearInterval(refreshInterval)
     }
 })
-
-// Dummy reservation for testing
-// const addDummyReservation = () => {
-//     loading.value = false
-//     const now = new Date()
-//     const dummyReservation: Reservation = {
-//         id: 999,
-//         start: new Date(now.getTime() - 10).toISOString(), // starts in 1 minute
-//         end: new Date(now.getTime() + 3600000).toISOString(), // ends in 1 hour
-//         device_id: 1,
-//         username: 'Test User',
-//     }
-//     reservations.value.push(dummyReservation)
-// }
-
-// onMounted(() => {
-// reservations.value = []
-// addDummyReservation()
-// })
 </script>
 
 <template>
-    <v-card class="mt-5" color="surface-variant">
-        <v-card-title>
-            {{ t('dashboard.title') }}
+    <v-card class="mt-5">
+        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
+            <span class="text-h5">{{ t('dashboard.title') }}</span>
         </v-card-title>
+        <v-divider></v-divider>
         <v-card-text>
             <div
                 v-if="loading"

@@ -1,8 +1,9 @@
+from typing import List
 from fastapi import APIRouter, HTTPException, Response, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
-from app.models.device import Device
+from app.models.device import Device, DevicePublic
 from app.models.device_type import DeviceType
 from app.models.device_software import DeviceSoftware
 from app.models.software import Software
@@ -29,7 +30,7 @@ def get_by_id(db: DbSession, id: int):
     return db_experiment
 
 
-@router.get("/device/{device_id}")
+@router.get("/device/{device_id}", response_model=List[ExperimentPublic])
 def get_by_device_id(db: DbSession, device_id: int):
     stmt = select(Experiment).where(Experiment.device_id == device_id)
     db_experiments = db.exec(stmt).all()

@@ -1,13 +1,23 @@
 <script setup lang="ts">
-import { useI18n } from 'vue-i18n'
-const { t } = useI18n()
+import { ref } from 'vue'
+import ServerBrowser from '@/components/ServerBrowser.vue'
+import DeviceBrowser from '@/components/DeviceBrowser.vue'
+import type { Server } from '@/types/api'
+
+const selectedServer = ref<Server | null>(null)
+
+const handleSelectServer = (server: Server) => {
+    selectedServer.value = server
+}
+
+const handleServersLoaded = (servers: Server[]) => {
+    if (!selectedServer.value && servers.length > 0 && servers[0]) {
+        selectedServer.value = servers[0]
+    }
+}
 </script>
 
 <template>
-    <v-card class="mt-5" color="surface-variant">
-        <v-card-title>
-            {{ t('servers.title') }}
-        </v-card-title>
-        <v-card-text> </v-card-text>
-    </v-card>
+    <ServerBrowser @select-server="handleSelectServer" @servers-loaded="handleServersLoaded" />
+    <DeviceBrowser :selected-server="selectedServer" />
 </template>

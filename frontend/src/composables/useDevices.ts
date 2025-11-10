@@ -55,7 +55,6 @@ export function useDevices() {
                 const devicesData: Device[] = await response.json()
                 devices.value = devicesData
 
-                // Fetch software for all devices
                 await Promise.all(devicesData.map((device) => fetchDeviceSoftware(device.id)))
             } else {
                 error.value = `Failed to fetch devices: ${response.statusText}`
@@ -70,12 +69,40 @@ export function useDevices() {
         }
     }
 
+    async function fetchDevicesByServer(serverId: number): Promise<void> {
+        loading.value = true
+        error.value = null
+
+        try {
+            const response = await fetch(`http://localhost:8000/api/server/${serverId}/devices`)
+
+            if (response.ok) {
+                const devicesData: Device[] = await response.json()
+                devices.value = devicesData
+
+                // Fetch software for all devices
+                await Promise.all(devicesData.map((device) => fetchDeviceSoftware(device.id)))
+            } else {
+                error.value = `Failed to fetch devices: ${response.statusText}`
+                devices.value = []
+            }
+        } catch (e) {
+            console.error('Error fetching devices for server:', e)
+            error.value = 'Error fetching devices'
+            devices.value = []
+        } finally {
+            loading.value = false
+        }
+    }
+
     return {
         devices,
         devicesForSelect,
         loading,
         error,
         fetchDevices,
+        fetchDevicesByServer,
         getDeviceById,
+        deviceSoftwareMap,
     }
 }
