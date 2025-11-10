@@ -3,6 +3,11 @@ export interface Device {
     name: string
 }
 
+export interface Software {
+    id: number
+    name: string
+}
+
 export interface Reservation {
     id: number
     start: string
@@ -16,6 +21,7 @@ export interface Experiment {
     name: string
     description?: string
     device_id: number
+    software_id: number
     has_schema?: boolean
     commands?: Record<string, CommandSpec>
     experiment_commands?: Record<string, CommandSpec>

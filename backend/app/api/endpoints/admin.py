@@ -5,6 +5,7 @@ from app.api.dependencies import DbSession
 from app.models.device import Device
 from app.models.device_type import DeviceType, DeviceTypeCreate
 from app.models.device_software import DeviceSoftware
+from app.models.reservation import Reservation
 from app.models.software import Software
 from app.models.experiment import Experiment
 from app.models.reserved_experiment import ReservedExperiment
@@ -17,9 +18,9 @@ router = APIRouter()
 
 @router.post("/seed")
 def seed(db: DbSession):
-    # 1. Create Software first (needed by Schema)
+    # 1. Create Software first (needed by Schema)    
     software = Software(
-        name="Device Control Software"
+        name="Matlab"
     )
     db.add(software)
     db.commit()
@@ -57,7 +58,7 @@ def seed(db: DbSession):
         raise ValueError("Schema ID cannot be None")
     
     device_type = DeviceType(
-        name="Temperature Sensor",
+        name="Sensor",
         schema_id=schema.id
     )
     db.add(device_type)
@@ -72,7 +73,7 @@ def seed(db: DbSession):
         raise ValueError("Server ID cannot be None")
     
     device = Device(
-        name="Sensor-001",
+        name="tom1a",
         device_type_id=device_type.id,
         server_id=server.id
     )
@@ -81,6 +82,12 @@ def seed(db: DbSession):
     db.refresh(device)
     
     # 6. Create DeviceSoftware (many-to-many relationship)
+    if device.id is None:
+        raise ValueError("Device ID cannot be None")
+    
+    if software.id is None:
+        raise ValueError("Software ID cannot be None")
+    
     device_software = DeviceSoftware(
         device_id=device.id,
         software_id=software.id
@@ -91,8 +98,14 @@ def seed(db: DbSession):
     
     # 7. Create Experiment (depends on Server, DeviceType, Device, Software)
     experiment = Experiment(
-        commands={"start": "begin_monitoring"},
-        experiment_commands={"calibrate": "calibrate_sensor"},
+        commands={"init": "expression","start": "expression","change": "expression","stop": "expression"},
+        experiment_commands={
+            "fan_voltage": {
+                "value": 0,
+                "type": "number",
+                "unit": "V"
+            }
+        },
         output_arguments={"format": "json"},
         has_schema=True,
         server_id=server.id,
@@ -139,7 +152,7 @@ def seed(db: DbSession):
 
 @router.delete("/clear")
 def clear(db: DbSession):
-    # Delete all entries in reverse order of dependencies
+    db.exec(delete(Reservation))
     db.exec(delete(ReservedExperiment))
     db.exec(delete(Experiment))
     db.exec(delete(DeviceSoftware))

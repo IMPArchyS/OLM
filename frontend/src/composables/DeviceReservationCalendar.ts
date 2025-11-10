@@ -246,6 +246,7 @@ export function useDeviceReservationCalendar(props: Props) {
         plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
         locale: locale.value === 'sk' ? skLocale : 'en',
         initialView: 'timeGridWeek',
+        timeZone: 'local',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',

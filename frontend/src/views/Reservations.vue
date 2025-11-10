@@ -1,27 +1,21 @@
 <script setup lang="ts">
 import DeviceReservationCalendar from '@/components/DeviceReservationCalendar.vue'
+import { useDevices } from '@/composables/useDevices'
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 
-interface Device {
-    id: number
-    name: string
-}
-
-const devices = ref<Device[]>([])
 const selectedDevice = ref<number | null>(null)
 
+const { devicesForSelect, loading, error, fetchDevices, getDeviceById } = useDevices()
+
 const selectedDeviceData = computed(() => {
-    return devices.value.find((device) => device.id === selectedDevice.value) || null
+    return selectedDevice.value ? getDeviceById(selectedDevice.value) : null
 })
 
 onMounted(async () => {
-    const response = await fetch('http://localhost:8000/api/device/')
-    if (response.ok) {
-        devices.value = await response.json()
-    }
+    await fetchDevices()
 })
 </script>
 
@@ -31,11 +25,22 @@ onMounted(async () => {
             {{ t('reservations.title') }}
         </v-card-title>
         <v-card-text>
+            <!-- Loading state -->
+            <div v-if="loading" style="display: flex; justify-content: center; padding: 16px">
+                <v-progress-circular indeterminate color="primary" size="48" />
+            </div>
+
+            <!-- Error state -->
+            <v-alert v-else-if="error" type="error" variant="tonal" class="mb-4">
+                {{ error }}
+            </v-alert>
+
             <!-- Device Dropdown -->
             <v-select
+                v-else
                 v-model="selectedDevice"
-                :items="devices"
-                item-title="name"
+                :items="devicesForSelect"
+                item-title="displayName"
                 item-value="id"
                 :label="t('reservations.selectDevice')"
                 :placeholder="t('reservations.chooseDevice')"

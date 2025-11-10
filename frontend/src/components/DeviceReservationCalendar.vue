@@ -1,3 +1,32 @@
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import FullCalendar from '@fullcalendar/vue3'
+import { useDeviceReservationCalendar } from '../composables/DeviceReservationCalendar'
+import type { Device } from '@/types/api'
+
+const props = defineProps<{
+    selectedDeviceId?: number | null
+    selectedDeviceData?: Device | null
+}>()
+
+const {
+    isModalOpen,
+    editingReservation,
+    fullCalendar,
+    reservationForm,
+    calendarOptions,
+    loading,
+    saveReservation,
+    deleteReservation,
+    updateCalendarEvents,
+    closeModal,
+} = useDeviceReservationCalendar(props)
+
+onMounted(() => {
+    updateCalendarEvents()
+})
+</script>
+
 <template>
     <div style="display: flex; flex-direction: column; height: 100%; overflow: hidden">
         <!-- Loading indicator -->
@@ -72,35 +101,6 @@
         </v-dialog>
     </div>
 </template>
-
-<script setup lang="ts">
-import { onMounted } from 'vue'
-import FullCalendar from '@fullcalendar/vue3'
-import { useDeviceReservationCalendar } from '../composables/DeviceReservationCalendar'
-import type { Device } from '@/types/api'
-
-const props = defineProps<{
-    selectedDeviceId?: number | null
-    selectedDeviceData?: Device | null
-}>()
-
-const {
-    isModalOpen,
-    editingReservation,
-    fullCalendar,
-    reservationForm,
-    calendarOptions,
-    loading,
-    saveReservation,
-    deleteReservation,
-    updateCalendarEvents,
-    closeModal,
-} = useDeviceReservationCalendar(props)
-
-onMounted(() => {
-    updateCalendarEvents()
-})
-</script>
 
 <style>
 thead {

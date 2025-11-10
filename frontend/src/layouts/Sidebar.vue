@@ -209,7 +209,6 @@ const showLabels = computed(() => !isCollapsed.value)
 </template>
 
 <style scoped>
-/* Collapsed nav items - centered icons */
 .nav-item-collapsed {
     height: 48px;
     display: flex;
@@ -233,7 +232,6 @@ const showLabels = computed(() => !isCollapsed.value)
     color: white;
 }
 
-/* Expanded nav items */
 .nav-item-expanded {
     height: 48px;
     display: flex;
@@ -258,7 +256,6 @@ const showLabels = computed(() => !isCollapsed.value)
     color: white;
 }
 
-/* Toggle button */
 .toggle-button {
     height: 48px;
     display: flex;

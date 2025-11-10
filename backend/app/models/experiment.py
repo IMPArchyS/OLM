@@ -41,7 +41,7 @@ class Experiment(ExperimentBase, table=True):
 
 
 class ExperimentCreate(ExperimentBase):
-    pass
+    server_id: int
 
 
 class ExperimentPublic(ExperimentBase):

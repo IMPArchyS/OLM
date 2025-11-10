@@ -1,4 +1,3 @@
-// directives/clickOutside.ts
 import type { Directive } from 'vue'
 
 export const vClickOutside: Directive = {

@@ -29,6 +29,13 @@ def get_by_id(db: DbSession, id: int):
     return db_experiment
 
 
+@router.get("/device/{device_id}")
+def get_by_device_id(db: DbSession, device_id: int):
+    stmt = select(Experiment).where(Experiment.device_id == device_id)
+    db_experiments = db.exec(stmt).all()
+    return db_experiments
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, experiment: ExperimentCreate):
     db_experiment = Experiment.model_validate(experiment)

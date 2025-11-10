@@ -9,11 +9,10 @@ const { locale } = useI18n()
 
 const selectLanguage = (langCode: string) => {
     languageStore.setLanguage(langCode)
-    locale.value = langCode // Update i18n locale
+    locale.value = langCode
     isOpen.value = false
 }
 
-// Watch for language changes from store and update i18n
 watch(
     () => languageStore.currentLanguage.code,
     (newCode) => {

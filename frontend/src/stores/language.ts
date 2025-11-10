@@ -1,4 +1,3 @@
-// stores/language.ts
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -9,36 +8,26 @@ export interface Language {
     flag: string
 }
 
+const DEFAULT_LANGUAGE: Language = { code: 'en', name: 'English', flag: '🇬🇧' }
+
+const AVAILABLE_LANGUAGES: Language[] = [
+    DEFAULT_LANGUAGE,
+    { code: 'sk', name: 'Slovenčina', flag: '🇸🇰' },
+]
+
 export const useLanguageStore = defineStore('language', () => {
-    // Available languages - easy to add more!
-    const languages = ref<Language[]>([
-        { code: 'en', name: 'English', flag: '🇬🇧' },
-        { code: 'sk', name: 'Slovenčina', flag: '🇸🇰' },
-    ])
+    const { locale } = useI18n()
 
-    const currentLanguage = ref<Language>(
-        languages.value[0] ?? { code: 'en', name: 'English', flag: '🇬🇧' },
-    )
+    const languages = ref<Language[]>(AVAILABLE_LANGUAGES)
+    const currentLanguage = ref<Language>(DEFAULT_LANGUAGE)
 
-    // Initialize language from localStorage or default to English
-    const initLanguage = () => {
-        const savedLangCode = localStorage.getItem('language')
-        if (savedLangCode) {
-            const found = languages.value.find((lang) => lang.code === savedLangCode)
-            if (found) {
-                currentLanguage.value = found
-            }
-        }
-        applyLanguage(currentLanguage.value.code)
-    }
+    let isInitialized = false
 
-    // Apply language (integrate with i18n here)
     const applyLanguage = (langCode: string) => {
+        locale.value = langCode
         document.documentElement.setAttribute('lang', langCode)
-        // Note: i18n locale change is handled in the component using useI18n
     }
 
-    // Set language
     const setLanguage = (langCode: string) => {
         const found = languages.value.find((lang) => lang.code === langCode)
         if (found) {
@@ -46,8 +35,24 @@ export const useLanguageStore = defineStore('language', () => {
         }
     }
 
-    // Watch for language changes and persist
+    const initLanguage = () => {
+        if (isInitialized) return
+
+        const savedLangCode = localStorage.getItem('language')
+        if (savedLangCode) {
+            const found = languages.value.find((lang) => lang.code === savedLangCode)
+            if (found) {
+                currentLanguage.value = found
+            }
+        }
+
+        applyLanguage(currentLanguage.value.code)
+        isInitialized = true
+    }
+
     watch(currentLanguage, (newLang) => {
+        if (!isInitialized) return
+
         localStorage.setItem('language', newLang.code)
         applyLanguage(newLang.code)
     })
