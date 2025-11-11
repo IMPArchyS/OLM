@@ -3,17 +3,10 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import ExperimentSandbox from '@/components/ExperimentSandbox.vue'
+import type { Reservation } from '@/types/api'
 
 const { t } = useI18n()
 const router = useRouter()
-
-interface Reservation {
-    id: number
-    start: string
-    end: string
-    device_id: number
-    username?: string
-}
 
 const reservations = ref<Reservation[]>([])
 const loading = ref(true)
@@ -58,7 +51,8 @@ const fetchReservations = async () => {
     try {
         const response = await fetch('http://localhost:8000/api/reservation/')
         if (response.ok) {
-            reservations.value = await response.json()
+            const data = await response.json()
+            reservations.value = data.filter((reservation: Reservation) => !reservation.queued)
         } else {
             reservations.value = []
         }

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, status
-from sqlmodel import select
+from sqlmodel import select, asc
 from app.api.dependencies import DbSession
 
 from app.models.device import Device
-from app.models.reservation import Reservation, ReservationCreate, ReservationPublic, ReservationUpdate
+from app.models.reservation import Reservation, ReservationCreate, ReservationPublic, ReservationQueue, ReservationUpdate
 from app.models.device_type import DeviceType, DeviceTypeCreate
 from app.models.device_software import DeviceSoftware
 from app.models.software import Software
@@ -11,6 +11,9 @@ from app.models.experiment import Experiment
 from app.models.reserved_experiment import ReservedExperiment
 from app.models.schema import Schema, SchemaCreate, SchemaPublic, SchemaUpdate
 from app.models.server import Server
+from datetime import datetime, timedelta, timezone
+
+from app.models.utils import now
 
 
 router = APIRouter()
@@ -50,6 +53,54 @@ def create(db: DbSession, reservation: ReservationCreate):
             detail=f"Device {reservation.device_id} is already reserved during this time period!"
         )
     
+    db.add(db_reservation)
+    db.commit()
+    db.refresh(db_reservation)
+    return db_reservation
+
+
+@router.post("/queue", status_code=status.HTTP_201_CREATED)
+def create_queued(db: DbSession, reservation: ReservationQueue):
+    
+    if reservation.simulation_time <= 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Simulation time must be positive!")
+    
+    if not db.get(Device, reservation.device_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {reservation.device_id} not found!")
+    
+    existing_reservations_stmt = select(Reservation).where(
+        Reservation.device_id == reservation.device_id
+    ).order_by(asc(Reservation.start))
+    existing_reservations = db.exec(existing_reservations_stmt).all()
+    
+    duration = timedelta(seconds=reservation.simulation_time + 120)
+
+    def to_utc(dt: datetime) -> datetime:
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            local_tz = datetime.now().astimezone().tzinfo
+            return dt.replace(tzinfo=local_tz).astimezone(timezone.utc)
+        return dt.astimezone(timezone.utc)
+
+    proposed_start = now()
+
+    for existing_res in existing_reservations:
+        existing_start = to_utc(existing_res.start)
+        existing_end = to_utc(existing_res.end)
+
+        if existing_end <= proposed_start:
+            continue
+
+        if proposed_start + duration <= existing_start:
+            break
+
+        proposed_start = existing_end
+
+    proposed_start = max(proposed_start, now())
+
+    db_reservation = Reservation(start=proposed_start, end=proposed_start + duration, device_id=reservation.device_id)
+    db_reservation.queued = True
     db.add(db_reservation)
     db.commit()
     db.refresh(db_reservation)

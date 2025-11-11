@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import ExperimentSelector from '@/components/ExperimentSelector.vue'
 import { useI18n } from 'vue-i18n'
 import type { CommandSpec } from '@/types/api'
+import { useDevices } from '@/composables/useDevices'
 
 const { t } = useI18n()
 
@@ -21,11 +22,38 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 const addToQueue = async () => {
     console.log('Add to queue - Form Data:', JSON.stringify(formData.value, null, 2))
 
-    // TODO: Send to backend
-    // await fetch('/api/queue', {
-    //     method: 'POST',
-    //     body: JSON.stringify(formData.value)
-    // })
+    if (!formData.value.experiment_id) {
+        console.error('No experiment selected')
+        return
+    }
+
+    const { getDeviceByExperimentId } = useDevices()
+    const device = await getDeviceByExperimentId(formData.value.experiment_id)
+
+    if (!device) {
+        console.error('Device not found for experiment:', formData.value.experiment_id)
+        return
+    }
+
+    const device_id = device.id
+    console.log(JSON.stringify({ device_id, simulation_time: formData.value.simulation_time }))
+    try {
+        const response = await fetch('http://localhost:8000/api/reservation/queue', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ device_id, simulation_time: formData.value.simulation_time }),
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json()
+            alert(`Failed to create reservation: ${errorData.message || response.statusText}`)
+            return
+        }
+    } catch (error) {
+        console.error('Error saving reservation:', error)
+    }
 }
 </script>
 

@@ -27,6 +27,23 @@ export function useDevices() {
         return devices.value.find((d) => d.id === deviceId)
     }
 
+    async function getDeviceByExperimentId(experimentId: number): Promise<Device | undefined> {
+        try {
+            const response = await fetch(
+                `http://localhost:8000/api/experiment/${experimentId}/device`,
+            )
+
+            if (response.ok) {
+                const device: Device = await response.json()
+                return device
+            } else {
+                console.error(`Failed to fetch device for experiment ${experimentId}`)
+            }
+        } catch (e) {
+            console.error(`Error fetching device for experiment ${experimentId}:`, e)
+        }
+    }
+
     async function fetchDeviceSoftware(deviceId: number): Promise<void> {
         try {
             const response = await fetch(`http://localhost:8000/api/device/${deviceId}/software`)
@@ -102,6 +119,7 @@ export function useDevices() {
         fetchDevices,
         fetchDevicesByServer,
         getDeviceById,
+        getDeviceByExperimentId,
         deviceSoftwareMap,
     }
 }

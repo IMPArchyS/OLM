@@ -37,6 +37,15 @@ def get_by_device_id(db: DbSession, device_id: int):
     return db_experiments
 
 
+@router.get("/{id}/device", response_model=DevicePublic)
+def get_experiment_device(db: DbSession, id: int):
+    db_experiment = db.get(Experiment, id)
+    if not db_experiment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {id} not found!")
+    if not db_experiment.device_id:
+        return None
+    return db_experiment.device
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, experiment: ExperimentCreate):
     db_experiment = Experiment.model_validate(experiment)

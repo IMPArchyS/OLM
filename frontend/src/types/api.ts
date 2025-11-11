@@ -20,6 +20,7 @@ export interface Reservation {
     start: string
     end: string
     device_id: number
+    queued: boolean
     username?: string
 }
 

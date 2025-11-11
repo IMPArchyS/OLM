@@ -26,6 +26,11 @@ class ReservationCreate(ReservationBase):
     device_id: int
 
 
+class ReservationQueue(SQLModel):
+    device_id: int
+    simulation_time: int
+
+
 class ReservationPublic(ReservationBase):
     id: int 
     created_at: datetime
