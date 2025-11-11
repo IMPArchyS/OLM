@@ -11,6 +11,7 @@ from app.models.experiment import Experiment
 from app.models.reserved_experiment import ReservedExperiment
 from app.models.schema import Schema
 from app.models.server import Server, ServerCreate, ServerPublic, ServerPubDetailed, ServerUpdate
+from app.models.utils import now
 
 
 ServerPubDetailed.model_rebuild()
@@ -70,4 +71,18 @@ def delete(db: DbSession, id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
     db.delete(db_server)
     db.commit()
-    return db_server
+    return None
+
+
+@router.delete("/{id}/delete", status_code=status.HTTP_204_NO_CONTENT)
+def soft_delete(db: DbSession, id: int):
+    db_server = db.get(Server, id)
+    if not db_server:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
+    if db_server.deleted_at is not None:
+        raise HTTPException(status_code=status.HTTP_410_GONE,detail="Server already deleted")
+    db_server.deleted_at = now()
+    db.add(db_server)
+    db.commit()
+    db.refresh(db_server)
+    return None

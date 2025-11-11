@@ -25,7 +25,6 @@ watch(
     async (newServer) => {
         if (newServer) {
             await fetchDevicesByServer(newServer.id)
-            console.log(devices.value)
         }
     },
 )

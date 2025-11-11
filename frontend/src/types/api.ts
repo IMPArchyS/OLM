@@ -60,8 +60,9 @@ export interface Server {
     name: string
     ip_address: string
     api_domain: string
-    ws_port: number
-    available: boolean
-    production: boolean
-    enabled: boolean
+    websocket_port: number
+    available?: boolean
+    production?: boolean
+    enabled?: boolean
+    deleted_at?: string
 }

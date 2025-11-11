@@ -1,28 +1,55 @@
 <script setup lang="ts">
 import { useServers } from '@/composables/useServers'
-import { onMounted } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Server } from '@/types/api'
+import ServerDetailsModal from './ServerDetailsModal.vue'
+import ServerEditModal from './ServerEditModal.vue'
+import ServerCreateModal from './ServerCreateModal.vue'
 
 const { t } = useI18n()
-const { servers, loading, error, fetchServers } = useServers()
+const {
+    servers,
+    loading,
+    error,
+    fetchServers,
+    updateServer,
+    getServer,
+    createServer,
+    softDeleteServer,
+} = useServers()
 
 const emit = defineEmits<{
     selectServer: [server: Server]
     serversLoaded: [servers: Server[]]
 }>()
 
+const showDetailsModal = ref(false)
+const showEditModal = ref(false)
+const showCreateModal = ref(false)
+const selectedServer = ref<Server | null>(null)
+const showDeleted = ref(false)
+
+// Computed property to filter servers based on deleted_at
+const filteredServers = computed(() => {
+    if (showDeleted.value) {
+        // Show only deleted servers
+        return servers.value.filter((server) => server.deleted_at)
+    } else {
+        // Show only non-deleted servers
+        return servers.value.filter((server) => !server.deleted_at)
+    }
+})
+
 onMounted(async () => {
     await fetchServers()
-    console.log(servers.value)
     if (servers.value.length > 0) {
         emit('serversLoaded', servers.value)
     }
 })
 
-const handleCreate = () => {
-    console.log('Create new server')
-    // TODO: Implement create logic
+const handleCreate = async () => {
+    showCreateModal.value = true
 }
 
 const handleDevices = (item: Server) => {
@@ -31,29 +58,45 @@ const handleDevices = (item: Server) => {
 }
 
 const handleEdit = (item: Server) => {
-    console.log('Edit server:', item)
-    // TODO: Implement edit logic
+    selectedServer.value = item
+    showEditModal.value = true
 }
 
-const handleDelete = (item: Server) => {
+const handleDelete = async (item: Server) => {
     console.log('Delete server:', item)
-    // TODO: Implement delete logic
+    await softDeleteServer(item)
 }
 
 const handleView = (item: Server) => {
-    console.log('View server:', item)
-    // TODO: Implement view logic
+    selectedServer.value = item
+    showDetailsModal.value = true
 }
 
-const handleSync = (item: Server) => {
+const handleSync = async (item: Server) => {
     console.log('Sync server:', item)
-    // TODO: Implement sync logic
+    await getServer(item)
+}
+
+const handleEditFromDetails = (server: Server) => {
+    selectedServer.value = server
+    showEditModal.value = true
+}
+
+const handleSaveServer = async (server: Server) => {
+    console.log('Save server:', server)
+    await updateServer(server)
+    await fetchServers()
+}
+
+const handleCreateServer = async (server: Omit<Server, 'id'>) => {
+    console.log('Create server:', server)
+    await createServer(server)
+    await fetchServers()
 }
 
 const handleSyncAll = async () => {
     console.log('Sync all servers')
     await fetchServers()
-    // TODO: Implement sync all logic
 }
 </script>
 
@@ -75,6 +118,16 @@ const handleSyncAll = async () => {
             <v-divider></v-divider>
 
             <v-card-text>
+                <!-- Toggle for deleted servers -->
+                <div class="d-flex justify-start mb-4">
+                    <v-switch
+                        v-model="showDeleted"
+                        :label="t('servers.showDeleted')"
+                        color="info"
+                        hide-details
+                    ></v-switch>
+                </div>
+
                 <v-data-table
                     :headers="[
                         { title: t('servers.id'), key: 'id', sortable: true },
@@ -99,7 +152,7 @@ const handleSyncAll = async () => {
                             align: 'center' as const,
                         },
                     ]"
-                    :items="servers"
+                    :items="filteredServers"
                     :loading="loading"
                     :loading-text="t('servers.loadingServers')"
                     class="elevation-1"
@@ -181,5 +234,18 @@ const handleSyncAll = async () => {
                 </v-alert>
             </v-card-text>
         </v-card>
+
+        <!-- Modals -->
+        <ServerDetailsModal
+            v-model="showDetailsModal"
+            :server="selectedServer"
+            @edit="handleEditFromDetails"
+        />
+        <ServerEditModal
+            v-model="showEditModal"
+            :server="selectedServer"
+            @save="handleSaveServer"
+        />
+        <ServerCreateModal v-model="showCreateModal" @create="handleCreateServer" />
     </v-container>
 </template>

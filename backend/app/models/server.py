@@ -47,7 +47,11 @@ class ServerPubDetailed(ServerPublic):
     experiments: List["Experiment"] = []
 
 
-class ServerUpdate(ServerBase):
+class ServerUpdate(SQLModel):
+    name: str | None = None
+    ip_address: str | None = None
+    api_domain: str | None = None
+    websocket_port: int | None = None  
     available: bool | None = None
     production: bool | None = None 
     enabled: bool | None = None 
