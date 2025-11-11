@@ -30,13 +30,10 @@ const showCreateModal = ref(false)
 const selectedServer = ref<Server | null>(null)
 const showDeleted = ref(false)
 
-// Computed property to filter servers based on deleted_at
 const filteredServers = computed(() => {
     if (showDeleted.value) {
-        // Show only deleted servers
         return servers.value.filter((server) => server.deleted_at)
     } else {
-        // Show only non-deleted servers
         return servers.value.filter((server) => !server.deleted_at)
     }
 })
@@ -53,7 +50,6 @@ const handleCreate = async () => {
 }
 
 const handleDevices = (item: Server) => {
-    console.log('Show devices for server:', item)
     emit('selectServer', item)
 }
 
@@ -63,7 +59,6 @@ const handleEdit = (item: Server) => {
 }
 
 const handleDelete = async (item: Server) => {
-    console.log('Delete server:', item)
     await softDeleteServer(item)
 }
 
@@ -73,7 +68,6 @@ const handleView = (item: Server) => {
 }
 
 const handleSync = async (item: Server) => {
-    console.log('Sync server:', item)
     await getServer(item)
 }
 
@@ -83,19 +77,16 @@ const handleEditFromDetails = (server: Server) => {
 }
 
 const handleSaveServer = async (server: Server) => {
-    console.log('Save server:', server)
     await updateServer(server)
     await fetchServers()
 }
 
 const handleCreateServer = async (server: Omit<Server, 'id'>) => {
-    console.log('Create server:', server)
     await createServer(server)
     await fetchServers()
 }
 
 const handleSyncAll = async () => {
-    console.log('Sync all servers')
     await fetchServers()
 }
 </script>
