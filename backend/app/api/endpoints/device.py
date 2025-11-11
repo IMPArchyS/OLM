@@ -40,31 +40,17 @@ def get_device_software(db: DbSession, id: int):
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, device: DeviceCreate):
+    if device.maintenance_start and device.maintenance_end:
+        if device.maintenance_start > device.maintenance_end:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maintenance start date cannot be after maintenance end date!")
+    
     db_device = Device.model_validate(device)
-    db.add(db_device)
-    db.commit()
-    db.refresh(db_device)
-    return db_device
-
-
-@router.patch("/{id}", response_model=DevicePublic)
-def update(db: DbSession, id: int, device: DeviceUpdate):
-    db_device = db.get(Device, id)
-    if not db_device:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {id} not found!")
-    reserved_device_data = device.model_dump(exclude_unset=True)
-    db_device.sqlmodel_update(reserved_device_data)
-    
-    if not db.get(DeviceType, device.device_type_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device Type with {device.device_type_id} not found!")    
-    
-    if not db.get(Server, device.server_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {device.server_id} not found!")    
     
     db.add(db_device)
     db.commit()
     db.refresh(db_device)
     return db_device
+
 
 @router.post("/{id}/software/{software_id}", status_code=status.HTTP_201_CREATED)
 def add_software_to_device(db: DbSession, id: int, software_id: int):
@@ -83,7 +69,37 @@ def add_software_to_device(db: DbSession, id: int, software_id: int):
     db.add(db_device)
     db.commit()
     db.refresh(db_device)
-    return {"message": "Software added to device successfully"}
+
+
+@router.patch("/{id}", response_model=DevicePublic)
+def update(db: DbSession, id: int, device: DeviceUpdate):
+    db_device = db.get(Device, id)
+    if not db_device:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {id} not found!")
+    
+    reserved_device_data = device.model_dump(exclude_unset=True)
+    db_device.sqlmodel_update(reserved_device_data)
+    
+    maintenance_start = device.maintenance_start if device.maintenance_start is not None else db_device.maintenance_start
+    maintenance_end = device.maintenance_end if device.maintenance_end is not None else db_device.maintenance_end
+    
+    if maintenance_start and maintenance_end:
+        if maintenance_start > maintenance_end:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maintenance start date cannot be after maintenance end date!")
+    
+    if not db.get(DeviceType, device.device_type_id):
+        db_device.sqlmodel_update(reserved_device_data)
+    
+    if not db.get(DeviceType, device.device_type_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device Type with {device.device_type_id} not found!")    
+    
+    if not db.get(Server, device.server_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {device.server_id} not found!")    
+    
+    db.add(db_device)
+    db.commit()
+    db.refresh(db_device)
+    return db_device
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)

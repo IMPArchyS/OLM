@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 class ReservationBase(SQLModel):
     start: datetime = Field()
     end: datetime = Field()
+    queued: bool = Field(default=False)
 
 class Reservation(ReservationBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
