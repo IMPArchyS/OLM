@@ -124,8 +124,8 @@ export default {
         experiment_commands: 'Experiment Commands',
         experiment_parameters: 'Experiment Parameters',
         run_experiment: 'Run Experiment',
-        sim_time: 'Simulation Time',
-        sample_rate: 'Sample Rate',
+        simulation_time: 'Simulation Time',
+        sampling_rate: 'Sample Rate',
         no_commands_available: 'No commands available',
     },
     reports: {
@@ -133,6 +133,7 @@ export default {
     },
     queues: {
         title: 'Queue',
+        add_to_queue: 'Queue Experiment',
     },
     profile: {
         title: 'Profile',

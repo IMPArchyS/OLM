@@ -9,6 +9,18 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const emit = defineEmits<{
+    'update:formData': [
+        data: {
+            experiment_id: number | null
+            command: string
+            experiment_commands: Record<string, any>
+            simulation_time: number
+            sampling_rate: number
+        },
+    ]
+}>()
+
 const experiments = ref<Experiment[]>([])
 const selectedExperimentId = ref<number | null>(null)
 const selectedCommand = ref<string>('')
@@ -107,8 +119,6 @@ const fetchExperiments = async (deviceId?: number | null) => {
 
             experiments.value = experimentsWithNames
 
-            console.log('Fetched experiments:', experiments.value)
-
             if (experiments.value.length === 0) {
                 error.value = deviceId
                     ? 'No experiments found for this device'
@@ -164,6 +174,40 @@ watch(selectedExperiment, (newExperiment) => {
     }
 })
 
+const formData = computed(() => {
+    const parameters: Record<string, CommandSpec> = {}
+
+    if (selectedExperiment.value?.experiment_commands) {
+        Object.entries(experimentCommandValues.value).forEach(([key, value]) => {
+            const originalSpec = selectedExperiment.value?.experiment_commands?.[key]
+            if (originalSpec) {
+                parameters[key] = {
+                    value: value,
+                    type: originalSpec.type,
+                    unit: originalSpec.unit ?? null,
+                }
+            }
+        })
+    }
+
+    return {
+        experiment_id: selectedExperimentId.value,
+        command: selectedCommand.value,
+        experiment_commands: parameters,
+        simulation_time: simTime.value,
+        sampling_rate: sampleRate.value,
+    }
+})
+
+// Emit form data changes
+watch(
+    formData,
+    (newData) => {
+        emit('update:formData', newData)
+    },
+    { deep: true },
+)
+
 // Expose data for parent component
 defineExpose({
     selectedExperiment,
@@ -171,6 +215,7 @@ defineExpose({
     experimentCommandValues,
     simTime,
     sampleRate,
+    formData,
 })
 </script>
 
@@ -261,14 +306,14 @@ defineExpose({
             <!-- Universal Simulation Parameters -->
             <v-number-input
                 v-model="simTime"
-                :label="$t('dashboard.sim_time')"
+                :label="$t('dashboard.simulation_time')"
                 :min="0"
                 variant="outlined"
                 density="comfortable"
             />
             <v-number-input
                 v-model="sampleRate"
-                :label="$t('dashboard.sample_rate')"
+                :label="$t('dashboard.sampling_rate')"
                 :min="0"
                 variant="outlined"
                 density="comfortable"

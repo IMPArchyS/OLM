@@ -124,8 +124,8 @@ export default {
         experiment_commands: 'Príkazy experimentu',
         experiment_parameters: 'Parametre experimentu',
         run_experiment: 'Spustiť experiment',
-        sim_time: 'Simulačný čas',
-        sample_rate: 'Frekvencia vzorkovania',
+        simulation_time: 'Simulačný čas',
+        sampling_rate: 'Frekvencia vzorkovania',
         no_commands_available: 'Žiadne príkazy nie sú k dispozícii  ',
     },
     reports: {
@@ -133,6 +133,7 @@ export default {
     },
     queues: {
         title: 'Dávkovanie experimentov',
+        add_to_queue: 'Pridať do fronty',
     },
     profile: {
         title: 'Profil',

@@ -50,6 +50,8 @@ class ExperimentPublic(ExperimentBase):
     created_at: datetime
     modified_at: datetime
     deleted_at: datetime | None
+    device_id: int
+    software_id: int
 
 
 class ExperimentUpdate(ExperimentBase):

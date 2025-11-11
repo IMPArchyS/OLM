@@ -34,12 +34,23 @@ function runExperiment() {
         return
     }
 
+    // Reconstruct experiment_commands with full structure (value, type, unit)
+    const reconstructedCommands: Record<string, { value: any; type: string; unit?: string }> = {}
+
+    Object.entries(selectedExperiment.experiment_commands || {}).forEach(([key, spec]) => {
+        reconstructedCommands[key] = {
+            value: experimentCommandValues[key],
+            type: spec.type,
+            ...(spec.unit && { unit: spec.unit }),
+        }
+    })
+
     const payload = {
         experiment_id: selectedExperiment.id,
         command: selectedCommand,
-        values: { ...experimentCommandValues },
-        sim_time: selector.simTime,
-        sample_rate: selector.sampleRate,
+        experiment_commands: reconstructedCommands,
+        simulation_time: selector.simTime,
+        sampling_rate: selector.sampleRate,
     }
     console.log('Payload to send via WebSocket:', JSON.stringify(payload, null, 2))
     // TODO: Implement WebSocket communication
