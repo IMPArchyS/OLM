@@ -285,8 +285,8 @@ export function useDeviceReservationCalendar(props: Props) {
 
             const reservationData = {
                 device_id: reservationForm.value.deviceId,
-                start: formatToISOLocal(startDate),
-                end: formatToISOLocal(endDate),
+                start: startDate.toISOString(),
+                end: endDate.toISOString(),
             }
 
             if (editingReservation.value) {
@@ -386,16 +386,6 @@ export function useDeviceReservationCalendar(props: Props) {
         const hours = String(date.getHours()).padStart(2, '0')
         const minutes = String(date.getMinutes()).padStart(2, '0')
         return `${year}-${month}-${day}T${hours}:${minutes}`
-    }
-
-    function formatToISOLocal(date: Date): string {
-        const year = date.getFullYear()
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        const day = String(date.getDate()).padStart(2, '0')
-        const hours = String(date.getHours()).padStart(2, '0')
-        const minutes = String(date.getMinutes()).padStart(2, '0')
-        const seconds = String(date.getSeconds()).padStart(2, '0')
-        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
     }
 
     // FullCalendar configuration

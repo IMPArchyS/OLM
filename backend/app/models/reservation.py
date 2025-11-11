@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Column, DateTime, Field, Relationship, SQLModel
 from app.models.utils import now
 
 if TYPE_CHECKING:
@@ -8,8 +8,8 @@ if TYPE_CHECKING:
 
 
 class ReservationBase(SQLModel):
-    start: datetime = Field()
-    end: datetime = Field()
+    start: datetime = Field(sa_column=Column(DateTime(timezone=True)))
+    end: datetime = Field(sa_column=Column(DateTime(timezone=True)))
     queued: bool = Field(default=False)
 
 class Reservation(ReservationBase, table=True):
