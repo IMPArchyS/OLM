@@ -80,6 +80,7 @@ export default {
         syncDevices: 'Sync Devices',
         id: 'ID',
         name: 'Name',
+        type: 'Type',
         software: 'Software',
         actions: 'Actions',
         loadingDevices: 'Loading devices...',

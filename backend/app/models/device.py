@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, List
 from sqlmodel import Field, Relationship, SQLModel
+from app.models.device_type import DeviceTypePublic
 from app.models.utils import now
 from app.models.device_software import DeviceSoftware
 
@@ -45,6 +46,7 @@ class DevicePublic(DeviceBase):
     created_at: datetime
     modified_at: datetime
     deleted_at: datetime | None
+    device_type: DeviceTypePublic
 
 
 class DeviceUpdate(SQLModel):

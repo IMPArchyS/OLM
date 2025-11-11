@@ -2,6 +2,12 @@ export interface Device {
     id: number
     name: string
     software?: Software[]
+    device_type?: DeviceType
+}
+
+export interface DeviceType {
+    id: number
+    name: string
 }
 
 export interface Software {

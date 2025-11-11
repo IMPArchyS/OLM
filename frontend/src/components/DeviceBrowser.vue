@@ -25,6 +25,7 @@ watch(
     async (newServer) => {
         if (newServer) {
             await fetchDevicesByServer(newServer.id)
+            console.log(devices.value)
         }
     },
 )
@@ -62,6 +63,7 @@ watch(
                     :headers="[
                         { title: t('devices.id'), key: 'id', sortable: true },
                         { title: t('devices.name'), key: 'name', sortable: true },
+                        { title: t('devices.type'), key: 'device_type.name', sortable: true },
                         { title: t('devices.software'), key: 'software', sortable: false },
                     ]"
                     :items="devicesWithSoftware"

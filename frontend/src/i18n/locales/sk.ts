@@ -80,6 +80,7 @@ export default {
         syncDevices: 'Synchronizovať zariadenia',
         id: 'ID',
         name: 'Názov',
+        type: 'Typ',
         software: 'Softvér',
         actions: 'Akcie',
         loadingDevices: 'Načítavam zariadenia...',

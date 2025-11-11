@@ -54,7 +54,6 @@ export function useDevices() {
             if (response.ok) {
                 const devicesData: Device[] = await response.json()
                 devices.value = devicesData
-
                 await Promise.all(devicesData.map((device) => fetchDeviceSoftware(device.id)))
             } else {
                 error.value = `Failed to fetch devices: ${response.statusText}`
