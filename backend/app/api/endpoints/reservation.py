@@ -86,8 +86,8 @@ def create_queued(db: DbSession, reservation: ReservationQueue):
     proposed_start = now()
 
     for existing_res in existing_reservations:
-        existing_start = to_utc(existing_res.start)
-        existing_end = to_utc(existing_res.end)
+        existing_start = existing_res.start
+        existing_end = existing_res.end
 
         if existing_end <= proposed_start:
             continue

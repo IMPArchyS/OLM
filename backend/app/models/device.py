@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 from typing import TYPE_CHECKING, List
 from sqlmodel import Field, Relationship, SQLModel
 from app.models.device_type import DeviceTypePublic
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 
 class DeviceBase(SQLModel):
     name: str = Field(index=True)
-    maintenance_start: datetime | None = Field(default=None)
-    maintenance_end: datetime | None = Field(default=None)
+    maintenance_start: time | None = Field(default=None)
+    maintenance_end: time | None = Field(default=None)
 
 
 class Device(DeviceBase, table=True):
@@ -53,7 +53,7 @@ class DevicePublic(DeviceBase):
 
 class DeviceUpdate(SQLModel):
     name: str | None = None
-    maintenance_start: datetime | None = None
-    maintenance_end: datetime | None = None
+    maintenance_start: time | None = None
+    maintenance_end: time | None = None
     device_type_id: int | None = None
     server_id: int | None = None

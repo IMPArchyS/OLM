@@ -29,6 +29,7 @@ class ReservationCreate(ReservationBase):
 class ReservationQueue(SQLModel):
     device_id: int
     simulation_time: int
+    timezone: str
 
 
 class ReservationPublic(ReservationBase):

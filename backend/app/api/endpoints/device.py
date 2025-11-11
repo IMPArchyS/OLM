@@ -87,13 +87,10 @@ def update(db: DbSession, id: int, device: DeviceUpdate):
         if maintenance_start > maintenance_end:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maintenance start date cannot be after maintenance end date!")
     
-    if not db.get(DeviceType, device.device_type_id):
-        db_device.sqlmodel_update(reserved_device_data)
-    
-    if not db.get(DeviceType, device.device_type_id):
+    if device.device_type_id is not None and not db.get(DeviceType, device.device_type_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device Type with {device.device_type_id} not found!")    
     
-    if not db.get(Server, device.server_id):
+    if device.server_id is not None and not db.get(Server, device.server_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {device.server_id} not found!")    
     
     db.add(db_device)

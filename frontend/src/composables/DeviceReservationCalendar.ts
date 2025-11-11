@@ -29,7 +29,6 @@ export function useDeviceReservationCalendar(props: Props) {
         endDate: '',
     })
 
-    // Fetch reservations from API
     async function fetchReservations() {
         if (!props.selectedDeviceId) return
 
@@ -48,7 +47,6 @@ export function useDeviceReservationCalendar(props: Props) {
         }
     }
 
-    // Watch for device changes and fetch reservations
     watch(
         () => props.selectedDeviceId,
         (newDeviceId) => {
@@ -61,25 +59,124 @@ export function useDeviceReservationCalendar(props: Props) {
         { immediate: true },
     )
 
-    // Convert reservations to FullCalendar events
     const calendarEvents = computed(() => {
-        return reservations.value.map((r) => ({
+        const reservationEvents = reservations.value.map((r) => ({
             id: String(r.id),
             title: r.username || 'Reserved',
             start: r.start,
             end: r.end,
+            backgroundColor: undefined,
             extendedProps: {
                 deviceId: r.device_id,
+                isMaintenance: false,
             },
         }))
+
+        const maintenanceEvents = []
+        if (
+            props.selectedDeviceData?.maintenance_start &&
+            props.selectedDeviceData?.maintenance_end
+        ) {
+            const today = new Date()
+            for (let i = -365; i < 365; i++) {
+                const eventDate = new Date(today)
+                eventDate.setDate(today.getDate() + i)
+
+                const maintenanceStart = props.selectedDeviceData.maintenance_start
+                const maintenanceEnd = props.selectedDeviceData.maintenance_end
+
+                const startParts = maintenanceStart.split(':').map(Number)
+                const endParts = maintenanceEnd.split(':').map(Number)
+                const startHour = startParts[0] ?? 0
+                const startMinute = startParts[1] ?? 0
+                const endHour = endParts[0] ?? 0
+                const endMinute = endParts[1] ?? 0
+
+                const startDateTime = new Date(eventDate)
+                startDateTime.setHours(startHour, startMinute, 0, 0)
+
+                const endDateTime = new Date(eventDate)
+                endDateTime.setHours(endHour, endMinute, 0, 0)
+
+                maintenanceEvents.push({
+                    id: `maintenance-${i}`,
+                    title: 'Maintenance',
+                    start: startDateTime.toISOString(),
+                    end: endDateTime.toISOString(),
+                    backgroundColor: '#ef4444',
+                    borderColor: '#dc2626',
+                    extendedProps: {
+                        deviceId: props.selectedDeviceData.id,
+                        isMaintenance: true,
+                    },
+                })
+            }
+        }
+
+        return [...reservationEvents, ...maintenanceEvents]
     })
 
     function handleDateSelect(selectInfo: DateSelectArg) {
         const calendarApi = selectInfo.view.calendar
         calendarApi.unselect()
 
-        // Use selected device from parent
         if (!props.selectedDeviceId) return
+
+        if (
+            props.selectedDeviceData?.maintenance_start &&
+            props.selectedDeviceData?.maintenance_end
+        ) {
+            const startDate = selectInfo.start
+            const endDate = selectInfo.end
+            const maintenanceStart = props.selectedDeviceData.maintenance_start
+            const maintenanceEnd = props.selectedDeviceData.maintenance_end
+
+            const startParts = maintenanceStart.split(':').map(Number)
+            const endParts = maintenanceEnd.split(':').map(Number)
+            const maintenanceStartHour = startParts[0] ?? 0
+            const maintenanceStartMinute = startParts[1] ?? 0
+            const maintenanceEndHour = endParts[0] ?? 0
+            const maintenanceEndMinute = endParts[1] ?? 0
+
+            const currentDate = new Date(startDate)
+            currentDate.setHours(0, 0, 0, 0) // Reset to start of day
+
+            const endDateDay = new Date(endDate)
+            endDateDay.setHours(23, 59, 59, 999) // Set to end of day
+
+            while (currentDate <= endDateDay) {
+                const dayMaintenanceStart = new Date(currentDate)
+                dayMaintenanceStart.setHours(maintenanceStartHour, maintenanceStartMinute, 0, 0)
+
+                const dayMaintenanceEnd = new Date(currentDate)
+                dayMaintenanceEnd.setHours(maintenanceEndHour, maintenanceEndMinute, 0, 0)
+
+                // Calculate the effective reservation period for this specific day
+                const dayStart = new Date(currentDate)
+                dayStart.setHours(0, 0, 0, 0)
+
+                const dayEnd = new Date(currentDate)
+                dayEnd.setHours(23, 59, 59, 999)
+
+                // Get the overlap of reservation with this day
+                const effectiveStart = startDate > dayStart ? startDate : dayStart
+                const effectiveEnd = endDate < dayEnd ? endDate : dayEnd
+
+                // Check if the effective reservation period on this day overlaps with maintenance
+                if (
+                    (effectiveStart >= dayMaintenanceStart && effectiveStart < dayMaintenanceEnd) ||
+                    (effectiveEnd > dayMaintenanceStart && effectiveEnd <= dayMaintenanceEnd) ||
+                    (effectiveStart <= dayMaintenanceStart && effectiveEnd >= dayMaintenanceEnd)
+                ) {
+                    alert(
+                        `Cannot create reservation during maintenance period (${maintenanceStart} - ${maintenanceEnd})`,
+                    )
+                    return
+                }
+
+                currentDate.setDate(currentDate.getDate() + 1)
+            }
+        }
 
         reservationForm.value = {
             deviceId: props.selectedDeviceId,
@@ -93,11 +190,16 @@ export function useDeviceReservationCalendar(props: Props) {
 
     function handleEventClick(clickInfo: EventClickArg) {
         const event = clickInfo.event
+
+        if (event.extendedProps.isMaintenance) {
+            alert('Maintenance periods cannot be edited')
+            return
+        }
+
         const reservation = reservations.value.find((r) => r.id === Number(event.id))
 
         if (!reservation) return
 
-        // Check if event is in the past
         const eventEnd = new Date(reservation.end)
         const now = new Date()
         if (eventEnd < now) {
@@ -124,6 +226,61 @@ export function useDeviceReservationCalendar(props: Props) {
             if (startDate < now || endDate < now) {
                 alert('Cannot create reservation in the past')
                 return
+            }
+
+            if (
+                props.selectedDeviceData?.maintenance_start &&
+                props.selectedDeviceData?.maintenance_end
+            ) {
+                const maintenanceStart = props.selectedDeviceData.maintenance_start
+                const maintenanceEnd = props.selectedDeviceData.maintenance_end
+
+                const startParts = maintenanceStart.split(':').map(Number)
+                const endParts = maintenanceEnd.split(':').map(Number)
+                const maintenanceStartHour = startParts[0] ?? 0
+                const maintenanceStartMinute = startParts[1] ?? 0
+                const maintenanceEndHour = endParts[0] ?? 0
+                const maintenanceEndMinute = endParts[1] ?? 0
+
+                const currentDate = new Date(startDate)
+                currentDate.setHours(0, 0, 0, 0) // Reset to start of day
+
+                const endDateDay = new Date(endDate)
+                endDateDay.setHours(23, 59, 59, 999) // Set to end of day
+
+                while (currentDate <= endDateDay) {
+                    const dayMaintenanceStart = new Date(currentDate)
+                    dayMaintenanceStart.setHours(maintenanceStartHour, maintenanceStartMinute, 0, 0)
+
+                    const dayMaintenanceEnd = new Date(currentDate)
+                    dayMaintenanceEnd.setHours(maintenanceEndHour, maintenanceEndMinute, 0, 0)
+
+                    // Calculate the effective reservation period for this specific day
+                    const dayStart = new Date(currentDate)
+                    dayStart.setHours(0, 0, 0, 0)
+
+                    const dayEnd = new Date(currentDate)
+                    dayEnd.setHours(23, 59, 59, 999)
+
+                    // Get the overlap of reservation with this day
+                    const effectiveStart = startDate > dayStart ? startDate : dayStart
+                    const effectiveEnd = endDate < dayEnd ? endDate : dayEnd
+
+                    // Check if the effective reservation period on this day overlaps with maintenance
+                    if (
+                        (effectiveStart >= dayMaintenanceStart &&
+                            effectiveStart < dayMaintenanceEnd) ||
+                        (effectiveEnd > dayMaintenanceStart && effectiveEnd <= dayMaintenanceEnd) ||
+                        (effectiveStart <= dayMaintenanceStart && effectiveEnd >= dayMaintenanceEnd)
+                    ) {
+                        alert(
+                            `Reservation conflicts with daily maintenance period (${maintenanceStart} - ${maintenanceEnd})`,
+                        )
+                        return
+                    }
+
+                    currentDate.setDate(currentDate.getDate() + 1)
+                }
             }
 
             const reservationData = {
@@ -280,7 +437,12 @@ export function useDeviceReservationCalendar(props: Props) {
         eventDidMount: (info) => {
             const eventEnd = info.event.end || info.event.start
             const now = new Date()
-            if (eventEnd && eventEnd < now) {
+
+            // Check if this is a maintenance event
+            if (info.event.extendedProps.isMaintenance) {
+                info.el.style.cursor = 'not-allowed'
+                info.el.title = 'Maintenance period - cannot be modified'
+            } else if (eventEnd && eventEnd < now) {
                 // Add visual indication for past events
                 info.el.style.opacity = '0.6'
                 info.el.style.cursor = 'not-allowed'

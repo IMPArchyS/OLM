@@ -43,7 +43,11 @@ const addToQueue = async () => {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ device_id, simulation_time: formData.value.simulation_time }),
+            body: JSON.stringify({
+                device_id,
+                simulation_time: formData.value.simulation_time,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            }),
         })
 
         if (!response.ok) {

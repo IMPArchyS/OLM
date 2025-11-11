@@ -1,6 +1,8 @@
 export interface Device {
     id: number
     name: string
+    maintenance_start: string
+    maintenance_end: string
     software?: Software[]
     device_type?: DeviceType
 }
