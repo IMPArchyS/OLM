@@ -146,4 +146,14 @@ export default {
         lamp_voltage: 'Lampa napätie',
         led_voltage: 'LED napätie',
     },
+    page404: {
+        title: 'Oops! Stratili sme sa.',
+        description: 'Stránka, ktorú hľadáte, nebola nájdená.',
+        button: 'Späť domov',
+    },
+    page500: {
+        title: 'Oops! Niečo sa pokazilo.',
+        description: 'Stránka, ktorú hľadáte je dočasne nedostupná.',
+        button: 'Späť domov',
+    },
 }

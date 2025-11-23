@@ -146,4 +146,14 @@ export default {
         lamp_voltage: 'Lamp Voltage',
         led_voltage: 'LED Voltage',
     },
+    page404: {
+        title: "Oops! You're lost.",
+        description: 'The page you are looking for was not found.',
+        button: 'Go to Home',
+    },
+    page500: {
+        title: 'Oops! Something went wrong.',
+        description: 'The page you are looking for is temporarily unavailable.',
+        button: 'Go to Home',
+    },
 }

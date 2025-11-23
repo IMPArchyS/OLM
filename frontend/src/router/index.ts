@@ -9,11 +9,12 @@ import servers from '@/views/Servers.vue'
 import schemas from '@/views/Schemas.vue'
 import login from '@/views/auth/Login.vue'
 import register from '@/views/auth/Register.vue'
+import error404 from '@/views/errors/Error404.vue'
+import error500 from '@/views/errors/Error500.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
-        // Auth routes at root level - uses AuthLayout
         {
             path: '/auth',
             component: AuthLayout,
@@ -34,7 +35,6 @@ const router = createRouter({
                 },
             ],
         },
-        // Main app routes under /app - uses MainLayout
         {
             path: '/app',
             component: MainLayout,
@@ -76,27 +76,17 @@ const router = createRouter({
                 },
             ],
         },
+        {
+            path: '/:pathMatch(.*)*',
+            name: 'notFound',
+            component: error404,
+        },
+        {
+            path: '/500',
+            name: 'serverError',
+            component: error500,
+        },
     ],
 })
-
-// Navigation guard to check authentication
-// router.beforeEach((to, from, next) => {
-//     const isAuthenticated = checkAuth() // Implement your auth check logic
-
-//     if (to.meta.requiresAuth && !isAuthenticated) {
-//         next({ name: 'login' })
-//     } else if (to.path.startsWith('/auth') && isAuthenticated) {
-//         next({ name: 'dashboard' })
-//     } else {
-//         next()
-//     }
-// })
-
-// function checkAuth(): boolean {
-//     // TODO: Implement your authentication check
-//     // Example: Check if user token exists in localStorage or store
-//     // return !!localStorage.getItem('authToken')
-//     return true // Temporary - always authenticated
-// }
 
 export default router
