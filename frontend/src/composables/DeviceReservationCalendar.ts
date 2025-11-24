@@ -8,6 +8,7 @@ import skLocale from '@fullcalendar/core/locales/sk'
 import { useI18n } from 'vue-i18n'
 import type { Device, Reservation } from '@/types/api'
 import type { ReservationForm } from '@/types/forms'
+import { apiClient } from './useAxios'
 
 interface Props {
     selectedDeviceId?: number | null
@@ -34,12 +35,10 @@ export function useDeviceReservationCalendar(props: Props) {
 
         loading.value = true
         try {
-            const response = await fetch(
-                `http://localhost:8000/api/reservation/?device_id=${props.selectedDeviceId}`,
-            )
-            if (response.ok) {
-                reservations.value = await response.json()
-            }
+            const response = await apiClient.get('/reservation/', {
+                params: { device_id: props.selectedDeviceId },
+            })
+            reservations.value = response.data
         } catch (error) {
             console.error('Error fetching reservations:', error)
         } finally {
@@ -290,47 +289,15 @@ export function useDeviceReservationCalendar(props: Props) {
             }
 
             if (editingReservation.value) {
-                const response = await fetch(
-                    `http://localhost:8000/api/reservation/${editingReservation.value.id}/`,
-                    {
-                        method: 'PATCH',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(reservationData),
-                    },
+                await apiClient.patch(
+                    `/reservation/${editingReservation.value.id}/`,
+                    reservationData,
                 )
-
-                if (!response.ok) {
-                    const errorData = await response.json()
-                    alert(
-                        `Failed to update reservation: ${errorData.message || response.statusText}`,
-                    )
-                    return
-                }
-
-                await fetchReservations() // Refresh the list
             } else {
-                // Create new
-                const response = await fetch('http://localhost:8000/api/reservation/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(reservationData),
-                })
-
-                if (!response.ok) {
-                    const errorData = await response.json()
-                    alert(
-                        `Failed to create reservation: ${errorData.message || response.statusText}`,
-                    )
-                    return
-                }
-
-                await fetchReservations() // Refresh the list
+                await apiClient.post('/reservation/', reservationData)
             }
 
+            await fetchReservations()
             updateCalendarEvents()
             closeModal()
         } catch (error) {
@@ -348,18 +315,10 @@ export function useDeviceReservationCalendar(props: Props) {
         }
 
         try {
-            const response = await fetch(
-                `http://localhost:8000/api/reservation/${editingReservation.value.id}/`,
-                {
-                    method: 'DELETE',
-                },
-            )
-
-            if (response.ok) {
-                await fetchReservations()
-                updateCalendarEvents()
-                closeModal()
-            }
+            await apiClient.delete(`/reservation/${editingReservation.value.id}/`)
+            await fetchReservations()
+            updateCalendarEvents()
+            closeModal()
         } catch (error) {
             console.error('Error deleting reservation:', error)
             alert('Failed to delete reservation')

@@ -8,8 +8,9 @@ from app.models.device_software import DeviceSoftware
 from app.models.software import Software
 from app.models.experiment import Experiment
 from app.models.reserved_experiment import ReservedExperiment
-from app.models.schema import Schema, SchemaCreate, SchemaPublic, SchemaUpdate
+from app.models.schema import Schema, SchemaCreate, SchemaPublic, SchemaType, SchemaUpdate
 from app.models.server import Server
+from app.models.utils import now
 
 
 router = APIRouter()
@@ -18,6 +19,12 @@ router = APIRouter()
 @router.get("/")
 def get_all(db: DbSession): 
     stmt = select(Schema)
+    return db.exec(stmt).all()
+
+
+@router.get("/type", response_model=list[SchemaType])
+def get_types(db: DbSession):
+    stmt = select(Schema.schema_type)
     return db.exec(stmt).all()
 
 
@@ -63,3 +70,17 @@ def delete(db: DbSession, id: int):
     db.delete(db_schema)
     db.commit()
     return db_schema
+
+
+@router.delete("/{id}/delete", status_code=status.HTTP_204_NO_CONTENT)
+def soft_delete(db: DbSession, id: int):
+    db_schema = db.get(Schema, id)
+    if not db_schema:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Schema with {id} not found!")
+    if db_schema.deleted_at is not None:
+        raise HTTPException(status_code=status.HTTP_410_GONE,detail="Schema already deleted")
+    db_schema.deleted_at = now()
+    db.add(db_schema)
+    db.commit()
+    db.refresh(db_schema)
+    return None

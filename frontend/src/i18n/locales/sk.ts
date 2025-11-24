@@ -100,6 +100,51 @@ export default {
         deleteSchema: 'Vymazať schému',
         schemaName: 'Názov schémy',
         schemaDescription: 'Popis schémy',
+        index: {
+            title: 'Schémy',
+        },
+        columns: {
+            id: 'ID',
+            name: 'Názov',
+            device_type: 'Typ zariadenia',
+            software: 'Softvér',
+            schema_type: 'Typ schémy',
+            note: 'Poznámka',
+            schema: 'Súbor schémy',
+            preview: 'Náhľad',
+        },
+        trashed: {
+            label: 'Zobraziť vymazané',
+            without: 'Bez vymazaných',
+            with: 'S vymazanými',
+            only: 'Iba vymazané',
+        },
+        preview: {
+            error: 'Náhľad nie je dostupný',
+        },
+        download: {
+            success: 'Schéma bola úspešne stiahnutá',
+            error: 'Nepodarilo sa stiahnuť schému',
+        },
+        delete: {
+            confirm: 'Naozaj chcete vymazať túto schému?',
+            success: 'Schéma bola úspešne vymazaná',
+            error: 'Nepodarilo sa vymazať schému',
+        },
+        restore: {
+            confirm: 'Naozaj chcete obnoviť túto schému?',
+            success: 'Schéma bola úspešne obnovená',
+            error: 'Nepodarilo sa obnoviť schému',
+        },
+        create: {
+            success: 'Schéma bola úspešne vytvorená',
+            error: 'Nepodarilo sa vytvoriť schému',
+        },
+        update: {
+            success: 'Schéma bola úspešne aktualizovaná',
+            error: 'Nepodarilo sa aktualizovať schému',
+        },
+        device_type_warning: 'Vyberte typ zariadenia pre zobrazenie dostupných výstupných hodnôt',
     },
     dashboard: {
         title: 'Dashboard',
@@ -155,5 +200,9 @@ export default {
         title: 'Oops! Niečo sa pokazilo.',
         description: 'Stránka, ktorú hľadáte je dočasne nedostupná.',
         button: 'Späť domov',
+    },
+    actions: {
+        add: 'Pridať',
+        back: 'Späť',
     },
 }

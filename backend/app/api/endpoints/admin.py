@@ -9,7 +9,7 @@ from app.models.reservation import Reservation
 from app.models.software import Software
 from app.models.experiment import Experiment
 from app.models.reserved_experiment import ReservedExperiment
-from app.models.schema import Schema
+from app.models.schema import Schema, SchemaType
 from app.models.server import Server
 from app.models.utils import now
 

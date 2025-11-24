@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import type { Device, Software } from '@/types/api'
+import { apiClient } from './useAxios'
 
 export function useDevices() {
     const devices = ref<Device[]>([])
@@ -29,32 +30,18 @@ export function useDevices() {
 
     async function getDeviceByExperimentId(experimentId: number): Promise<Device | undefined> {
         try {
-            const response = await fetch(
-                `http://localhost:8000/api/experiment/${experimentId}/device`,
-            )
-
-            if (response.ok) {
-                const device: Device = await response.json()
-                return device
-            } else {
-                console.error(`Failed to fetch device for experiment ${experimentId}`)
-            }
+            const response = await apiClient.get(`/experiment/${experimentId}/device`)
+            return response.data
         } catch (e) {
             console.error(`Error fetching device for experiment ${experimentId}:`, e)
+            return undefined
         }
     }
 
     async function fetchDeviceSoftware(deviceId: number): Promise<void> {
         try {
-            const response = await fetch(`http://localhost:8000/api/device/${deviceId}/software`)
-
-            if (response.ok) {
-                const softwares: Software[] = await response.json()
-                deviceSoftwareMap.value[deviceId] = softwares
-            } else {
-                console.error(`Failed to fetch software for device ${deviceId}`)
-                deviceSoftwareMap.value[deviceId] = []
-            }
+            const response = await apiClient.get(`/device/${deviceId}/software`)
+            deviceSoftwareMap.value[deviceId] = response.data
         } catch (e) {
             console.error(`Error fetching software for device ${deviceId}:`, e)
             deviceSoftwareMap.value[deviceId] = []
@@ -66,16 +53,9 @@ export function useDevices() {
         error.value = null
 
         try {
-            const response = await fetch('http://localhost:8000/api/device/')
-
-            if (response.ok) {
-                const devicesData: Device[] = await response.json()
-                devices.value = devicesData
-                await Promise.all(devicesData.map((device) => fetchDeviceSoftware(device.id)))
-            } else {
-                error.value = `Failed to fetch devices: ${response.statusText}`
-                devices.value = []
-            }
+            const response = await apiClient.get('/device/')
+            devices.value = response.data
+            await Promise.all(devices.value.map((device) => fetchDeviceSoftware(device.id)))
         } catch (e) {
             console.error('Error fetching devices:', e)
             error.value = 'Error fetching devices'
@@ -90,18 +70,9 @@ export function useDevices() {
         error.value = null
 
         try {
-            const response = await fetch(`http://localhost:8000/api/server/${serverId}/devices`)
-
-            if (response.ok) {
-                const devicesData: Device[] = await response.json()
-                devices.value = devicesData
-
-                // Fetch software for all devices
-                await Promise.all(devicesData.map((device) => fetchDeviceSoftware(device.id)))
-            } else {
-                error.value = `Failed to fetch devices: ${response.statusText}`
-                devices.value = []
-            }
+            const response = await apiClient.get(`/server/${serverId}/devices`)
+            devices.value = response.data
+            await Promise.all(devices.value.map((device) => fetchDeviceSoftware(device.id)))
         } catch (e) {
             console.error('Error fetching devices for server:', e)
             error.value = 'Error fetching devices'

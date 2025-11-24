@@ -93,6 +93,10 @@ export default {
         loadingDevices: 'Loading devices...',
         noDevicesFound: 'No devices found for this server',
     },
+    actions: {
+        add: 'Add',
+        back: 'Back',
+    },
     schemas: {
         title: 'Schemas',
         addSchema: 'Add Schema',
@@ -100,6 +104,51 @@ export default {
         deleteSchema: 'Delete Schema',
         schemaName: 'Schema Name',
         schemaDescription: 'Schema Description',
+        index: {
+            title: 'Schemas',
+        },
+        columns: {
+            id: 'ID',
+            name: 'Name',
+            device_type: 'Device Type',
+            software: 'Software',
+            schema_type: 'Schema Type',
+            note: 'Note',
+            schema: 'Schema File',
+            preview: 'Preview',
+        },
+        trashed: {
+            label: 'Show Deleted',
+            without: 'Without Deleted',
+            with: 'With Deleted',
+            only: 'Only Deleted',
+        },
+        preview: {
+            error: 'No preview available',
+        },
+        download: {
+            success: 'Schema downloaded successfully',
+            error: 'Failed to download schema',
+        },
+        delete: {
+            confirm: 'Are you sure you want to delete this schema?',
+            success: 'Schema deleted successfully',
+            error: 'Failed to delete schema',
+        },
+        restore: {
+            confirm: 'Are you sure you want to restore this schema?',
+            success: 'Schema restored successfully',
+            error: 'Failed to restore schema',
+        },
+        create: {
+            success: 'Schema created successfully',
+            error: 'Failed to create schema',
+        },
+        update: {
+            success: 'Schema updated successfully',
+            error: 'Failed to update schema',
+        },
+        device_type_warning: 'Select a device type to see available output values',
     },
     dashboard: {
         title: 'Dashboard',

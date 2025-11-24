@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import type { Experiment, CommandSpec } from '@/types/api'
+import { apiClient } from '@/composables/useAxios'
 
 interface Props {
     deviceId?: number | null
@@ -47,89 +48,68 @@ const fetchExperiments = async (deviceId?: number | null) => {
     error.value = null
 
     try {
-        const url = deviceId
-            ? `http://localhost:8000/api/experiment/device/${deviceId}`
-            : `http://localhost:8000/api/experiment/`
+        const url = deviceId ? `/experiment/device/${deviceId}` : '/experiment/'
+        const response = await apiClient.get(url)
+        const data = response.data
 
-        const response = await fetch(url)
+        const experimentsWithNames = await Promise.all(
+            data.map(async (exp: any) => {
+                let experimentName = exp.name
 
-        if (response.ok) {
-            const data = await response.json()
+                if (!experimentName) {
+                    let deviceName = 'device'
+                    let softwareName = 'software'
 
-            // Fetch device and software names for experiments that don't have a name
-            const experimentsWithNames = await Promise.all(
-                data.map(async (exp: any) => {
-                    let experimentName = exp.name
-
-                    if (!experimentName) {
-                        let deviceName = 'device'
-                        let softwareName = 'software'
-
-                        // Fetch device name
-                        if (exp.device_id) {
-                            try {
-                                const deviceResponse = await fetch(
-                                    `http://localhost:8000/api/device/${exp.device_id}`,
-                                )
-                                if (deviceResponse.ok) {
-                                    const deviceData = await deviceResponse.json()
-                                    deviceName = deviceData.name || deviceName
-                                }
-                            } catch (e) {
-                                console.error(`Error fetching device ${exp.device_id}:`, e)
-                            }
+                    if (exp.device_id) {
+                        try {
+                            const deviceResponse = await apiClient.get(`/device/${exp.device_id}`)
+                            deviceName = deviceResponse.data.name || deviceName
+                        } catch (e) {
+                            console.error(`Error fetching device ${exp.device_id}:`, e)
                         }
-
-                        // Fetch software name
-                        if (exp.software_id) {
-                            try {
-                                const softwareResponse = await fetch(
-                                    `http://localhost:8000/api/software/${exp.software_id}`,
-                                )
-                                if (softwareResponse.ok) {
-                                    const softwareData = await softwareResponse.json()
-                                    softwareName = softwareData.name || softwareName
-                                }
-                            } catch (e) {
-                                console.error(`Error fetching software ${exp.software_id}:`, e)
-                            }
-                        }
-
-                        experimentName = `${deviceName} - ${softwareName}`
                     }
 
-                    return {
-                        id: exp.id,
-                        name: experimentName,
-                        description: exp.description,
-                        device_id: exp.device_id,
-                        has_schema: exp.has_schema,
-                        commands: exp.commands ? convertCommandsToSpecs(exp.commands) : undefined,
-                        experiment_commands: exp.experiment_commands
-                            ? Object.fromEntries(
-                                  Object.entries(exp.experiment_commands).map(([key, val]) => [
-                                      key,
-                                      val,
-                                  ]),
-                              )
-                            : undefined,
+                    if (exp.software_id) {
+                        try {
+                            const softwareResponse = await apiClient.get(
+                                `/software/${exp.software_id}`,
+                            )
+                            softwareName = softwareResponse.data.name || softwareName
+                        } catch (e) {
+                            console.error(`Error fetching software ${exp.software_id}:`, e)
+                        }
                     }
-                }),
-            )
 
-            experiments.value = experimentsWithNames
+                    experimentName = `${deviceName} - ${softwareName}`
+                }
 
-            if (experiments.value.length === 0) {
-                error.value = deviceId
-                    ? 'No experiments found for this device'
-                    : 'No experiments available'
-            } else {
-                // Auto-select the first experiment
-                selectedExperimentId.value = experiments.value[0]?.id ?? null
-            }
+                return {
+                    id: exp.id,
+                    name: experimentName,
+                    description: exp.description,
+                    device_id: exp.device_id,
+                    has_schema: exp.has_schema,
+                    commands: exp.commands ? convertCommandsToSpecs(exp.commands) : undefined,
+                    experiment_commands: exp.experiment_commands
+                        ? Object.fromEntries(
+                              Object.entries(exp.experiment_commands).map(([key, val]) => [
+                                  key,
+                                  val,
+                              ]),
+                          )
+                        : undefined,
+                }
+            }),
+        )
+
+        experiments.value = experimentsWithNames
+
+        if (experiments.value.length === 0) {
+            error.value = deviceId
+                ? 'No experiments found for this device'
+                : 'No experiments available'
         } else {
-            error.value = `Failed to fetch experiments: ${response.statusText}`
-            experiments.value = []
+            selectedExperimentId.value = experiments.value[0]?.id ?? null
         }
     } catch (e) {
         console.error('Error fetching experiments:', e)

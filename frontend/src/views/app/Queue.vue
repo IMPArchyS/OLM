@@ -4,6 +4,7 @@ import ExperimentSelector from '@/components/ExperimentSelector.vue'
 import { useI18n } from 'vue-i18n'
 import type { CommandSpec } from '@/types/api'
 import { useDevices } from '@/composables/useDevices'
+import { apiClient } from '@/composables/useAxios'
 
 const { t } = useI18n()
 
@@ -38,25 +39,14 @@ const addToQueue = async () => {
     const device_id = device.id
     console.log(JSON.stringify({ device_id, simulation_time: formData.value.simulation_time }))
     try {
-        const response = await fetch('http://localhost:8000/api/reservation/queue', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                device_id,
-                simulation_time: formData.value.simulation_time,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            }),
+        await apiClient.post('/reservation/queue', {
+            device_id,
+            simulation_time: formData.value.simulation_time,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         })
-
-        if (!response.ok) {
-            const errorData = await response.json()
-            alert(`Failed to create reservation: ${errorData.message || response.statusText}`)
-            return
-        }
     } catch (error) {
         console.error('Error saving reservation:', error)
+        alert('Failed to create reservation')
     }
 }
 </script>

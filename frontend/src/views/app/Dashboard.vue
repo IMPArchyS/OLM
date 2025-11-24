@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import ExperimentSandbox from '@/components/ExperimentSandbox.vue'
 import type { Reservation } from '@/types/api'
+import { apiClient } from '@/composables/useAxios'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -49,13 +50,10 @@ const goToReservations = () => {
 
 const fetchReservations = async () => {
     try {
-        const response = await fetch('http://localhost:8000/api/reservation/')
-        if (response.ok) {
-            const data = await response.json()
-            reservations.value = data.filter((reservation: Reservation) => !reservation.queued)
-        } else {
-            reservations.value = []
-        }
+        const response = await apiClient.get('/reservation/', {
+            params: { queued: false },
+        })
+        reservations.value = response.data.filter((reservation: Reservation) => !reservation.queued)
     } catch (e) {
         console.error('Failed to fetch reservations:', e)
         reservations.value = []

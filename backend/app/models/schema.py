@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import TYPE_CHECKING
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -10,9 +11,15 @@ if TYPE_CHECKING:
     from app.models.device_type import DeviceType
 
 
+class SchemaType(str, Enum):
+    control = "control"
+    ident = "ident"
+
+
 class SchemaBase(SQLModel):
     name: str = Field(index=True, unique=True)
     note: str = Field(default=None, index=True)
+    schema_type: SchemaType = Field(default=SchemaType.control)
 
 
 class Schema(SchemaBase, table=True):
@@ -30,7 +37,7 @@ class Schema(SchemaBase, table=True):
 
 
 class SchemaCreate(SchemaBase):
-    pass
+    software_id: int
 
 
 class SchemaPublic(SchemaBase):

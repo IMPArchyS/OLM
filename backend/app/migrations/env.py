@@ -13,7 +13,7 @@ from app.models.software import Software
 from app.models.server import Server
 from app.models.reservation import Reservation
 from app.models.device_software import DeviceSoftware
-from app.models.schema import Schema
+from app.models.schema import Schema, SchemaType
 from app.models.reserved_experiment import ReservedExperiment
 
 # this is the Alembic Config object, which provides

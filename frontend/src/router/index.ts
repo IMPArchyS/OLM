@@ -6,7 +6,6 @@ import queue from '@/views/app/Queue.vue'
 import reservations from '@/views/app/Reservations.vue'
 import reports from '@/views/app/Reports.vue'
 import servers from '@/views/app/Servers.vue'
-import schemas from '@/views/app/Schemas.vue'
 import login from '@/views/auth/Login.vue'
 import register from '@/views/auth/Register.vue'
 import error404 from '@/views/errors/Error404.vue'
@@ -71,8 +70,30 @@ const router = createRouter({
                 },
                 {
                     path: '/app/schemas',
-                    name: 'schemas',
-                    component: schemas,
+                    name: 'schemas-index',
+                    component: () => import('@/views/app/schemas/IndexSchema.vue'),
+                    meta: {
+                        requiresAuth: true,
+                        permission: 'schema.index',
+                    },
+                },
+                {
+                    path: '/app/schemas/create',
+                    name: 'schemas-create',
+                    component: () => import('@/views/app/schemas/CreateSchema.vue'),
+                    meta: {
+                        requiresAuth: true,
+                        permission: 'schema.create',
+                    },
+                },
+                {
+                    path: '/app/schemas/:id/edit',
+                    name: 'schemas-edit',
+                    component: () => import('@/views/app/schemas/EditSchema.vue'),
+                    meta: {
+                        requiresAuth: true,
+                        permission: 'schema.update',
+                    },
                 },
             ],
         },

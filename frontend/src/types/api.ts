@@ -10,6 +10,11 @@ export interface Device {
 export interface DeviceType {
     id: number
     name: string
+    experiment: Array<{
+        output_arguments: Array<{
+            name: string
+        }>
+    }>
 }
 
 export interface Software {
@@ -68,4 +73,73 @@ export interface Server {
     production?: boolean
     enabled?: boolean
     deleted_at?: string
+}
+
+export interface OptionInput {
+    name: string
+    value: string
+    output_value: string
+}
+
+export interface ArgumentInput {
+    name: string
+    label: string
+    default_value: string | null
+    row?: number
+    order?: number
+    options?: OptionInput[]
+}
+
+export interface SchemaBasic {
+    id: number
+    name: string
+    schema: string | null
+    preview: string | null
+    deviceType: {
+        name: string
+    }
+    software: {
+        name: string
+    }
+    deleted_at: string | null
+}
+
+export interface SchemaExtended {
+    id: number
+    name: string
+    type: string
+    availableTypes: string[]
+    note: string | null
+    schema: string | null
+    preview: string | null
+    deviceType: {
+        id: number
+        name: string
+    }
+    software: {
+        id: number
+        name: string
+    }
+    arguments: ArgumentInput[]
+}
+
+export interface CreateSchemaInput {
+    name: string
+    type: string
+    device_type_id: number
+    software_id: number
+    note?: string | null
+    arguments: ArgumentInput[]
+    schema: File | null
+    preview?: File | null
+}
+
+export interface UpdateSchemaInput extends CreateSchemaInput {
+    id: number
+}
+
+export enum Trashed {
+    Only = 'only',
+    With = 'with',
+    Without = 'without',
 }
