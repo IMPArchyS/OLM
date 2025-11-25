@@ -4,9 +4,9 @@ from typing import TYPE_CHECKING
 from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.utils import now
+from app.models.argument import Argument
 
 if TYPE_CHECKING:
-    from app.models.argument import Argument
     from app.models.software import Software
     from app.models.reserved_experiment import ReservedExperiment
     from app.models.device_type import DeviceType
@@ -50,6 +50,9 @@ class SchemaPublic(SchemaBase):
     created_at: datetime
     modified_at: datetime
     deleted_at: datetime | None
+    device_type_id: int
+    software_id: int
+    arguments: list["Argument"]
 
 
 class SchemaUpdate(SQLModel):

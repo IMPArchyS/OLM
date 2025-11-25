@@ -10,7 +10,7 @@ export interface Device {
 export interface DeviceType {
     id: number
     name: string
-    experiment: Array<{
+    experiments: Array<{
         output_arguments: Array<{
             name: string
         }>
@@ -126,6 +126,7 @@ export interface SchemaExtended {
 export interface CreateSchemaInput {
     name: string
     type: string
+
     device_type_id: number
     software_id: number
     note?: string | null

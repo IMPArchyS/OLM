@@ -15,7 +15,7 @@ from app.models.server import Server
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("/", response_model=list[DeviceTypePublic])
 def get_all(db: DbSession): 
     stmt = select(DeviceType)
     return db.exec(stmt).all()

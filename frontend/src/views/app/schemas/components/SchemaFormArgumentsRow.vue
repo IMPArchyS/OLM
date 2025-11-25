@@ -106,7 +106,6 @@ watch(
     (newVal) => {
         localArgument.value = { ...newVal }
     },
-    { deep: true },
 )
 
 const handleDefaultValueChange = (value: string | null) => {
@@ -117,27 +116,38 @@ const handleDefaultValueChange = (value: string | null) => {
 }
 
 const handleAddOption = () => {
-    if (!localArgument.value.options) {
-        localArgument.value.options = []
+    const updated = { ...localArgument.value }
+    if (!updated.options) {
+        updated.options = []
     }
-    localArgument.value.options.push({
-        name: '',
-        value: '',
-        output_value: '',
-    })
-    emitChange()
+    updated.options = [
+        ...updated.options,
+        {
+            name: '',
+            value: '',
+            output_value: '',
+        },
+    ]
+    localArgument.value = updated
+    emit('change', updated)
 }
 
 const handleOptionChange = (option: OptionInput, index: number) => {
     if (!localArgument.value.options) return
-    localArgument.value.options[index] = option
-    emitChange()
+    const updated = { ...localArgument.value }
+    updated.options = [...localArgument.value.options]
+    updated.options[index] = option
+    localArgument.value = updated
+    emit('change', updated)
 }
 
 const handleDeleteOption = (index: number) => {
     if (!localArgument.value.options) return
-    localArgument.value.options.splice(index, 1)
-    emitChange()
+    const updated = { ...localArgument.value }
+    updated.options = [...localArgument.value.options]
+    updated.options.splice(index, 1)
+    localArgument.value = updated
+    emit('change', updated)
 }
 
 const emitChange = () => {

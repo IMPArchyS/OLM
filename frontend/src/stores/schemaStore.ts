@@ -37,15 +37,23 @@ export const useSchemaStore = defineStore('schema', {
             (state) =>
             (deviceTypeId: number): string[] => {
                 const deviceType = state.deviceTypes.find((dt) => dt.id === deviceTypeId)
+
                 if (!deviceType) return []
 
                 const outputValues: string[] = []
-                deviceType.experiment.forEach((experiment) => {
-                    experiment.output_arguments.forEach((outputArg) => {
-                        if (!outputValues.includes(outputArg.name)) {
-                            outputValues.push(outputArg.name)
-                        }
-                    })
+
+                deviceType.experiments.forEach((experiment) => {
+                    if (
+                        experiment.output_arguments &&
+                        typeof experiment.output_arguments === 'object'
+                    ) {
+                        // output_arguments is an object, get all its keys
+                        Object.keys(experiment.output_arguments).forEach((key) => {
+                            if (!outputValues.includes(key)) {
+                                outputValues.push(key)
+                            }
+                        })
+                    }
                 })
                 return outputValues
             },

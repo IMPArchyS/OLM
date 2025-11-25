@@ -1,10 +1,10 @@
 <template>
-    <v-card>
-        <v-card-title class="d-flex align-center">
+    <v-card class="h-screen overflow-hidden flex flex-col">
+        <v-card-title class="d-flex align-center shrink-0">
             <v-icon class="me-2">mdi-lock</v-icon>
             {{ $t('actions.edit') }}
         </v-card-title>
-        <v-card-text>
+        <v-card-text class="overflow-y-auto grow">
             <v-overlay
                 :model-value="schemaStore.loading || deviceTypesLoading || !updateSchemaInput"
                 contained
@@ -177,16 +177,10 @@ const previewFile = ref<File[]>([])
 const previewDialog = ref(false)
 const updateSchemaInput = ref<UpdateSchemaInput | null>(null)
 
-const schemaTypeItems = computed(() => {
-    if (!schemaStore.currentSchema) return []
-    return [
-        { title: '', value: '-1' },
-        ...schemaStore.currentSchema.availableTypes.map((type) => ({
-            title: t(`schemas.types.${type}`),
-            value: type,
-        })),
-    ]
-})
+const schemaTypeItems = computed(() => [
+    { title: t('schemas.types.control'), value: 'control' },
+    { title: t('schemas.types.ident'), value: 'ident' },
+])
 
 const deviceTypeItems = computed(() => [
     { title: '', value: '-1' },
@@ -264,7 +258,8 @@ const handleUpdate = async () => {
 }
 
 onMounted(async () => {
-    const schemaId = route.params.id as string
+    const schemaIdParam = route.params.id
+    const schemaId = Array.isArray(schemaIdParam) ? Number(schemaIdParam[0]) : Number(schemaIdParam)
     deviceTypesLoading.value = true
 
     try {
@@ -274,12 +269,13 @@ onMounted(async () => {
         ])
 
         if (schemaStore.currentSchema) {
+            console.log(schemaStore.currentSchema)
             updateSchemaInput.value = {
                 id: schemaStore.currentSchema.id,
                 name: schemaStore.currentSchema.name,
                 type: schemaStore.currentSchema.type,
-                device_type_id: schemaStore.currentSchema.deviceType.id,
-                software_id: schemaStore.currentSchema.software.id,
+                device_type_id: schemaStore.currentSchema.device_type_id,
+                software_id: schemaStore.currentSchema.software_id,
                 note: schemaStore.currentSchema.note,
                 arguments: schemaStore.currentSchema.arguments.map((arg) => ({
                     name: arg.name,

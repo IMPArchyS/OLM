@@ -97,18 +97,33 @@ export default {
         add: 'Add',
         back: 'Back',
         title: 'Actions',
+        save: 'Save',
     },
     schemas: {
         title: 'Schemas',
         addSchema: 'Add Schema',
+        save: 'Save',
         editSchema: 'Edit Schema',
         deleteSchema: 'Delete Schema',
         schemaName: 'Schema Name',
         schemaDescription: 'Schema Description',
+        add_argument: 'Add Argument',
+        arguments: 'Arguments',
         index: {
             title: 'Schemas',
         },
+        types: {
+            control: 'Control',
+        },
         columns: {
+            add_option: 'Add Option',
+            add_argument: 'Add Argument',
+            arguments: 'Arguments',
+            options: 'Options',
+            types: {
+                control: 'Control',
+            },
+
             id: 'ID',
             name: 'Name',
             device_type: 'Device Type',
@@ -120,6 +135,19 @@ export default {
         },
         trashed: {
             label: 'Show Deleted',
+
+            argument: {
+                label: 'Label',
+                default_value: 'Default Value',
+                row: 'Row',
+                order: 'Order',
+                name: 'Name',
+                option: {
+                    name: 'Name',
+                    value: 'Value',
+                    output_value: 'Output Value',
+                },
+            },
             without: 'Without Deleted',
             with: 'With Deleted',
             only: 'Only Deleted',

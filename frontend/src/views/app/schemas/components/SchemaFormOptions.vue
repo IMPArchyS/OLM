@@ -61,7 +61,6 @@ watch(
     (newVal) => {
         localOption.value = { ...newVal }
     },
-    { deep: true },
 )
 
 const outputValueItems = computed(() => {

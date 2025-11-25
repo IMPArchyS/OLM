@@ -45,33 +45,35 @@ watch(
     (newVal) => {
         localArguments.value = [...newVal]
     },
-    { deep: true },
-)
-
-watch(
-    localArguments,
-    () => {
-        emit('change', [...localArguments.value])
-    },
-    { deep: true },
 )
 
 const handleAddArgument = () => {
-    localArguments.value.push({
-        name: '',
-        label: '',
-        default_value: '',
-        row: 1,
-        order: 1,
-        options: [],
-    })
+    const updated = [
+        ...localArguments.value,
+        {
+            name: '',
+            label: '',
+            default_value: '',
+            row: 1,
+            order: 1,
+            options: [],
+        },
+    ]
+    localArguments.value = updated
+    emit('change', updated)
 }
 
 const handleArgumentChange = (argument: ArgumentInput, index: number) => {
-    localArguments.value[index] = argument
+    const updated = [...localArguments.value]
+    updated[index] = argument
+    localArguments.value = updated
+    emit('change', updated)
 }
 
 const handleDeleteArgument = (index: number) => {
-    localArguments.value.splice(index, 1)
+    const updated = [...localArguments.value]
+    updated.splice(index, 1)
+    localArguments.value = updated
+    emit('change', updated)
 }
 </script>

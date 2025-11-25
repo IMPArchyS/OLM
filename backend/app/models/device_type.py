@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, List
 from sqlmodel import Field, Relationship, SQLModel
 from app.models.utils import now
 from app.models.schema import Schema
+from app.models.experiment import ExperimentPublic
 
 if TYPE_CHECKING:
     from app.models.device import Device
@@ -33,6 +34,7 @@ class DeviceTypePublic(DeviceTypeBase):
     id: int
     created_at: datetime
     modified_at: datetime
+    experiments: List["ExperimentPublic"]
 
 
 class DeviceTypeUpdate(DeviceTypeBase):
