@@ -145,6 +145,7 @@ export default {
             error: 'Nepodarilo sa aktualizovať schému',
         },
         device_type_warning: 'Vyberte typ zariadenia pre zobrazenie dostupných výstupných hodnôt',
+        noSchemasFound: 'Žiadne schémy nenájdené',
     },
     dashboard: {
         title: 'Dashboard',

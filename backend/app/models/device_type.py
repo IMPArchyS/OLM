@@ -22,9 +22,7 @@ class DeviceType(DeviceTypeBase, table=True):
     # Relationships
     devices: List["Device"] = Relationship(back_populates="device_type", cascade_delete=True)
     experiments: List["Experiment"] = Relationship(back_populates="device_type", cascade_delete=True)
-    
-    schema_id: int = Field(foreign_key="schema.id")
-    schema_obj: Schema = Relationship(back_populates="device_types")
+    schemas: List["Schema"] = Relationship(back_populates="device_type", cascade_delete=True)
 
 
 class DeviceTypeCreate(DeviceTypeBase):
@@ -38,4 +36,4 @@ class DeviceTypePublic(DeviceTypeBase):
 
 
 class DeviceTypeUpdate(DeviceTypeBase):
-    schema_id: int | None = None 
+    pass 

@@ -68,7 +68,7 @@ export const useSchemaStore = defineStore('schema', {
             }
         },
 
-        async fetchSchema(id: string) {
+        async fetchSchema(id: number) {
             this.loading = true
             this.error = null
             try {
@@ -172,7 +172,7 @@ export const useSchemaStore = defineStore('schema', {
             }
         },
 
-        async deleteSchema(id: string) {
+        async deleteSchema(id: number) {
             this.loading = true
             this.error = null
             try {
@@ -185,7 +185,7 @@ export const useSchemaStore = defineStore('schema', {
             }
         },
 
-        async restoreSchema(id: string) {
+        async restoreSchema(id: number) {
             this.loading = true
             this.error = null
             try {

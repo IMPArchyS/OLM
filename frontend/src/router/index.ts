@@ -71,7 +71,7 @@ const router = createRouter({
                 {
                     path: '/app/schemas',
                     name: 'schemas-index',
-                    component: () => import('@/views/app/schemas/IndexSchema.vue'),
+                    component: () => import('@/views/app/schemas/Schemas.vue'),
                     meta: {
                         requiresAuth: true,
                         permission: 'schema.index',

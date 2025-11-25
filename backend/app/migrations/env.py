@@ -7,6 +7,8 @@ from sqlmodel import SQLModel
 
 from app.core.config import settings
 from app.models.device import Device
+from app.models.argument import Argument
+from app.models.option import Option
 from app.models.device_type import DeviceType
 from app.models.experiment import Experiment
 from app.models.software import Software

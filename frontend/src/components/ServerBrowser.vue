@@ -28,6 +28,7 @@ const showDetailsModal = ref(false)
 const showEditModal = ref(false)
 const showCreateModal = ref(false)
 const selectedServer = ref<Server | null>(null)
+const selectedDeviceServer = ref<Server | null>(null)
 const showDeleted = ref(false)
 
 const filteredServers = computed(() => {
@@ -42,6 +43,10 @@ onMounted(async () => {
     await fetchServers()
     if (servers.value.length > 0) {
         emit('serversLoaded', servers.value)
+        const firstServer = filteredServers.value[0]
+        if (firstServer) {
+            selectedDeviceServer.value = firstServer
+        }
     }
 })
 
@@ -50,6 +55,7 @@ const handleCreate = async () => {
 }
 
 const handleDevices = (item: Server) => {
+    selectedDeviceServer.value = item
     emit('selectServer', item)
 }
 
@@ -179,6 +185,7 @@ const handleSyncAll = async () => {
                             icon="mdi-toolbox"
                             size="small"
                             variant="text"
+                            :color="selectedDeviceServer?.id === item.id ? 'primary' : ''"
                             @click="handleDevices(item)"
                         ></v-btn>
                         <v-btn

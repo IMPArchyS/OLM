@@ -46,6 +46,7 @@ const headers = computed(() => [
         key: 'actions',
         sortable: false,
         width: 200,
+        align: 'center' as const,
     },
 ])
 
@@ -121,124 +122,121 @@ onMounted(async () => {
 </script>
 
 <template>
-    <v-card>
-        <v-card-title class="d-flex align-center justify-space-between">
-            <div class="d-flex align-center">
-                <v-icon class="me-2">mdi-calculator</v-icon>
-                {{ $t('schemas.index.title') }}
-            </div>
-            <v-btn
-                v-if="canCreate"
-                color="primary"
-                prepend-icon="mdi-plus"
-                @click="$router.push('/app/schemas/create')"
-            >
-                {{ $t('actions.add') }}
-            </v-btn>
-        </v-card-title>
-        <v-card-text>
-            <v-overlay
-                :model-value="schemaStore.loading"
-                contained
-                class="align-center justify-center"
-            >
-                <v-progress-circular indeterminate size="64" />
-            </v-overlay>
+    <v-container fluid>
+        <v-card>
+            <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
+                <span class="text-h5">{{ $t('schemas.index.title') }}</span>
+                <v-btn
+                    v-if="canCreate"
+                    color="primary"
+                    prepend-icon="mdi-plus"
+                    @click="$router.push('/app/schemas/create')"
+                >
+                    {{ $t('actions.add') }}
+                </v-btn>
+            </v-card-title>
 
-            <v-alert
-                v-if="schemaStore.error"
-                type="error"
-                class="mb-4"
-                closable
-                @click:close="schemaStore.error = null"
-            >
-                {{ schemaStore.error }}
-            </v-alert>
+            <v-divider></v-divider>
 
-            <v-select
-                v-model="withTrashed"
-                :items="trashedOptions"
-                :label="$t('schemas.trashed.label')"
-                variant="outlined"
-                density="compact"
-                class="mb-4"
-                style="max-width: 300px"
-                @update:model-value="handleTrashedChange"
-            />
+            <v-card-text>
+                <!-- Toggle for deleted schemas -->
+                <div class="d-flex justify-start mb-4">
+                    <v-switch
+                        v-model="withTrashed"
+                        :label="$t('schemas.trashed.label')"
+                        color="info"
+                        hide-details
+                        :true-value="Trashed.With"
+                        :false-value="Trashed.Without"
+                        @update:model-value="handleTrashedChange"
+                    ></v-switch>
+                </div>
 
-            <v-divider class="mb-4" />
+                <!-- Preview Modal -->
+                <v-dialog v-model="previewDialog" max-width="800">
+                    <v-card>
+                        <v-card-title class="d-flex justify-space-between align-center">
+                            {{ $t('schemas.columns.preview') }}
+                            <v-btn icon @click="closePreview">
+                                <v-icon>mdi-close</v-icon>
+                            </v-btn>
+                        </v-card-title>
+                        <v-card-text>
+                            <v-img v-if="previewUrl" :src="previewUrl" contain />
+                        </v-card-text>
+                    </v-card>
+                </v-dialog>
 
-            <!-- Preview Modal -->
-            <v-dialog v-model="previewDialog" max-width="800">
-                <v-card>
-                    <v-card-title class="d-flex justify-space-between align-center">
-                        {{ $t('schemas.columns.preview') }}
-                        <v-btn icon @click="closePreview">
-                            <v-icon>mdi-close</v-icon>
-                        </v-btn>
-                    </v-card-title>
-                    <v-card-text>
-                        <v-img v-if="previewUrl" :src="previewUrl" contain />
-                    </v-card-text>
-                </v-card>
-            </v-dialog>
-
-            <v-data-table
-                :headers="headers"
-                :items="schemaStore.schemas"
-                :items-per-page="10"
-                class="elevation-1"
-            >
-                <template #item.actions="{ item }">
-                    <div class="d-flex ga-2">
+                <v-data-table
+                    :headers="headers"
+                    :items="schemaStore.schemas"
+                    :loading="schemaStore.loading"
+                    :loading-text="t('common.loading')"
+                    class="elevation-1"
+                    item-value="id"
+                >
+                    <template #item.actions="{ item }">
                         <v-btn
                             v-if="canShow"
+                            icon="mdi-image"
+                            size="small"
+                            variant="text"
                             color="warning"
-                            icon
-                            size="small"
                             @click="handleOpenPreview(item.id)"
-                        >
-                            <v-icon size="small">mdi-image</v-icon>
-                        </v-btn>
+                        ></v-btn>
                         <v-btn
                             v-if="canShow"
-                            color="success"
-                            icon
+                            icon="mdi-download"
                             size="small"
+                            variant="text"
+                            color="success"
                             @click="handleDownload(item.id)"
-                        >
-                            <v-icon size="small">mdi-download</v-icon>
-                        </v-btn>
+                        ></v-btn>
                         <v-btn
                             v-if="canUpdate && !item.deleted_at"
-                            color="primary"
-                            icon
+                            icon="mdi-pencil"
                             size="small"
+                            variant="text"
+                            color="primary"
                             @click="$router.push(`/app/schemas/${item.id}/edit`)"
-                        >
-                            <v-icon size="small">mdi-pencil</v-icon>
-                        </v-btn>
+                        ></v-btn>
                         <v-btn
                             v-if="canDelete && !item.deleted_at"
-                            color="error"
-                            icon
+                            icon="mdi-delete"
                             size="small"
+                            variant="text"
+                            color="error"
                             @click="handleDelete(item.id)"
-                        >
-                            <v-icon size="small">mdi-delete</v-icon>
-                        </v-btn>
+                        ></v-btn>
                         <v-btn
                             v-if="canRestore && item.deleted_at"
-                            color="grey-darken-2"
-                            icon
+                            icon="mdi-undo"
                             size="small"
+                            variant="text"
+                            color="grey-darken-2"
                             @click="handleRestore(item.id)"
-                        >
-                            <v-icon size="small">mdi-undo</v-icon>
-                        </v-btn>
-                    </div>
-                </template>
-            </v-data-table>
-        </v-card-text>
-    </v-card>
+                        ></v-btn>
+                    </template>
+
+                    <!-- No Data -->
+                    <template v-slot:no-data>
+                        <v-alert type="info" variant="tonal" class="ma-4">
+                            {{ t('schemas.noSchemasFound') }}
+                        </v-alert>
+                    </template>
+                </v-data-table>
+
+                <!-- Error Alert -->
+                <v-alert
+                    v-if="schemaStore.error"
+                    type="error"
+                    variant="tonal"
+                    class="mt-4"
+                    closable
+                >
+                    {{ schemaStore.error }}
+                </v-alert>
+            </v-card-text>
+        </v-card>
+    </v-container>
 </template>

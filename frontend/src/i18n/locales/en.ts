@@ -96,6 +96,7 @@ export default {
     actions: {
         add: 'Add',
         back: 'Back',
+        title: 'Actions',
     },
     schemas: {
         title: 'Schemas',
@@ -149,6 +150,7 @@ export default {
             error: 'Failed to update schema',
         },
         device_type_warning: 'Select a device type to see available output values',
+        noSchemasFound: 'No schemas found',
     },
     dashboard: {
         title: 'Dashboard',

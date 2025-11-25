@@ -1,12 +1,14 @@
 from fastapi import APIRouter
 
 from app.api.endpoints import (
+    argument,
     device_type,
     device,
     server,
     experiment,
     reserved_experiment,
     schema,
+    option,
     software,
     reservation,
     admin
@@ -20,6 +22,18 @@ api_router.include_router(
     admin.router,
     prefix="/api/admin",
     tags=["Admin"],
+)
+
+api_router.include_router(
+    argument.router,
+    prefix="/api/argument",
+    tags=["Argument"],
+)
+
+api_router.include_router(
+    option.router,
+    prefix="/api/option",
+    tags=["Option"],
 )
 
 api_router.include_router(
