@@ -21,7 +21,7 @@ provide('mainLayout', {
     <v-app>
         <Sidebar />
         <NavBar />
-        <v-main>
+        <v-main style="height: 100vh; overflow-y: auto; overflow-x: hidden">
             <div class="px-7 mb-5">
                 <router-view />
             </div>

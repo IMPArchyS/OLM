@@ -10,6 +10,8 @@ import login from '@/views/auth/Login.vue'
 import register from '@/views/auth/Register.vue'
 import error404 from '@/views/errors/Error404.vue'
 import error500 from '@/views/errors/Error500.vue'
+import updateProfile from '@/views/app/users/UpdateProfile.vue'
+import updatePassword from '@/views/app/users/UpdatePassword.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,6 +44,16 @@ const router = createRouter({
                 {
                     path: '',
                     redirect: '/app/dashboard',
+                },
+                {
+                    path: '/app/update-profile',
+                    name: 'update-profile',
+                    component: updateProfile,
+                },
+                {
+                    path: '/app/update-password',
+                    name: 'update-password',
+                    component: updatePassword,
                 },
                 {
                     path: '/app/dashboard',

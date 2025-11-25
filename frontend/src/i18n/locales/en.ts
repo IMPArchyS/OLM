@@ -100,6 +100,7 @@ export default {
         save: 'Save',
         edit: 'Edit',
         create: 'Create',
+        update: 'Update',
     },
     schemas: {
         title: 'Schemas',

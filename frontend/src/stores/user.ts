@@ -10,7 +10,6 @@ export interface User {
 export const useUserStore = defineStore('user', () => {
     const user = ref<User | null>(null)
     const isLoggedIn = computed(() => user.value !== null)
-
     // Initialize user from localStorage
     const initUser = () => {
         const savedUser = localStorage.getItem('user')
@@ -39,16 +38,12 @@ export const useUserStore = defineStore('user', () => {
         // TODO: Add actual logout API call here
     }
 
-    // Update profile (placeholder)
     const updateProfile = () => {
-        console.log('Update profile clicked for user:', user.value?.username)
-        // TODO: Add actual update profile logic here
+        console.log('update profile')
     }
 
-    // Update password (placeholder)
     const updatePassword = () => {
-        console.log('Update password clicked for user:', user.value?.username)
-        // TODO: Add actual update password logic here
+        console.log('update password')
     }
 
     // Watch for user changes and persist

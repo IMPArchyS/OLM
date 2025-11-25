@@ -27,12 +27,15 @@ def time():
 @router.post("/seed")
 def seed(db: DbSession):
     # 1. Create Software first (needed by Schema)    
-    software = Software(
-        name="Matlab"
-    )
+    software = Software(name="Matlab")
     db.add(software)
     db.commit()
     db.refresh(software)
+    
+    sw2 = Software(name="Openloop")
+    db.add(sw2)
+    db.commit()
+    db.refresh(sw2)
     
     device_type = DeviceType(
         name="Sensor",
@@ -156,6 +159,14 @@ def seed(db: DbSession):
     db.commit()
     db.refresh(device_software)
     
+    device_software2 = DeviceSoftware(
+        device_id=device.id,
+        software_id=sw2.id
+    )
+    db.add(device_software2)
+    db.commit()
+    db.refresh(device_software2)
+    
     # 7. Create Experiment (depends on Server, DeviceType, Device, Software)
     experiment = Experiment(
         commands={"init": "expression","start": "expression","change": "expression","stop": "expression"},
@@ -176,6 +187,27 @@ def seed(db: DbSession):
     db.add(experiment)
     db.commit()
     db.refresh(experiment)
+
+    experiment2 = Experiment(
+        commands={"init": "expression","start": "expression","change": "expression","stop": "expression"},
+        experiment_commands={
+            "fan_voltage": {
+                "value": 0,
+                "type": "number",
+                "unit": "V"
+            }
+        },
+        output_arguments={"format": "json"},
+        has_schema=False,
+        server_id=server.id,
+        device_type_id=device_type.id,
+        device_id=device.id,
+        software_id=sw2.id
+    )
+    db.add(experiment2)
+    db.commit()
+    db.refresh(experiment2)
+    
     
     # 8. Create ReservedExperiment (depends on Experiment, Device, Schema)
     if experiment.id is None:
@@ -219,11 +251,11 @@ def clear(db: DbSession):
     db.exec(delete(Experiment))
     db.exec(delete(DeviceSoftware))
     db.exec(delete(Device))
-    db.exec(delete(DeviceType))
-    db.exec(delete(Server))
     db.exec(delete(Option))
     db.exec(delete(Argument))
     db.exec(delete(Schema))
+    db.exec(delete(DeviceType))
+    db.exec(delete(Server))
     db.exec(delete(Software))
     db.commit()
     return {"message": "Database cleared successfully"}

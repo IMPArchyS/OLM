@@ -12,16 +12,19 @@ const isOpen = ref(false)
 const handleUpdateProfile = () => {
     userStore.updateProfile()
     isOpen.value = false
+    router.push({ name: 'update-profile' })
 }
 
 const handleUpdatePassword = () => {
     userStore.updatePassword()
     isOpen.value = false
+    router.push({ name: 'update-password' })
 }
 
 const handleLogout = () => {
     userStore.logout()
     isOpen.value = false
+    router.push({ name: 'login' })
 }
 
 const handleLogin = () => {

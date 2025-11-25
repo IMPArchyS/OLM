@@ -16,42 +16,35 @@ const handleLogin = () => {
 </script>
 
 <template>
-    <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-            <h2 class="card-title text-2xl mb-4">Login</h2>
-            <form @submit.prevent="handleLogin">
-                <div class="form-control mb-4">
-                    <label class="label">
-                        <span class="label-text">Username</span>
-                    </label>
-                    <input
-                        v-model="username"
-                        type="text"
-                        placeholder="Enter username"
-                        class="input input-bordered w-full"
-                        required
-                    />
-                </div>
-                <div class="form-control mb-4">
-                    <label class="label">
-                        <span class="label-text">Password</span>
-                    </label>
-                    <input
-                        v-model="password"
-                        type="password"
-                        placeholder="Enter password"
-                        class="input input-bordered w-full"
-                        required
-                    />
-                </div>
-                <div class="form-control mt-6">
-                    <button type="submit" class="btn btn-primary w-full">Login</button>
-                </div>
-            </form>
-            <div class="divider">OR</div>
-            <router-link :to="{ name: 'register' }" class="btn btn-ghost w-full">
-                Create an account
-            </router-link>
-        </div>
-    </div>
+    <v-card max-width="400" class="mx-auto mt-5">
+        <v-card-title class="text-h5 mb-4">Login</v-card-title>
+        <v-card-text>
+            <v-form @submit.prevent="handleLogin">
+                <v-text-field
+                    v-model="username"
+                    label="Username"
+                    placeholder="Enter username"
+                    variant="outlined"
+                    density="comfortable"
+                    required
+                    class="mb-4"
+                />
+                <v-text-field
+                    v-model="password"
+                    label="Password"
+                    placeholder="Enter password"
+                    type="password"
+                    variant="outlined"
+                    density="comfortable"
+                    required
+                    class="mb-4"
+                />
+                <v-btn type="submit" color="primary" variant="elevated" block class="mt-2">
+                    Login
+                </v-btn>
+            </v-form>
+            <v-divider class="my-4" />
+            <v-btn :to="{ name: 'register' }" variant="text" block> Create an account </v-btn>
+        </v-card-text>
+    </v-card>
 </template>
