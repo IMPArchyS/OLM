@@ -122,121 +122,113 @@ onMounted(async () => {
 </script>
 
 <template>
-    <v-container fluid>
-        <v-card>
-            <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-                <span class="text-h5">{{ $t('schemas.index.title') }}</span>
-                <v-btn
-                    v-if="canCreate"
-                    color="primary"
-                    prepend-icon="mdi-plus"
-                    @click="$router.push('/app/schemas/create')"
-                >
-                    {{ $t('actions.add') }}
-                </v-btn>
-            </v-card-title>
+    <v-card class="mt-5">
+        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
+            <span class="text-h5">{{ $t('schemas.index.title') }}</span>
+            <v-btn
+                v-if="canCreate"
+                color="primary"
+                prepend-icon="mdi-plus"
+                @click="$router.push('/app/schemas/create')"
+            >
+                {{ $t('actions.add') }}
+            </v-btn>
+        </v-card-title>
 
-            <v-divider></v-divider>
+        <v-divider></v-divider>
 
-            <v-card-text>
-                <!-- Toggle for deleted schemas -->
-                <div class="d-flex justify-start mb-4">
-                    <v-switch
-                        v-model="withTrashed"
-                        :label="$t('schemas.trashed.label')"
-                        color="info"
-                        hide-details
-                        :true-value="Trashed.With"
-                        :false-value="Trashed.Without"
-                        @update:model-value="handleTrashedChange"
-                    ></v-switch>
-                </div>
+        <v-card-text>
+            <!-- Toggle for deleted schemas -->
+            <div class="d-flex justify-start mb-4">
+                <v-switch
+                    v-model="withTrashed"
+                    :label="$t('schemas.trashed.label')"
+                    color="info"
+                    hide-details
+                    :true-value="Trashed.With"
+                    :false-value="Trashed.Without"
+                    @update:model-value="handleTrashedChange"
+                ></v-switch>
+            </div>
 
-                <!-- Preview Modal -->
-                <v-dialog v-model="previewDialog" max-width="800">
-                    <v-card>
-                        <v-card-title class="d-flex justify-space-between align-center">
-                            {{ $t('schemas.columns.preview') }}
-                            <v-btn icon @click="closePreview">
-                                <v-icon>mdi-close</v-icon>
-                            </v-btn>
-                        </v-card-title>
-                        <v-card-text>
-                            <v-img v-if="previewUrl" :src="previewUrl" contain />
-                        </v-card-text>
-                    </v-card>
-                </v-dialog>
+            <!-- Preview Modal -->
+            <v-dialog v-model="previewDialog" max-width="800">
+                <v-card>
+                    <v-card-title class="d-flex justify-space-between align-center">
+                        {{ $t('schemas.columns.preview') }}
+                        <v-btn icon @click="closePreview">
+                            <v-icon>mdi-close</v-icon>
+                        </v-btn>
+                    </v-card-title>
+                    <v-card-text>
+                        <v-img v-if="previewUrl" :src="previewUrl" contain />
+                    </v-card-text>
+                </v-card>
+            </v-dialog>
 
-                <v-data-table
-                    :headers="headers"
-                    :items="schemaStore.schemas"
-                    :loading="schemaStore.loading"
-                    :loading-text="t('common.loading')"
-                    class="elevation-1"
-                    item-value="id"
-                >
-                    <template #item.actions="{ item }">
-                        <v-btn
-                            v-if="canShow"
-                            icon="mdi-image"
-                            size="small"
-                            variant="text"
-                            color="warning"
-                            @click="handleOpenPreview(item.id)"
-                        ></v-btn>
-                        <v-btn
-                            v-if="canShow"
-                            icon="mdi-download"
-                            size="small"
-                            variant="text"
-                            color="success"
-                            @click="handleDownload(item.id)"
-                        ></v-btn>
-                        <v-btn
-                            v-if="canUpdate && !item.deleted_at"
-                            icon="mdi-pencil"
-                            size="small"
-                            variant="text"
-                            color="primary"
-                            @click="$router.push(`/app/schemas/${item.id}/edit`)"
-                        ></v-btn>
-                        <v-btn
-                            v-if="canDelete && !item.deleted_at"
-                            icon="mdi-delete"
-                            size="small"
-                            variant="text"
-                            color="error"
-                            @click="handleDelete(item.id)"
-                        ></v-btn>
-                        <v-btn
-                            v-if="canRestore && item.deleted_at"
-                            icon="mdi-undo"
-                            size="small"
-                            variant="text"
-                            color="grey-darken-2"
-                            @click="handleRestore(item.id)"
-                        ></v-btn>
-                    </template>
+            <v-data-table
+                :headers="headers"
+                :items="schemaStore.schemas"
+                :loading="schemaStore.loading"
+                :loading-text="t('common.loading')"
+                class="elevation-1"
+                item-value="id"
+            >
+                <template #item.actions="{ item }">
+                    <v-btn
+                        v-if="canShow"
+                        icon="mdi-image"
+                        size="small"
+                        variant="text"
+                        color="warning"
+                        @click="handleOpenPreview(item.id)"
+                    ></v-btn>
+                    <v-btn
+                        v-if="canShow"
+                        icon="mdi-download"
+                        size="small"
+                        variant="text"
+                        color="success"
+                        @click="handleDownload(item.id)"
+                    ></v-btn>
+                    <v-btn
+                        v-if="canUpdate && !item.deleted_at"
+                        icon="mdi-pencil"
+                        size="small"
+                        variant="text"
+                        color="primary"
+                        @click="$router.push(`/app/schemas/${item.id}/edit`)"
+                    ></v-btn>
+                    <v-btn
+                        v-if="canDelete && !item.deleted_at"
+                        icon="mdi-delete"
+                        size="small"
+                        variant="text"
+                        color="error"
+                        @click="handleDelete(item.id)"
+                    ></v-btn>
+                    <v-btn
+                        v-if="canRestore && item.deleted_at"
+                        icon="mdi-undo"
+                        size="small"
+                        variant="text"
+                        color="grey-darken-2"
+                        @click="handleRestore(item.id)"
+                    ></v-btn>
+                </template>
 
-                    <!-- No Data -->
-                    <template v-slot:no-data>
-                        <v-alert type="info" variant="tonal" class="ma-4">
-                            {{ t('schemas.noSchemasFound') }}
-                        </v-alert>
-                    </template>
-                </v-data-table>
+                <!-- No Data -->
+                <template v-slot:no-data>
+                    <v-alert type="info" variant="tonal" class="ma-4">
+                        {{ t('schemas.noSchemasFound') }}
+                    </v-alert>
+                </template>
+            </v-data-table>
 
-                <!-- Error Alert -->
-                <v-alert
-                    v-if="schemaStore.error"
-                    type="error"
-                    variant="tonal"
-                    class="mt-4"
-                    closable
-                >
-                    {{ schemaStore.error }}
-                </v-alert>
-            </v-card-text>
-        </v-card>
-    </v-container>
+            <!-- Error Alert -->
+            <v-alert v-if="schemaStore.error" type="error" variant="tonal" class="mt-4" closable>
+                {{ schemaStore.error }}
+            </v-alert>
+        </v-card-text>
+    </v-card>
 </template>

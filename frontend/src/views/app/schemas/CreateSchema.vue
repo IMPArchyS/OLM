@@ -1,10 +1,9 @@
 <template>
-    <v-card class="h-screen overflow-hidden flex flex-col">
-        <v-card-title class="d-flex align-center shrink-0">
-            <v-icon class="me-2">mdi-calculator</v-icon>
-            {{ $t('actions.create') }}
+    <v-card class="mt-5">
+        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
+            <span class="text-h5">{{ $t('actions.create') }}</span>
         </v-card-title>
-        <v-card-text class="overflow-y-auto grow">
+        <v-card-text class="overflow-y-auto! grow">
             <v-form @submit.prevent="handleCreate">
                 <v-overlay
                     :model-value="schemaStore.loading || deviceTypesLoading"

@@ -98,6 +98,8 @@ export default {
         back: 'Back',
         title: 'Actions',
         save: 'Save',
+        edit: 'Edit',
+        create: 'Create',
     },
     schemas: {
         title: 'Schemas',
