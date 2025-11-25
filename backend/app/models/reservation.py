@@ -10,7 +10,6 @@ if TYPE_CHECKING:
 class ReservationBase(SQLModel):
     start: datetime = Field(sa_column=Column(DateTime(timezone=True)))
     end: datetime = Field(sa_column=Column(DateTime(timezone=True)))
-    queued: bool = Field(default=False)
 
 class Reservation(ReservationBase, table=True):
     id: int | None = Field(default=None, primary_key=True)

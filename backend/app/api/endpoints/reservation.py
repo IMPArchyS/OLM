@@ -34,6 +34,15 @@ def get_by_id(db: DbSession, id: int):
     return db_reservation
 
 
+@router.get("/current", response_model=ReservationPublic)
+def get_current(db: DbSession):
+    stmt = select(Reservation).where(Reservation.start <= now(), Reservation.end >= now()).order_by(asc(Reservation.start))
+    db_reservation = db.exec(stmt).first()
+    if not db_reservation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No current reservation found!")
+    return db_reservation
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, reservation: ReservationCreate):
     db_reservation = Reservation.model_validate(reservation)
@@ -53,54 +62,6 @@ def create(db: DbSession, reservation: ReservationCreate):
             detail=f"Device {reservation.device_id} is already reserved during this time period!"
         )
     
-    db.add(db_reservation)
-    db.commit()
-    db.refresh(db_reservation)
-    return db_reservation
-
-
-@router.post("/queue", status_code=status.HTTP_201_CREATED)
-def create_queued(db: DbSession, reservation: ReservationQueue):
-    
-    if reservation.simulation_time <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Simulation time must be positive!")
-    
-    if not db.get(Device, reservation.device_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {reservation.device_id} not found!")
-    
-    existing_reservations_stmt = select(Reservation).where(
-        Reservation.device_id == reservation.device_id
-    ).order_by(asc(Reservation.start))
-    existing_reservations = db.exec(existing_reservations_stmt).all()
-    
-    duration = timedelta(seconds=reservation.simulation_time + 120)
-
-    def to_utc(dt: datetime) -> datetime:
-        if dt is None:
-            return None
-        if dt.tzinfo is None:
-            local_tz = datetime.now().astimezone().tzinfo
-            return dt.replace(tzinfo=local_tz).astimezone(timezone.utc)
-        return dt.astimezone(timezone.utc)
-
-    proposed_start = now()
-
-    for existing_res in existing_reservations:
-        existing_start = existing_res.start
-        existing_end = existing_res.end
-
-        if existing_end <= proposed_start:
-            continue
-
-        if proposed_start + duration <= existing_start:
-            break
-
-        proposed_start = existing_end
-
-    proposed_start = max(proposed_start, now())
-
-    db_reservation = Reservation(start=proposed_start, end=proposed_start + duration, device_id=reservation.device_id)
-    db_reservation.queued = True
     db.add(db_reservation)
     db.commit()
     db.refresh(db_reservation)
