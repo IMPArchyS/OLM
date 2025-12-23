@@ -40,47 +40,47 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import type { OptionInput } from '@/types/api.ts'
+import { ref, watch, computed } from 'vue';
+import type { OptionInput } from '@/types/api.ts';
 
 interface Props {
-    option: OptionInput
-    outputValues?: string[]
+    option: OptionInput;
+    outputValues?: string[];
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 const emit = defineEmits<{
-    change: [option: OptionInput]
-    delete: []
-}>()
+    change: [option: OptionInput];
+    delete: [];
+}>();
 
-const localOption = ref<OptionInput>({ ...props.option })
+const localOption = ref<OptionInput>({ ...props.option });
 
 watch(
     () => props.option,
     (newVal) => {
-        localOption.value = { ...newVal }
+        localOption.value = { ...newVal };
     },
-)
+);
 
 const outputValueItems = computed(() => {
-    if (!props.outputValues) return []
+    if (!props.outputValues) return [];
     return [
         { title: '', value: '' },
         ...props.outputValues.map((val) => ({
             title: `${val}`,
             value: val,
         })),
-    ]
-})
+    ];
+});
 
 const handleValueChange = (value: string) => {
     // Only allow numbers, commas, periods, brackets, and spaces
-    localOption.value.value = value.replace(/[^0-9\,.\]\[\s]/g, '')
-    emitChange()
-}
+    localOption.value.value = value.replace(/[^0-9\,.\]\[\s]/g, '');
+    emitChange();
+};
 
 const emitChange = () => {
-    emit('change', { ...localOption.value })
-}
+    emit('change', { ...localOption.value });
+};
 </script>

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { useMainLayout } from '@/composables/useMainLayout'
-import Sidebar from './Sidebar.vue'
-import NavBar from './NavBar.vue'
-import { provide } from 'vue'
+import { useMainLayout } from '@/composables/useMainLayout';
+import Sidebar from './Sidebar.vue';
+import NavBar from './NavBar.vue';
+import { provide } from 'vue';
 
 const { sidebarCollapsed, sidebarVisible, windowWidth, toggleSidebar, toggleSidebarVisibility } =
-    useMainLayout()
+    useMainLayout();
 
 // Provide the layout state and functions to child components
 provide('mainLayout', {
@@ -14,7 +14,7 @@ provide('mainLayout', {
     windowWidth,
     toggleSidebar,
     toggleSidebarVisibility,
-})
+});
 </script>
 
 <template>

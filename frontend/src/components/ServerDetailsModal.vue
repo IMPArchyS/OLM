@@ -1,31 +1,31 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import type { Server } from '@/types/api'
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import type { Server } from '@/types/api';
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 const props = defineProps<{
-    modelValue: boolean
-    server: Server | null
-}>()
+    modelValue: boolean;
+    server: Server | null;
+}>();
 
 const emit = defineEmits<{
-    'update:modelValue': [value: boolean]
-    edit: [server: Server]
-}>()
+    'update:modelValue': [value: boolean];
+    edit: [server: Server];
+}>();
 
 const dialog = computed({
     get: () => props.modelValue,
     set: (value) => emit('update:modelValue', value),
-})
+});
 
 const handleEdit = () => {
     if (props.server) {
-        emit('edit', props.server)
-        dialog.value = false
+        emit('edit', props.server);
+        dialog.value = false;
     }
-}
+};
 </script>
 
 <template>

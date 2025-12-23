@@ -84,41 +84,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import type { ArgumentInput, OptionInput } from '@/types/api.ts'
-import SchemaFormOptions from './SchemaFormOptions.vue'
+import { ref, watch } from 'vue';
+import type { ArgumentInput, OptionInput } from '@/types/api.ts';
+import SchemaFormOptions from './SchemaFormOptions.vue';
 
 interface Props {
-    argument: ArgumentInput
-    outputValues?: string[]
+    argument: ArgumentInput;
+    outputValues?: string[];
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 const emit = defineEmits<{
-    change: [argument: ArgumentInput]
-    delete: []
-}>()
+    change: [argument: ArgumentInput];
+    delete: [];
+}>();
 
-const localArgument = ref<ArgumentInput>({ ...props.argument })
+const localArgument = ref<ArgumentInput>({ ...props.argument });
 
 watch(
     () => props.argument,
     (newVal) => {
-        localArgument.value = { ...newVal }
+        localArgument.value = { ...newVal };
     },
-)
+);
 
 const handleDefaultValueChange = (value: string | null) => {
     if (value !== null) {
-        localArgument.value.default_value = value.replace(/[^0-9\,.\]\[\s]/g, '')
+        localArgument.value.default_value = value.replace(/[^0-9\,.\]\[\s]/g, '');
     }
-    emitChange()
-}
+    emitChange();
+};
 
 const handleAddOption = () => {
-    const updated = { ...localArgument.value }
+    const updated = { ...localArgument.value };
     if (!updated.options) {
-        updated.options = []
+        updated.options = [];
     }
     updated.options = [
         ...updated.options,
@@ -127,30 +127,30 @@ const handleAddOption = () => {
             value: '',
             output_value: '',
         },
-    ]
-    localArgument.value = updated
-    emit('change', updated)
-}
+    ];
+    localArgument.value = updated;
+    emit('change', updated);
+};
 
 const handleOptionChange = (option: OptionInput, index: number) => {
-    if (!localArgument.value.options) return
-    const updated = { ...localArgument.value }
-    updated.options = [...localArgument.value.options]
-    updated.options[index] = option
-    localArgument.value = updated
-    emit('change', updated)
-}
+    if (!localArgument.value.options) return;
+    const updated = { ...localArgument.value };
+    updated.options = [...localArgument.value.options];
+    updated.options[index] = option;
+    localArgument.value = updated;
+    emit('change', updated);
+};
 
 const handleDeleteOption = (index: number) => {
-    if (!localArgument.value.options) return
-    const updated = { ...localArgument.value }
-    updated.options = [...localArgument.value.options]
-    updated.options.splice(index, 1)
-    localArgument.value = updated
-    emit('change', updated)
-}
+    if (!localArgument.value.options) return;
+    const updated = { ...localArgument.value };
+    updated.options = [...localArgument.value.options];
+    updated.options.splice(index, 1);
+    localArgument.value = updated;
+    emit('change', updated);
+};
 
 const emitChange = () => {
-    emit('change', { ...localArgument.value })
-}
+    emit('change', { ...localArgument.value });
+};
 </script>

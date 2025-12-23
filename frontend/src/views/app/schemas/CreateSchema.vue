@@ -117,20 +117,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { useSchemaStore } from '@/stores/schemaStore'
-import type { CreateSchemaInput, ArgumentInput } from '@/types/api.ts'
-import SchemaFormArguments from '@/views/app/schemas/components/SchemaFormArguments.vue'
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { useSchemaStore } from '@/stores/schemaStore';
+import type { CreateSchemaInput, ArgumentInput } from '@/types/api.ts';
+import SchemaFormArguments from '@/views/app/schemas/components/SchemaFormArguments.vue';
 
-const router = useRouter()
-const { t } = useI18n()
-const schemaStore = useSchemaStore()
+const router = useRouter();
+const { t } = useI18n();
+const schemaStore = useSchemaStore();
 
-const deviceTypesLoading = ref(false)
-const schemaFile = ref<File[]>([])
-const previewFile = ref<File[]>([])
+const deviceTypesLoading = ref(false);
+const schemaFile = ref<File[]>([]);
+const previewFile = ref<File[]>([]);
 
 const createSchemaInput = ref<CreateSchemaInput>({
     name: '',
@@ -141,7 +141,7 @@ const createSchemaInput = ref<CreateSchemaInput>({
     arguments: [],
     schema: null,
     preview: null,
-})
+});
 
 const schemaTypeItems = computed(() => [
     { title: '', value: '-1' },
@@ -149,7 +149,7 @@ const schemaTypeItems = computed(() => [
         title: t(`schemas.types.${type}`),
         value: type,
     })),
-])
+]);
 
 const deviceTypeItems = computed(() => [
     { title: '', value: '-1' },
@@ -157,7 +157,7 @@ const deviceTypeItems = computed(() => [
         title: dt.name,
         value: dt.id,
     })),
-])
+]);
 
 const softwareItems = computed(() => [
     { title: '', value: '-1' },
@@ -165,63 +165,63 @@ const softwareItems = computed(() => [
         title: sw.name,
         value: sw.id,
     })),
-])
+]);
 
 const currentOutputValues = computed(() => {
-    if (createSchemaInput.value.device_type_id === -1) return []
-    return schemaStore.outputValuesForDeviceType(createSchemaInput.value.device_type_id)
-})
+    if (createSchemaInput.value.device_type_id === -1) return [];
+    return schemaStore.outputValuesForDeviceType(createSchemaInput.value.device_type_id);
+});
 
 const handleSchemaFileChange = (files: File | File[]) => {
     if (Array.isArray(files)) {
         createSchemaInput.value.schema =
-            files.length > 0 && files[0] !== undefined ? files[0] : null
+            files.length > 0 && files[0] !== undefined ? files[0] : null;
     } else {
-        createSchemaInput.value.schema = files !== undefined ? files : null
+        createSchemaInput.value.schema = files !== undefined ? files : null;
     }
-}
+};
 
 const handlePreviewFileChange = (files: File | File[]) => {
     if (Array.isArray(files)) {
-        createSchemaInput.value.preview = files.length > 0 ? files[0] : null
+        createSchemaInput.value.preview = files.length > 0 ? files[0] : null;
     } else {
-        createSchemaInput.value.preview = files ?? null
+        createSchemaInput.value.preview = files ?? null;
     }
-}
+};
 
 const handleArgumentsChange = (args: ArgumentInput[]) => {
-    createSchemaInput.value.arguments = args
-}
+    createSchemaInput.value.arguments = args;
+};
 
 const handleCreate = async () => {
     try {
-        await schemaStore.createSchema(createSchemaInput.value)
+        await schemaStore.createSchema(createSchemaInput.value);
         // Show success toast (you'll need to implement toast functionality)
-        alert(t('schemas.create.success'))
-        router.push('/app/schemas')
+        alert(t('schemas.create.success'));
+        router.push('/app/schemas');
     } catch (error) {
         // Error is already set in store
-        alert(t('schemas.create.error'))
+        alert(t('schemas.create.error'));
     }
-}
+};
 
 onMounted(async () => {
-    deviceTypesLoading.value = true
+    deviceTypesLoading.value = true;
     try {
         await Promise.all([
             schemaStore.fetchDeviceTypesAndSoftware(),
             schemaStore.fetchAvailableSchemaTypes(),
-        ])
+        ]);
 
         // Set initial values after data is loaded
         if (schemaStore.deviceTypes.length > 0 && schemaStore.deviceTypes[0]?.id !== undefined) {
-            createSchemaInput.value.device_type_id = schemaStore.deviceTypes[0].id
+            createSchemaInput.value.device_type_id = schemaStore.deviceTypes[0].id;
         }
         if (schemaStore.software.length > 0 && schemaStore.software[0]?.id !== undefined) {
-            createSchemaInput.value.software_id = schemaStore.software[0].id
+            createSchemaInput.value.software_id = schemaStore.software[0].id;
         }
     } finally {
-        deviceTypesLoading.value = false
+        deviceTypesLoading.value = false;
     }
-})
+});
 </script>

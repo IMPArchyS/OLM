@@ -1,29 +1,29 @@
 <script setup lang="ts">
-import { inject, computed } from 'vue'
-import type { Ref } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useRouter, useRoute } from 'vue-router'
+import { inject, computed } from 'vue';
+import type { Ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter, useRoute } from 'vue-router';
 
-const { t } = useI18n()
-const router = useRouter()
-const route = useRoute()
+const { t } = useI18n();
+const router = useRouter();
+const route = useRoute();
 
 interface MainLayoutContext {
-    sidebarCollapsed: Ref<boolean>
-    sidebarVisible: Ref<boolean>
-    windowWidth: Ref<number>
-    toggleSidebar: () => void
+    sidebarCollapsed: Ref<boolean>;
+    sidebarVisible: Ref<boolean>;
+    windowWidth: Ref<number>;
+    toggleSidebar: () => void;
 }
 
 const { sidebarCollapsed, sidebarVisible, windowWidth, toggleSidebar } =
-    inject<MainLayoutContext>('mainLayout')!
+    inject<MainLayoutContext>('mainLayout')!;
 
-const isActiveRoute = (routePath: string) => route.path === routePath
-const navigate = (routePath: string) => router.push(routePath)
+const isActiveRoute = (routePath: string) => route.path === routePath;
+const navigate = (routePath: string) => router.push(routePath);
 
 // Computed for responsive behavior
-const isCollapsed = computed(() => sidebarCollapsed.value && windowWidth.value >= 720)
-const showLabels = computed(() => !isCollapsed.value)
+const isCollapsed = computed(() => sidebarCollapsed.value && windowWidth.value >= 720);
+const showLabels = computed(() => !isCollapsed.value);
 </script>
 
 <template>

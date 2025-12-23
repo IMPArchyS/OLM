@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import DeviceReservationCalendar from '@/components/DeviceReservationCalendar.vue'
-import { useDevices } from '@/composables/useDevices'
-import { ref, onMounted, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
+import DeviceReservationCalendar from '@/components/DeviceReservationCalendar.vue';
+import { useDevices } from '@/composables/useDevices';
+import { ref, onMounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n()
+const { t } = useI18n();
 
-const selectedDevice = ref<number | null>(null)
+const selectedDevice = ref<number | null>(null);
 
-const { devicesForSelect, loading, error, fetchDevices, getDeviceById } = useDevices()
+const { devicesForSelect, loading, error, fetchDevices, getDeviceById } = useDevices();
 
 const selectedDeviceData = computed(() => {
-    return selectedDevice.value ? getDeviceById(selectedDevice.value) : null
-})
+    return selectedDevice.value ? getDeviceById(selectedDevice.value) : null;
+});
 
 onMounted(async () => {
-    await fetchDevices()
-})
+    await fetchDevices();
+});
 </script>
 
 <template>

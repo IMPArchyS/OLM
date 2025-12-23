@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import { useLanguageStore } from '@/stores/language'
-import { ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { useLanguageStore } from '@/stores/language';
+import { ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-const languageStore = useLanguageStore()
-const isOpen = ref(false)
-const { locale } = useI18n()
+const languageStore = useLanguageStore();
+const isOpen = ref(false);
+const { locale } = useI18n();
 
 const selectLanguage = (langCode: string) => {
-    languageStore.setLanguage(langCode)
-    locale.value = langCode
-    isOpen.value = false
-}
+    languageStore.setLanguage(langCode);
+    locale.value = langCode;
+    isOpen.value = false;
+};
 
 watch(
     () => languageStore.currentLanguage.code,
     (newCode) => {
-        locale.value = newCode
+        locale.value = newCode;
     },
-)
+);
 </script>
 
 <template>

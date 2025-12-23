@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import LanguageSelector from '@/components/LanguageSelector.vue'
-import ThemeSelector from '@/components/ThemeSelector.vue'
-import UserSelector from '@/components/UserSelector.vue'
-import { inject, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import type { Ref } from 'vue'
+import LanguageSelector from '@/components/LanguageSelector.vue';
+import ThemeSelector from '@/components/ThemeSelector.vue';
+import UserSelector from '@/components/UserSelector.vue';
+import { inject, computed } from 'vue';
+import { useRoute } from 'vue-router';
+import type { Ref } from 'vue';
 
 interface MainLayoutContext {
-    toggleSidebarVisibility: () => void
+    toggleSidebarVisibility: () => void;
 }
 
-const { toggleSidebarVisibility } = inject<MainLayoutContext>('mainLayout')!
-const route = useRoute()
+const { toggleSidebarVisibility } = inject<MainLayoutContext>('mainLayout')!;
+const route = useRoute();
 
 // Show hamburger menu only on specific routes
 const showMenuButton = computed(() => {
     // Option 3: Show on all routes except auth
-    return !route.path.startsWith('/auth')
-})
+    return !route.path.startsWith('/auth');
+});
 </script>
 
 <template>

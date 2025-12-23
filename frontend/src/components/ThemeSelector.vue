@@ -1,26 +1,26 @@
 <script setup lang="ts">
-import { useThemeStore } from '@/stores/theme'
-import { useTheme } from 'vuetify'
-import { computed, watch } from 'vue'
+import { useThemeStore } from '@/stores/theme';
+import { useTheme } from 'vuetify';
+import { computed, watch } from 'vue';
 
-const themeStore = useThemeStore()
-const vuetifyTheme = useTheme()
+const themeStore = useThemeStore();
+const vuetifyTheme = useTheme();
 
-const isDark = computed(() => vuetifyTheme.global.name.value === 'dark')
+const isDark = computed(() => vuetifyTheme.global.name.value === 'dark');
 
 watch(
     () => themeStore.theme,
     (newTheme) => {
-        vuetifyTheme.change(newTheme)
+        vuetifyTheme.change(newTheme);
     },
     { immediate: true },
-)
+);
 
 const toggleTheme = () => {
-    const newTheme = isDark.value ? 'light' : 'dark'
-    vuetifyTheme.change(newTheme)
-    themeStore.theme = newTheme
-}
+    const newTheme = isDark.value ? 'light' : 'dark';
+    vuetifyTheme.change(newTheme);
+    themeStore.theme = newTheme;
+};
 </script>
 
 <template>

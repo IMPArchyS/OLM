@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios from 'axios';
 
 const apiClient = axios.create({
     baseURL: 'http://localhost:8000/api',
@@ -6,7 +6,7 @@ const apiClient = axios.create({
         'Content-Type': 'application/json',
     },
     timeout: 10000,
-})
+});
 
 // Request interceptor (optional - for auth tokens, etc.)
 apiClient.interceptors.request.use(
@@ -16,12 +16,12 @@ apiClient.interceptors.request.use(
         // if (token) {
         //     config.headers.Authorization = `Bearer ${token}`
         // }
-        return config
+        return config;
     },
     (error) => {
-        return Promise.reject(error)
+        return Promise.reject(error);
     },
-)
+);
 
 // Response interceptor (optional - for error handling)
 apiClient.interceptors.response.use(
@@ -31,8 +31,8 @@ apiClient.interceptors.response.use(
         if (error.response?.status === 401) {
             // Handle unauthorized
         }
-        return Promise.reject(error)
+        return Promise.reject(error);
     },
-)
+);
 
-export { apiClient }
+export { apiClient };

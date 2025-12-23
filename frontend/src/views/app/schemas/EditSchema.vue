@@ -158,28 +158,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { useSchemaStore } from '@/stores/schemaStore'
-import type { UpdateSchemaInput, ArgumentInput } from '@/types/api.ts'
-import SchemaFormArguments from '@/views/app/schemas/components/SchemaFormArguments.vue'
+import { ref, computed, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { useSchemaStore } from '@/stores/schemaStore';
+import type { UpdateSchemaInput, ArgumentInput } from '@/types/api.ts';
+import SchemaFormArguments from '@/views/app/schemas/components/SchemaFormArguments.vue';
 
-const router = useRouter()
-const route = useRoute()
-const { t } = useI18n()
-const schemaStore = useSchemaStore()
+const router = useRouter();
+const route = useRoute();
+const { t } = useI18n();
+const schemaStore = useSchemaStore();
 
-const deviceTypesLoading = ref(false)
-const schemaFile = ref<File[]>([])
-const previewFile = ref<File[]>([])
-const previewDialog = ref(false)
-const updateSchemaInput = ref<UpdateSchemaInput | null>(null)
+const deviceTypesLoading = ref(false);
+const schemaFile = ref<File[]>([]);
+const previewFile = ref<File[]>([]);
+const previewDialog = ref(false);
+const updateSchemaInput = ref<UpdateSchemaInput | null>(null);
 
 const schemaTypeItems = computed(() => [
     { title: t('schemas.types.control'), value: 'control' },
     { title: t('schemas.types.ident'), value: 'ident' },
-])
+]);
 
 const deviceTypeItems = computed(() => [
     { title: '', value: '-1' },
@@ -187,7 +187,7 @@ const deviceTypeItems = computed(() => [
         title: dt.name,
         value: dt.id,
     })),
-])
+]);
 
 const softwareItems = computed(() => [
     { title: '', value: '-1' },
@@ -195,80 +195,82 @@ const softwareItems = computed(() => [
         title: sw.name,
         value: sw.id,
     })),
-])
+]);
 
 const currentOutputValues = computed(() => {
-    if (!updateSchemaInput.value || updateSchemaInput.value.device_type_id === -1) return []
-    return schemaStore.outputValuesForDeviceType(updateSchemaInput.value.device_type_id)
-})
+    if (!updateSchemaInput.value || updateSchemaInput.value.device_type_id === -1) return [];
+    return schemaStore.outputValuesForDeviceType(updateSchemaInput.value.device_type_id);
+});
 
 const handleSchemaFileChange = (files: File | File[]) => {
-    const fileArray = Array.isArray(files) ? files : files ? [files] : []
+    const fileArray = Array.isArray(files) ? files : files ? [files] : [];
     if (updateSchemaInput.value) {
-        updateSchemaInput.value.schema = fileArray.length > 0 && fileArray[0] ? fileArray[0] : null
+        updateSchemaInput.value.schema = fileArray.length > 0 && fileArray[0] ? fileArray[0] : null;
     }
-}
+};
 
 const handlePreviewFileChange = (files: File | File[]) => {
-    const fileArray = Array.isArray(files) ? files : files ? [files] : []
+    const fileArray = Array.isArray(files) ? files : files ? [files] : [];
     if (updateSchemaInput.value) {
-        updateSchemaInput.value.preview = fileArray.length > 0 ? fileArray[0] : null
+        updateSchemaInput.value.preview = fileArray.length > 0 ? fileArray[0] : null;
     }
-}
+};
 
 const handleArgumentsChange = (args: ArgumentInput[]) => {
     if (updateSchemaInput.value) {
-        updateSchemaInput.value.arguments = args
+        updateSchemaInput.value.arguments = args;
     }
-}
+};
 
 const handleDownloadSchema = async () => {
     if (!schemaStore.currentSchema?.schema) {
-        alert(t('schemas.download.error'))
-        return
+        alert(t('schemas.download.error'));
+        return;
     }
 
     try {
-        const response = await fetch(schemaStore.currentSchema.schema)
-        const blob = await response.blob()
-        const fileExt = schemaStore.currentSchema.schema.split('.').pop()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `${schemaStore.currentSchema.name}.${fileExt}`
-        a.click()
-        window.URL.revokeObjectURL(url)
-        alert(t('schemas.download.success'))
+        const response = await fetch(schemaStore.currentSchema.schema);
+        const blob = await response.blob();
+        const fileExt = schemaStore.currentSchema.schema.split('.').pop();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${schemaStore.currentSchema.name}.${fileExt}`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        alert(t('schemas.download.success'));
     } catch (error) {
-        alert(t('schemas.download.error'))
+        alert(t('schemas.download.error'));
     }
-}
+};
 
 const handleUpdate = async () => {
-    if (!updateSchemaInput.value) return
+    if (!updateSchemaInput.value) return;
 
     try {
-        await schemaStore.updateSchema(updateSchemaInput.value)
-        alert(t('schemas.update.success'))
-        router.push('/app/schemas')
+        await schemaStore.updateSchema(updateSchemaInput.value);
+        alert(t('schemas.update.success'));
+        router.push('/app/schemas');
     } catch (error) {
-        alert(t('schemas.update.error'))
+        alert(t('schemas.update.error'));
     }
-}
+};
 
 onMounted(async () => {
-    const schemaIdParam = route.params.id
-    const schemaId = Array.isArray(schemaIdParam) ? Number(schemaIdParam[0]) : Number(schemaIdParam)
-    deviceTypesLoading.value = true
+    const schemaIdParam = route.params.id;
+    const schemaId = Array.isArray(schemaIdParam)
+        ? Number(schemaIdParam[0])
+        : Number(schemaIdParam);
+    deviceTypesLoading.value = true;
 
     try {
         await Promise.all([
             schemaStore.fetchSchema(schemaId),
             schemaStore.fetchDeviceTypesAndSoftware(),
-        ])
+        ]);
 
         if (schemaStore.currentSchema) {
-            console.log(schemaStore.currentSchema)
+            console.log(schemaStore.currentSchema);
             updateSchemaInput.value = {
                 id: schemaStore.currentSchema.id,
                 name: schemaStore.currentSchema.name,
@@ -290,10 +292,10 @@ onMounted(async () => {
                 })),
                 schema: null,
                 preview: null,
-            }
+            };
         }
     } finally {
-        deviceTypesLoading.value = false
+        deviceTypesLoading.value = false;
     }
-})
+});
 </script>

@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { useServers } from '@/composables/useServers'
-import { onMounted, ref, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import type { Server } from '@/types/api'
-import ServerDetailsModal from './ServerDetailsModal.vue'
-import ServerEditModal from './ServerEditModal.vue'
-import ServerCreateModal from './ServerCreateModal.vue'
+import { useServers } from '@/composables/useServers';
+import { onMounted, ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import type { Server } from '@/types/api';
+import ServerDetailsModal from './ServerDetailsModal.vue';
+import ServerEditModal from './ServerEditModal.vue';
+import ServerCreateModal from './ServerCreateModal.vue';
 
-const { t } = useI18n()
+const { t } = useI18n();
 const {
     servers,
     loading,
@@ -17,84 +17,84 @@ const {
     getServer,
     createServer,
     softDeleteServer,
-} = useServers()
+} = useServers();
 
 const emit = defineEmits<{
-    selectServer: [server: Server]
-    serversLoaded: [servers: Server[]]
-}>()
+    selectServer: [server: Server];
+    serversLoaded: [servers: Server[]];
+}>();
 
-const showDetailsModal = ref(false)
-const showEditModal = ref(false)
-const showCreateModal = ref(false)
-const selectedServer = ref<Server | null>(null)
-const selectedDeviceServer = ref<Server | null>(null)
-const showDeleted = ref(false)
+const showDetailsModal = ref(false);
+const showEditModal = ref(false);
+const showCreateModal = ref(false);
+const selectedServer = ref<Server | null>(null);
+const selectedDeviceServer = ref<Server | null>(null);
+const showDeleted = ref(false);
 
 const filteredServers = computed(() => {
     if (showDeleted.value) {
-        return servers.value.filter((server) => server.deleted_at)
+        return servers.value.filter((server) => server.deleted_at);
     } else {
-        return servers.value.filter((server) => !server.deleted_at)
+        return servers.value.filter((server) => !server.deleted_at);
     }
-})
+});
 
 onMounted(async () => {
-    await fetchServers()
+    await fetchServers();
     if (servers.value.length > 0) {
-        emit('serversLoaded', servers.value)
-        const firstServer = filteredServers.value[0]
+        emit('serversLoaded', servers.value);
+        const firstServer = filteredServers.value[0];
         if (firstServer) {
-            selectedDeviceServer.value = firstServer
+            selectedDeviceServer.value = firstServer;
         }
     }
-})
+});
 
 const handleCreate = async () => {
-    showCreateModal.value = true
-}
+    showCreateModal.value = true;
+};
 
 const handleDevices = (item: Server) => {
-    selectedDeviceServer.value = item
-    emit('selectServer', item)
-}
+    selectedDeviceServer.value = item;
+    emit('selectServer', item);
+};
 
 const handleEdit = (item: Server) => {
-    selectedServer.value = item
-    showEditModal.value = true
-}
+    selectedServer.value = item;
+    showEditModal.value = true;
+};
 
 const handleDelete = async (item: Server) => {
-    await softDeleteServer(item)
-}
+    await softDeleteServer(item);
+};
 
 const handleView = (item: Server) => {
-    selectedServer.value = item
-    showDetailsModal.value = true
-}
+    selectedServer.value = item;
+    showDetailsModal.value = true;
+};
 
 const handleSync = async (item: Server) => {
-    await getServer(item)
-}
+    await getServer(item);
+};
 
 const handleEditFromDetails = (server: Server) => {
-    selectedServer.value = server
-    showEditModal.value = true
-}
+    selectedServer.value = server;
+    showEditModal.value = true;
+};
 
 const handleSaveServer = async (server: Server) => {
-    await updateServer(server)
-    await fetchServers()
-}
+    await updateServer(server);
+    await fetchServers();
+};
 
 const handleCreateServer = async (server: Omit<Server, 'id'>) => {
-    await createServer(server)
-    await fetchServers()
-}
+    await createServer(server);
+    await fetchServers();
+};
 
 const handleSyncAll = async () => {
-    await fetchServers()
-}
+    await fetchServers();
+};
 </script>
 
 <template>

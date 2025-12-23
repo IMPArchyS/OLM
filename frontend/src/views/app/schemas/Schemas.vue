@@ -1,27 +1,27 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useSchemaStore } from '@/stores/schemaStore'
-import { Trashed } from '@/types/api.ts'
+import { ref, computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useSchemaStore } from '@/stores/schemaStore';
+import { Trashed } from '@/types/api.ts';
 
-const { t } = useI18n()
-const schemaStore = useSchemaStore()
+const { t } = useI18n();
+const schemaStore = useSchemaStore();
 
-const canCreate = ref(true)
-const canShow = ref(true)
-const canUpdate = ref(true)
-const canDelete = ref(true)
-const canRestore = ref(true)
+const canCreate = ref(true);
+const canShow = ref(true);
+const canUpdate = ref(true);
+const canDelete = ref(true);
+const canRestore = ref(true);
 
-const withTrashed = ref<Trashed>(Trashed.Without)
-const previewDialog = ref(false)
-const previewUrl = ref<string | null>(null)
+const withTrashed = ref<Trashed>(Trashed.Without);
+const previewDialog = ref(false);
+const previewUrl = ref<string | null>(null);
 
 const trashedOptions = computed(() => [
     { title: t('schemas.trashed.without'), value: Trashed.Without },
     { title: t('schemas.trashed.with'), value: Trashed.With },
     { title: t('schemas.trashed.only'), value: Trashed.Only },
-])
+]);
 
 const headers = computed(() => [
     {
@@ -48,77 +48,77 @@ const headers = computed(() => [
         width: 200,
         align: 'center' as const,
     },
-])
+]);
 
 const handleTrashedChange = async () => {
-    await schemaStore.fetchSchemas(withTrashed.value)
-}
+    await schemaStore.fetchSchemas(withTrashed.value);
+};
 
 const handleOpenPreview = (id: number) => {
-    const schema = schemaStore.schemas.find((s) => s.id === id)
+    const schema = schemaStore.schemas.find((s) => s.id === id);
     if (!schema?.preview) {
-        alert(t('schemas.preview.error'))
-        return
+        alert(t('schemas.preview.error'));
+        return;
     }
-    previewUrl.value = schema.preview
-    previewDialog.value = true
-}
+    previewUrl.value = schema.preview;
+    previewDialog.value = true;
+};
 
 const closePreview = () => {
-    previewDialog.value = false
-    previewUrl.value = null
-}
+    previewDialog.value = false;
+    previewUrl.value = null;
+};
 
 const handleDownload = async (id: number) => {
-    const schema = schemaStore.schemas.find((s) => s.id === id)
+    const schema = schemaStore.schemas.find((s) => s.id === id);
     if (!schema?.schema) {
-        alert(t('schemas.download.error'))
-        return
+        alert(t('schemas.download.error'));
+        return;
     }
 
     try {
-        const response = await fetch(schema.schema)
-        const blob = await response.blob()
-        const fileExt = schema.schema.split('.').pop()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `${schema.name}.${fileExt}`
-        a.click()
-        window.URL.revokeObjectURL(url)
-        alert(t('schemas.download.success'))
+        const response = await fetch(schema.schema);
+        const blob = await response.blob();
+        const fileExt = schema.schema.split('.').pop();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${schema.name}.${fileExt}`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        alert(t('schemas.download.success'));
     } catch (error) {
-        alert(t('schemas.download.error'))
+        alert(t('schemas.download.error'));
     }
-}
+};
 
 const handleDelete = async (id: number) => {
-    if (!confirm(t('schemas.delete.confirm'))) return
+    if (!confirm(t('schemas.delete.confirm'))) return;
 
     try {
-        await schemaStore.deleteSchema(id)
-        await schemaStore.fetchSchemas(withTrashed.value)
-        alert(t('schemas.delete.success'))
+        await schemaStore.deleteSchema(id);
+        await schemaStore.fetchSchemas(withTrashed.value);
+        alert(t('schemas.delete.success'));
     } catch (error) {
-        alert(t('schemas.delete.error'))
+        alert(t('schemas.delete.error'));
     }
-}
+};
 
 const handleRestore = async (id: number) => {
-    if (!confirm(t('schemas.restore.confirm'))) return
+    if (!confirm(t('schemas.restore.confirm'))) return;
 
     try {
-        await schemaStore.restoreSchema(id)
-        await schemaStore.fetchSchemas(withTrashed.value)
-        alert(t('schemas.restore.success'))
+        await schemaStore.restoreSchema(id);
+        await schemaStore.fetchSchemas(withTrashed.value);
+        alert(t('schemas.restore.success'));
     } catch (error) {
-        alert(t('schemas.restore.error'))
+        alert(t('schemas.restore.error'));
     }
-}
+};
 
 onMounted(async () => {
-    await schemaStore.fetchSchemas(withTrashed.value)
-})
+    await schemaStore.fetchSchemas(withTrashed.value);
+});
 </script>
 
 <template>

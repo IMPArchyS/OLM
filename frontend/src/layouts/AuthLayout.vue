@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { useMainLayout } from '@/composables/useMainLayout'
-import NavBar from './NavBar.vue'
-import { provide } from 'vue'
+import { useMainLayout } from '@/composables/useMainLayout';
+import NavBar from './NavBar.vue';
+import { provide } from 'vue';
 
-const { windowWidth } = useMainLayout()
+const { windowWidth } = useMainLayout();
 
 // Provide the layout state and functions to child components
 provide('mainLayout', {
     windowWidth,
-})
+});
 </script>
 
 <template>

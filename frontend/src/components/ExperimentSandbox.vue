@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import type { Reservation } from '@/types/api'
-import ExperimentSelector from './ExperimentSelector.vue'
+import { ref } from 'vue';
+import type { Reservation } from '@/types/api';
+import ExperimentSelector from './ExperimentSelector.vue';
 
-const props = defineProps<{ reservation: Reservation }>()
+const props = defineProps<{ reservation: Reservation }>();
 
-const experimentSelectorRef = ref<InstanceType<typeof ExperimentSelector> | null>(null)
+const experimentSelectorRef = ref<InstanceType<typeof ExperimentSelector> | null>(null);
 
 function runExperiment() {
-    const selector = experimentSelectorRef.value
-    if (!selector) return
+    const selector = experimentSelectorRef.value;
+    if (!selector) return;
 
-    const selectedExperiment = selector.selectedExperiment
-    const selectedCommand = selector.selectedCommand
-    const experimentCommandValues = selector.experimentCommandValues
+    const selectedExperiment = selector.selectedExperiment;
+    const selectedCommand = selector.selectedCommand;
+    const experimentCommandValues = selector.experimentCommandValues;
 
     if (!selectedExperiment) {
-        console.error('No experiment selected')
-        return
+        console.error('No experiment selected');
+        return;
     }
 
     const missing = Object.entries(selectedExperiment.experiment_commands || {})
@@ -27,23 +27,23 @@ function runExperiment() {
                 experimentCommandValues[key] === null ||
                 experimentCommandValues[key] === '',
         )
-        .map(([key]) => key)
+        .map(([key]) => key);
 
     if (missing.length > 0) {
-        alert('Please fill in all experiment command values: ' + missing.join(', '))
-        return
+        alert('Please fill in all experiment command values: ' + missing.join(', '));
+        return;
     }
 
     // Reconstruct experiment_commands with full structure (value, type, unit)
-    const reconstructedCommands: Record<string, { value: any; type: string; unit?: string }> = {}
+    const reconstructedCommands: Record<string, { value: any; type: string; unit?: string }> = {};
 
     Object.entries(selectedExperiment.experiment_commands || {}).forEach(([key, spec]) => {
         reconstructedCommands[key] = {
             value: experimentCommandValues[key],
             type: spec.type,
             ...(spec.unit && { unit: spec.unit }),
-        }
-    })
+        };
+    });
 
     const payload = {
         experiment_id: selectedExperiment.id,
@@ -51,8 +51,8 @@ function runExperiment() {
         experiment_commands: reconstructedCommands,
         simulation_time: selector.simTime,
         sampling_rate: selector.sampleRate,
-    }
-    console.log('Payload to send via WebSocket:', JSON.stringify(payload, null, 2))
+    };
+    console.log('Payload to send via WebSocket:', JSON.stringify(payload, null, 2));
     // TODO: Implement WebSocket communication
 }
 </script>

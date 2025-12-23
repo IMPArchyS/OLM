@@ -1,39 +1,39 @@
 <script setup lang="ts">
-import { useUserStore } from '@/stores/user'
-import { useRouter } from 'vue-router'
-import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { useUserStore } from '@/stores/user';
+import { useRouter } from 'vue-router';
+import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n()
-const userStore = useUserStore()
-const router = useRouter()
-const isOpen = ref(false)
+const { t } = useI18n();
+const userStore = useUserStore();
+const router = useRouter();
+const isOpen = ref(false);
 
 const handleUpdateProfile = () => {
-    userStore.updateProfile()
-    isOpen.value = false
-    router.push({ name: 'update-profile' })
-}
+    userStore.updateProfile();
+    isOpen.value = false;
+    router.push({ name: 'update-profile' });
+};
 
 const handleUpdatePassword = () => {
-    userStore.updatePassword()
-    isOpen.value = false
-    router.push({ name: 'update-password' })
-}
+    userStore.updatePassword();
+    isOpen.value = false;
+    router.push({ name: 'update-password' });
+};
 
 const handleLogout = () => {
-    userStore.logout()
-    isOpen.value = false
-    router.push({ name: 'login' })
-}
+    userStore.logout();
+    isOpen.value = false;
+    router.push({ name: 'login' });
+};
 
 const handleLogin = () => {
-    router.push({ name: 'login' })
-}
+    router.push({ name: 'login' });
+};
 
 const handleRegister = () => {
-    router.push({ name: 'register' })
-}
+    router.push({ name: 'register' });
+};
 </script>
 
 <template>

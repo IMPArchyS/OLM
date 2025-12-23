@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import FullCalendar from '@fullcalendar/vue3'
-import { useDeviceReservationCalendar } from '../composables/DeviceReservationCalendar'
-import type { Device } from '@/types/api'
+import { onMounted } from 'vue';
+import FullCalendar from '@fullcalendar/vue3';
+import { useDeviceReservationCalendar } from '../composables/DeviceReservationCalendar';
+import type { Device } from '@/types/api';
 
 const props = defineProps<{
-    selectedDeviceId?: number | null
-    selectedDeviceData?: Device | null
-}>()
+    selectedDeviceId?: number | null;
+    selectedDeviceData?: Device | null;
+}>();
 
 const {
     isModalOpen,
@@ -20,11 +20,11 @@ const {
     deleteReservation,
     updateCalendarEvents,
     closeModal,
-} = useDeviceReservationCalendar(props)
+} = useDeviceReservationCalendar(props);
 
 onMounted(() => {
-    updateCalendarEvents()
-})
+    updateCalendarEvents();
+});
 </script>
 
 <template>

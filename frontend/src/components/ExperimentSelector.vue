@@ -1,71 +1,71 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import type { Experiment, CommandSpec } from '@/types/api'
-import { apiClient } from '@/composables/useAxios'
+import { ref, watch, computed } from 'vue';
+import type { Experiment, CommandSpec } from '@/types/api';
+import { apiClient } from '@/composables/useAxios';
 
 interface Props {
-    deviceId?: number | null
-    fixedCommand?: string
+    deviceId?: number | null;
+    fixedCommand?: string;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
     'update:formData': [
         data: {
-            experiment_id: number | null
-            command: string
-            experiment_commands: Record<string, any>
-            simulation_time: number
-            sampling_rate: number
+            experiment_id: number | null;
+            command: string;
+            experiment_commands: Record<string, any>;
+            simulation_time: number;
+            sampling_rate: number;
         },
-    ]
-}>()
+    ];
+}>();
 
-const experiments = ref<Experiment[]>([])
-const selectedExperimentId = ref<number | null>(null)
-const selectedCommand = ref<string>('')
-const loading = ref(false)
-const error = ref<string | null>(null)
-const experimentCommandValues = ref<Record<string, any>>({})
-const simTime = ref<number>(0)
-const sampleRate = ref<number>(0)
+const experiments = ref<Experiment[]>([]);
+const selectedExperimentId = ref<number | null>(null);
+const selectedCommand = ref<string>('');
+const loading = ref(false);
+const error = ref<string | null>(null);
+const experimentCommandValues = ref<Record<string, any>>({});
+const simTime = ref<number>(0);
+const sampleRate = ref<number>(0);
 
 const selectedExperiment = computed(() => {
-    return experiments.value.find((exp) => exp.id === selectedExperimentId.value) || null
-})
+    return experiments.value.find((exp) => exp.id === selectedExperimentId.value) || null;
+});
 
 function convertCommandsToSpecs(
     commands: Record<string, { cmd: string }>,
 ): Record<string, CommandSpec> {
     return Object.fromEntries(
         Object.entries(commands).map(([key, val]) => [key, { type: 'string', value: val.cmd }]),
-    )
+    );
 }
 
 const fetchExperiments = async (deviceId?: number | null) => {
-    loading.value = true
-    error.value = null
+    loading.value = true;
+    error.value = null;
 
     try {
-        const url = deviceId ? `/experiment/device/${deviceId}` : '/experiment/'
-        const response = await apiClient.get(url)
-        const data = response.data
+        const url = deviceId ? `/experiment/device/${deviceId}` : '/experiment/';
+        const response = await apiClient.get(url);
+        const data = response.data;
 
         const experimentsWithNames = await Promise.all(
             data.map(async (exp: any) => {
-                let experimentName = exp.name
+                let experimentName = exp.name;
 
                 if (!experimentName) {
-                    let deviceName = 'device'
-                    let softwareName = 'software'
+                    let deviceName = 'device';
+                    let softwareName = 'software';
 
                     if (exp.device_id) {
                         try {
-                            const deviceResponse = await apiClient.get(`/device/${exp.device_id}`)
-                            deviceName = deviceResponse.data.name || deviceName
+                            const deviceResponse = await apiClient.get(`/device/${exp.device_id}`);
+                            deviceName = deviceResponse.data.name || deviceName;
                         } catch (e) {
-                            console.error(`Error fetching device ${exp.device_id}:`, e)
+                            console.error(`Error fetching device ${exp.device_id}:`, e);
                         }
                     }
 
@@ -73,14 +73,14 @@ const fetchExperiments = async (deviceId?: number | null) => {
                         try {
                             const softwareResponse = await apiClient.get(
                                 `/software/${exp.software_id}`,
-                            )
-                            softwareName = softwareResponse.data.name || softwareName
+                            );
+                            softwareName = softwareResponse.data.name || softwareName;
                         } catch (e) {
-                            console.error(`Error fetching software ${exp.software_id}:`, e)
+                            console.error(`Error fetching software ${exp.software_id}:`, e);
                         }
                     }
 
-                    experimentName = `${deviceName} - ${softwareName}`
+                    experimentName = `${deviceName} - ${softwareName}`;
                 }
 
                 return {
@@ -98,37 +98,37 @@ const fetchExperiments = async (deviceId?: number | null) => {
                               ]),
                           )
                         : undefined,
-                }
+                };
             }),
-        )
+        );
 
-        experiments.value = experimentsWithNames
+        experiments.value = experimentsWithNames;
 
         if (experiments.value.length === 0) {
             error.value = deviceId
                 ? 'No experiments found for this device'
-                : 'No experiments available'
+                : 'No experiments available';
         } else {
-            selectedExperimentId.value = experiments.value[0]?.id ?? null
+            selectedExperimentId.value = experiments.value[0]?.id ?? null;
         }
     } catch (e) {
-        console.error('Error fetching experiments:', e)
-        error.value = 'Error fetching experiments'
-        experiments.value = []
+        console.error('Error fetching experiments:', e);
+        error.value = 'Error fetching experiments';
+        experiments.value = [];
     } finally {
-        loading.value = false
+        loading.value = false;
     }
-}
+};
 
 // Watch for deviceId changes and fetch experiments
 watch(
     () => props.deviceId,
     (newDeviceId) => {
         // Always fetch: with deviceId if provided, or all experiments if not
-        fetchExperiments(newDeviceId)
+        fetchExperiments(newDeviceId);
     },
     { immediate: true },
-)
+);
 
 // Watch for experiment selection changes and reinitialize command values
 watch(selectedExperiment, (newExperiment) => {
@@ -140,34 +140,34 @@ watch(selectedExperiment, (newExperiment) => {
                     key,
                     spec.value ?? (spec.type === 'number' ? 0 : ''),
                 ]),
-            )
+            );
         }
         // Set command: use fixedCommand if provided, otherwise use first available command
         if (props.fixedCommand) {
-            selectedCommand.value = props.fixedCommand
+            selectedCommand.value = props.fixedCommand;
         } else if (newExperiment?.commands) {
-            const commandKeys = Object.keys(newExperiment.commands)
+            const commandKeys = Object.keys(newExperiment.commands);
             if (commandKeys.length > 0) {
-                selectedCommand.value = commandKeys[0] ?? ''
+                selectedCommand.value = commandKeys[0] ?? '';
             }
         }
     }
-})
+});
 
 const formData = computed(() => {
-    const parameters: Record<string, CommandSpec> = {}
+    const parameters: Record<string, CommandSpec> = {};
 
     if (selectedExperiment.value?.experiment_commands) {
         Object.entries(experimentCommandValues.value).forEach(([key, value]) => {
-            const originalSpec = selectedExperiment.value?.experiment_commands?.[key]
+            const originalSpec = selectedExperiment.value?.experiment_commands?.[key];
             if (originalSpec) {
                 parameters[key] = {
                     value: value,
                     type: originalSpec.type,
                     unit: originalSpec.unit ?? null,
-                }
+                };
             }
-        })
+        });
     }
 
     return {
@@ -176,17 +176,17 @@ const formData = computed(() => {
         experiment_commands: parameters,
         simulation_time: simTime.value,
         sampling_rate: sampleRate.value,
-    }
-})
+    };
+});
 
 // Emit form data changes
 watch(
     formData,
     (newData) => {
-        emit('update:formData', newData)
+        emit('update:formData', newData);
     },
     { deep: true },
-)
+);
 
 // Expose data for parent component
 defineExpose({
@@ -196,7 +196,7 @@ defineExpose({
     simTime,
     sampleRate,
     formData,
-})
+});
 </script>
 
 <template>

@@ -206,4 +206,4 @@ export default {
         add: 'Pridať',
         back: 'Späť',
     },
-}
+};

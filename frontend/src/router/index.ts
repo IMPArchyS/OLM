@@ -1,17 +1,17 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import MainLayout from '@/layouts/MainLayout.vue'
-import AuthLayout from '@/layouts/AuthLayout.vue'
-import dashboard from '@/views/app/Dashboard.vue'
-import queue from '@/views/app/Queue.vue'
-import reservations from '@/views/app/Reservations.vue'
-import reports from '@/views/app/Reports.vue'
-import servers from '@/views/app/Servers.vue'
-import login from '@/views/auth/Login.vue'
-import register from '@/views/auth/Register.vue'
-import error404 from '@/views/errors/Error404.vue'
-import error500 from '@/views/errors/Error500.vue'
-import updateProfile from '@/views/app/users/UpdateProfile.vue'
-import updatePassword from '@/views/app/users/UpdatePassword.vue'
+import { createRouter, createWebHistory } from 'vue-router';
+import MainLayout from '@/layouts/MainLayout.vue';
+import AuthLayout from '@/layouts/AuthLayout.vue';
+import dashboard from '@/views/app/Dashboard.vue';
+import queue from '@/views/app/Queue.vue';
+import reservations from '@/views/app/Reservations.vue';
+import reports from '@/views/app/Reports.vue';
+import servers from '@/views/app/Servers.vue';
+import login from '@/views/auth/Login.vue';
+import register from '@/views/auth/Register.vue';
+import error404 from '@/views/errors/Error404.vue';
+import error500 from '@/views/errors/Error500.vue';
+import updateProfile from '@/views/app/users/UpdateProfile.vue';
+import updatePassword from '@/views/app/users/UpdatePassword.vue';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -120,6 +120,6 @@ const router = createRouter({
             component: error500,
         },
     ],
-})
+});
 
-export default router
+export default router;

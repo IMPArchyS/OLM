@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import type { Server } from '@/types/api'
+import { ref, watch, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import type { Server } from '@/types/api';
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 const props = defineProps<{
-    modelValue: boolean
-    server: Server | null
-}>()
+    modelValue: boolean;
+    server: Server | null;
+}>();
 
 const emit = defineEmits<{
-    'update:modelValue': [value: boolean]
-    save: [server: Server]
-}>()
+    'update:modelValue': [value: boolean];
+    save: [server: Server];
+}>();
 
 const dialog = computed({
     get: () => props.modelValue,
     set: (value) => emit('update:modelValue', value),
-})
+});
 
 // Form data
 const formData = ref<Server>({
@@ -30,45 +30,45 @@ const formData = ref<Server>({
     available: false,
     production: false,
     enabled: false,
-})
+});
 
 // Watch for server changes to populate form
 watch(
     () => props.server,
     (newServer) => {
         if (newServer) {
-            formData.value = { ...newServer }
+            formData.value = { ...newServer };
         }
     },
     { immediate: true },
-)
+);
 
 // Form validation
-const valid = ref(false)
-const nameRules = [(v: string) => !!v || `${t('servers.name')} ${t('validation.required')}`]
+const valid = ref(false);
+const nameRules = [(v: string) => !!v || `${t('servers.name')} ${t('validation.required')}`];
 const ipRules = [
     (v: string) => !!v || `${t('servers.ipAddress')} ${t('validation.required')}`,
     (v: string) => {
-        const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/
-        return ipPattern.test(v) || t('validation.invalidIpFormat')
+        const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+        return ipPattern.test(v) || t('validation.invalidIpFormat');
     },
-]
-const domainRules = [(v: string) => !!v || `${t('servers.apiDomain')} ${t('validation.required')}`]
+];
+const domainRules = [(v: string) => !!v || `${t('servers.apiDomain')} ${t('validation.required')}`];
 const portRules = [
     (v: number) => !!v || `${t('servers.wsPort')} ${t('validation.required')}`,
     (v: number) => (v > 0 && v <= 65535) || t('validation.invalidPortRange'),
-]
+];
 
 const handleSave = () => {
     if (valid.value) {
-        emit('save', { ...formData.value })
-        dialog.value = false
+        emit('save', { ...formData.value });
+        dialog.value = false;
     }
-}
+};
 
 const handleCancel = () => {
-    dialog.value = false
-}
+    dialog.value = false;
+};
 </script>
 
 <template>

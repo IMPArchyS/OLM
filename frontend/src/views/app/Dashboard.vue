@@ -1,86 +1,88 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import ExperimentSandbox from '@/components/ExperimentSandbox.vue'
-import type { Reservation } from '@/types/api'
-import { apiClient } from '@/composables/useAxios'
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import ExperimentSandbox from '@/components/ExperimentSandbox.vue';
+import type { Reservation } from '@/types/api';
+import { apiClient } from '@/composables/useAxios';
 
-const { t } = useI18n()
-const router = useRouter()
+const { t } = useI18n();
+const router = useRouter();
 
-const reservations = ref<Reservation[]>([])
-const loading = ref(true)
-const currentTime = ref(new Date())
-let refreshInterval: number | null = null
+const reservations = ref<Reservation[]>([]);
+const loading = ref(true);
+const currentTime = ref(new Date());
+let refreshInterval: number | null = null;
 
-const now = computed(() => currentTime.value)
+const now = computed(() => currentTime.value);
 
 // Find active reservation (current time is between start and end)
 const activeReservation = computed(() => {
     return reservations.value.find((reservation) => {
-        const start = new Date(reservation.start)
-        const end = new Date(reservation.end)
-        return now.value >= start && now.value <= end
-    })
-})
+        const start = new Date(reservation.start);
+        const end = new Date(reservation.end);
+        return now.value >= start && now.value <= end;
+    });
+});
 
 // Find next upcoming reservation
 const nextReservation = computed(() => {
     const upcoming = reservations.value
         .filter((reservation) => new Date(reservation.start) > now.value)
-        .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
-    return upcoming[0] || null
-})
+        .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+    return upcoming[0] || null;
+});
 
 const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return date.toLocaleString(undefined, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-    })
-}
+    });
+};
 
 const goToReservations = () => {
-    router.push('/app/reservations')
-}
+    router.push('/app/reservations');
+};
 
 const fetchReservations = async () => {
     try {
         const response = await apiClient.get('/reservation/', {
             params: { queued: false },
-        })
-        reservations.value = response.data.filter((reservation: Reservation) => !reservation.queued)
+        });
+        reservations.value = response.data.filter(
+            (reservation: Reservation) => !reservation.queued,
+        );
     } catch (e) {
-        console.error('Failed to fetch reservations:', e)
-        reservations.value = []
+        console.error('Failed to fetch reservations:', e);
+        reservations.value = [];
     }
-}
+};
 
 onMounted(async () => {
-    loading.value = true
-    await fetchReservations()
-    loading.value = false
+    loading.value = true;
+    await fetchReservations();
+    loading.value = false;
 
     // Update current time every second for precise real-time updates
     refreshInterval = window.setInterval(() => {
-        currentTime.value = new Date()
-    }, 1000)
+        currentTime.value = new Date();
+    }, 1000);
 
     // Refetch reservations every 5 minutes to get latest data
     window.setInterval(() => {
-        fetchReservations()
-    }, 300000)
-})
+        fetchReservations();
+    }, 300000);
+});
 
 onUnmounted(() => {
     if (refreshInterval) {
-        clearInterval(refreshInterval)
+        clearInterval(refreshInterval);
     }
-})
+});
 </script>
 
 <template>

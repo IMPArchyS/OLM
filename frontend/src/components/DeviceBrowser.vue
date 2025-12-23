@@ -1,33 +1,33 @@
 <script setup lang="ts">
-import { watch, computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useDevices } from '@/composables/useDevices'
-import type { Server } from '@/types/api'
+import { watch, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useDevices } from '@/composables/useDevices';
+import type { Server } from '@/types/api';
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 const props = defineProps<{
-    selectedServer: Server | null
-}>()
+    selectedServer: Server | null;
+}>();
 
-const { devices, loading, error, fetchDevicesByServer, deviceSoftwareMap } = useDevices()
+const { devices, loading, error, fetchDevicesByServer, deviceSoftwareMap } = useDevices();
 
 // Create devices with software for display
 const devicesWithSoftware = computed(() => {
     return devices.value.map((device) => ({
         ...device,
         software: deviceSoftwareMap.value[device.id] || [],
-    }))
-})
+    }));
+});
 
 watch(
     () => props.selectedServer,
     async (newServer) => {
         if (newServer) {
-            await fetchDevicesByServer(newServer.id)
+            await fetchDevicesByServer(newServer.id);
         }
     },
-)
+);
 </script>
 
 <template>

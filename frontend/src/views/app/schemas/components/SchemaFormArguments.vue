@@ -21,31 +21,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import type { ArgumentInput } from '@/types/api.ts'
-import SchemaFormArgumentsRow from './SchemaFormArgumentsRow.vue'
+import { ref, watch } from 'vue';
+import type { ArgumentInput } from '@/types/api.ts';
+import SchemaFormArgumentsRow from './SchemaFormArgumentsRow.vue';
 
 interface Props {
-    schemaArguments?: ArgumentInput[]
-    outputValues?: string[]
+    schemaArguments?: ArgumentInput[];
+    outputValues?: string[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
     schemaArguments: () => [],
-})
+});
 
 const emit = defineEmits<{
-    change: [arguments: ArgumentInput[]]
-}>()
+    change: [arguments: ArgumentInput[]];
+}>();
 
-const localArguments = ref<ArgumentInput[]>([...props.schemaArguments])
+const localArguments = ref<ArgumentInput[]>([...props.schemaArguments]);
 
 watch(
     () => props.schemaArguments,
     (newVal) => {
-        localArguments.value = [...newVal]
+        localArguments.value = [...newVal];
     },
-)
+);
 
 const handleAddArgument = () => {
     const updated = [
@@ -58,22 +58,22 @@ const handleAddArgument = () => {
             order: 1,
             options: [],
         },
-    ]
-    localArguments.value = updated
-    emit('change', updated)
-}
+    ];
+    localArguments.value = updated;
+    emit('change', updated);
+};
 
 const handleArgumentChange = (argument: ArgumentInput, index: number) => {
-    const updated = [...localArguments.value]
-    updated[index] = argument
-    localArguments.value = updated
-    emit('change', updated)
-}
+    const updated = [...localArguments.value];
+    updated[index] = argument;
+    localArguments.value = updated;
+    emit('change', updated);
+};
 
 const handleDeleteArgument = (index: number) => {
-    const updated = [...localArguments.value]
-    updated.splice(index, 1)
-    localArguments.value = updated
-    emit('change', updated)
-}
+    const updated = [...localArguments.value];
+    updated.splice(index, 1);
+    localArguments.value = updated;
+    emit('change', updated);
+};
 </script>
