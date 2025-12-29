@@ -3,31 +3,16 @@ import { useServers } from '@/composables/useServers';
 import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { Server } from '@/types/api';
-import ServerDetailsModal from './ServerDetailsModal.vue';
-import ServerEditModal from './ServerEditModal.vue';
-import ServerCreateModal from './ServerCreateModal.vue';
+import router from '@/router';
 
 const { t } = useI18n();
-const {
-    servers,
-    loading,
-    error,
-    fetchServers,
-    updateServer,
-    getServer,
-    createServer,
-    softDeleteServer,
-} = useServers();
+const { servers, loading, error, fetchServers, getServer, softDeleteServer } = useServers();
 
 const emit = defineEmits<{
     selectServer: [server: Server];
     serversLoaded: [servers: Server[]];
 }>();
 
-const showDetailsModal = ref(false);
-const showEditModal = ref(false);
-const showCreateModal = ref(false);
-const selectedServer = ref<Server | null>(null);
 const selectedDeviceServer = ref<Server | null>(null);
 const showDeleted = ref(false);
 
@@ -43,15 +28,15 @@ onMounted(async () => {
     await fetchServers();
     if (servers.value.length > 0) {
         emit('serversLoaded', servers.value);
-        const firstServer = filteredServers.value[0];
+        const firstServer = servers.value.filter((server) => !server.deleted_at)[0];
         if (firstServer) {
             selectedDeviceServer.value = firstServer;
         }
     }
 });
 
-const handleCreate = async () => {
-    showCreateModal.value = true;
+const handleCreate = () => {
+    router.push('/app/servers/create');
 };
 
 const handleDevices = (item: Server) => {
@@ -60,8 +45,7 @@ const handleDevices = (item: Server) => {
 };
 
 const handleEdit = (item: Server) => {
-    selectedServer.value = item;
-    showEditModal.value = true;
+    router.push(`/app/servers/${item.id}/edit`);
 };
 
 const handleDelete = async (item: Server) => {
@@ -69,27 +53,11 @@ const handleDelete = async (item: Server) => {
 };
 
 const handleView = (item: Server) => {
-    selectedServer.value = item;
-    showDetailsModal.value = true;
+    router.push(`/app/servers/${item.id}/show`);
 };
 
 const handleSync = async (item: Server) => {
     await getServer(item);
-};
-
-const handleEditFromDetails = (server: Server) => {
-    selectedServer.value = server;
-    showEditModal.value = true;
-};
-
-const handleSaveServer = async (server: Server) => {
-    await updateServer(server);
-    await fetchServers();
-};
-
-const handleCreateServer = async (server: Omit<Server, 'id'>) => {
-    await createServer(server);
-    await fetchServers();
 };
 
 const handleSyncAll = async () => {
@@ -117,12 +85,7 @@ const handleSyncAll = async () => {
             <v-card-text>
                 <!-- Toggle for deleted servers -->
                 <div class="d-flex justify-start mb-4">
-                    <v-switch
-                        v-model="showDeleted"
-                        :label="t('servers.showDeleted')"
-                        color="info"
-                        hide-details
-                    ></v-switch>
+                    <v-switch v-model="showDeleted" :label="t('servers.showDeleted')" color="info" hide-details></v-switch>
                 </div>
 
                 <v-data-table
@@ -173,10 +136,7 @@ const handleSyncAll = async () => {
 
                     <!-- Enabled Column -->
                     <template v-slot:item.enabled="{ item }">
-                        <v-icon
-                            :color="item.enabled ? 'success' : 'error'"
-                            :icon="item.enabled ? 'mdi-check-circle' : 'mdi-close-circle'"
-                        ></v-icon>
+                        <v-icon :color="item.enabled ? 'success' : 'error'" :icon="item.enabled ? 'mdi-check-circle' : 'mdi-close-circle'"></v-icon>
                     </template>
 
                     <!-- Actions Column -->
@@ -185,37 +145,13 @@ const handleSyncAll = async () => {
                             icon="mdi-toolbox"
                             size="small"
                             variant="text"
-                            :color="selectedDeviceServer?.id === item.id ? 'primary' : ''"
+                            :color="selectedDeviceServer?.id === item.id ? '' : 'primary'"
                             @click="handleDevices(item)"
                         ></v-btn>
-                        <v-btn
-                            icon="mdi-eye"
-                            size="small"
-                            variant="text"
-                            color="warning"
-                            @click="handleView(item)"
-                        ></v-btn>
-                        <v-btn
-                            icon="mdi-sync"
-                            size="small"
-                            variant="text"
-                            color="success"
-                            @click="handleSync(item)"
-                        ></v-btn>
-                        <v-btn
-                            icon="mdi-pencil"
-                            size="small"
-                            variant="text"
-                            color="primary"
-                            @click="handleEdit(item)"
-                        ></v-btn>
-                        <v-btn
-                            icon="mdi-delete"
-                            size="small"
-                            variant="text"
-                            color="error"
-                            @click="handleDelete(item)"
-                        ></v-btn>
+                        <v-btn icon="mdi-eye" size="small" variant="text" color="warning" @click="handleView(item)"></v-btn>
+                        <v-btn icon="mdi-sync" size="small" variant="text" color="success" @click="handleSync(item)"></v-btn>
+                        <v-btn icon="mdi-pencil" size="small" variant="text" color="primary" @click="handleEdit(item)"></v-btn>
+                        <v-btn icon="mdi-delete" size="small" variant="text" color="error" @click="handleDelete(item)"></v-btn>
                     </template>
 
                     <!-- No Data -->
@@ -232,18 +168,5 @@ const handleSyncAll = async () => {
                 </v-alert>
             </v-card-text>
         </v-card>
-
-        <!-- Modals -->
-        <ServerDetailsModal
-            v-model="showDetailsModal"
-            :server="selectedServer"
-            @edit="handleEditFromDetails"
-        />
-        <ServerEditModal
-            v-model="showEditModal"
-            :server="selectedServer"
-            @save="handleSaveServer"
-        />
-        <ServerCreateModal v-model="showCreateModal" @create="handleCreateServer" />
     </v-container>
 </template>

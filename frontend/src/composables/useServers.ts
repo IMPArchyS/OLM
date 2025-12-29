@@ -1,11 +1,31 @@
 import { ref } from 'vue';
 import type { Server } from '@/types/api';
 import { apiClient } from './useAxios';
+import type { CreateServerForm, EditServerForm } from '@/types/forms';
+import { useI18n } from 'vue-i18n';
 
 export function useServers() {
     const servers = ref<Server[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
+
+    const { t } = useI18n();
+    const nameRules = [(v: string) => !!v || `${t('servers.name')} ${t('validation.required')}`];
+
+    const ipRules = [
+        (v: string) => !!v || `${t('servers.ipAddress')} ${t('validation.required')}`,
+        (v: string) => {
+            const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+            return ipPattern.test(v) || t('validation.invalidIpFormat');
+        },
+    ];
+
+    const domainRules = [(v: string) => !!v || `${t('servers.apiDomain')} ${t('validation.required')}`];
+
+    const portRules = [
+        (v: number) => !!v || `${t('servers.wsPort')} ${t('validation.required')}`,
+        (v: number) => (v > 0 && v <= 65535) || t('validation.invalidPortRange'),
+    ];
 
     async function fetchServers(): Promise<void> {
         try {
@@ -17,12 +37,16 @@ export function useServers() {
         }
     }
 
-    async function updateServer(server: Server) {
+    async function updateServer(server: EditServerForm): Promise<{ success: boolean; message?: string }> {
         try {
             await apiClient.patch(`/server/${server.id}/`, server);
-        } catch (e) {
-            console.error('Error updating server:', e);
-            throw e;
+            return { success: true };
+        } catch (e: any) {
+            console.error('Error creating server:', e);
+            return {
+                success: false,
+                message: e.response?.data?.message || 'Failed to create server',
+            };
         }
     }
 
@@ -38,13 +62,40 @@ export function useServers() {
         }
     }
 
-    async function createServer(server: Omit<Server, 'id'>): Promise<void> {
+    async function getServerById(id: number): Promise<Server | null> {
+        try {
+            const response = await apiClient.get(`/server/${id}`);
+            return response.data;
+        } catch (e) {
+            console.error(`Error fetching server with id ${id}: `, e);
+        }
+        return null;
+    }
+
+    async function createServer(server: CreateServerForm): Promise<{ success: boolean; message?: string }> {
         try {
             const response = await apiClient.post('/server/', server);
             servers.value.push(response.data);
-        } catch (e) {
+            return { success: true };
+        } catch (e: any) {
             console.error('Error creating server:', e);
-            throw e;
+            return {
+                success: false,
+                message: e.response?.data?.message || 'Failed to create server',
+            };
+        }
+    }
+
+    async function restoreServer(id: number): Promise<{ success: boolean; message?: string }> {
+        try {
+            await apiClient.post(`/server/${id}/restore`);
+            return { success: true };
+        } catch (e: any) {
+            console.error(`Error fetching server with id ${id}: `, e);
+            return {
+                success: false,
+                message: e.response?.data?.message || 'Failed to create server',
+            };
         }
     }
 
@@ -61,9 +112,15 @@ export function useServers() {
         servers,
         loading,
         error,
+        nameRules,
+        ipRules,
+        domainRules,
+        portRules,
         fetchServers,
         updateServer,
+        restoreServer,
         getServer,
+        getServerById,
         createServer,
         softDeleteServer,
     };

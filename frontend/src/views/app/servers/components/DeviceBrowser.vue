@@ -46,13 +46,7 @@ watch(
 
             <v-card-text>
                 <!-- No server selected state -->
-                <v-alert
-                    v-if="!selectedServer"
-                    type="info"
-                    variant="tonal"
-                    icon="mdi-information-outline"
-                    class="ma-4"
-                >
+                <v-alert v-if="!selectedServer" type="info" variant="tonal" icon="mdi-information-outline" class="ma-4">
                     {{ t('devices.selectServer') }}
                 </v-alert>
 
@@ -74,13 +68,7 @@ watch(
                     <!-- Software Column -->
                     <template v-slot:item.software="{ item }">
                         <v-chip-group v-if="item.software && item.software.length > 0">
-                            <v-chip
-                                v-for="software in item.software"
-                                :key="software.id"
-                                size="small"
-                                color="primary"
-                                variant="outlined"
-                            >
+                            <v-chip v-for="software in item.software" :key="software.id" size="small" color="primary" variant="outlined">
                                 {{ software.name }}
                             </v-chip>
                         </v-chip-group>

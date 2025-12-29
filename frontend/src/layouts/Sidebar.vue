@@ -18,7 +18,13 @@ interface MainLayoutContext {
 const { sidebarCollapsed, sidebarVisible, windowWidth, toggleSidebar } =
     inject<MainLayoutContext>('mainLayout')!;
 
-const isActiveRoute = (routePath: string) => route.path === routePath;
+const isActiveRoute = (routePath: string) => {
+    // For servers and schemas, check if current route starts with the path
+    if (routePath === '/app/servers' || routePath === '/app/schemas') {
+        return route.path.startsWith(routePath);
+    }
+    return route.path === routePath;
+};
 const navigate = (routePath: string) => router.push(routePath);
 
 // Computed for responsive behavior

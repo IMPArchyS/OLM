@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import ServerBrowser from '@/components/ServerBrowser.vue';
-import DeviceBrowser from '@/components/DeviceBrowser.vue';
+import DeviceBrowser from '@/views/app/servers/components/DeviceBrowser.vue';
+import ServerBrowser from '@/views/app/servers/components/ServerBrowser.vue';
 import type { Server } from '@/types/api';
 
 const selectedServer = ref<Server | null>(null);
@@ -11,8 +11,9 @@ const handleSelectServer = (server: Server) => {
 };
 
 const handleServersLoaded = (servers: Server[]) => {
-    if (!selectedServer.value && servers.length > 0 && servers[0]) {
-        selectedServer.value = servers[0];
+    const filteredFirst = servers.filter((server) => !server.deleted_at)[0];
+    if (!selectedServer.value && servers.length > 0 && filteredFirst) {
+        selectedServer.value = filteredFirst;
     }
 };
 </script>

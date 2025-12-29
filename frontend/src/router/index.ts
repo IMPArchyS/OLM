@@ -5,7 +5,7 @@ import dashboard from '@/views/app/Dashboard.vue';
 import queue from '@/views/app/Queue.vue';
 import reservations from '@/views/app/Reservations.vue';
 import reports from '@/views/app/Reports.vue';
-import servers from '@/views/app/Servers.vue';
+import servers from '@/views/app/servers/Servers.vue';
 import login from '@/views/auth/Login.vue';
 import register from '@/views/auth/Register.vue';
 import error404 from '@/views/errors/Error404.vue';
@@ -79,6 +79,21 @@ const router = createRouter({
                     path: '/app/servers',
                     name: 'servers',
                     component: servers,
+                },
+                {
+                    path: '/app/servers/create',
+                    name: 'servers-create',
+                    component: () => import('@/views/app/servers/CreateServer.vue'),
+                },
+                {
+                    path: '/app/servers/:id/show',
+                    name: 'servers-show',
+                    component: () => import('@/views/app/servers/ShowServer.vue'),
+                },
+                {
+                    path: '/app/servers/:id/edit',
+                    name: 'servers-edit',
+                    component: () => import('@/views/app/servers/EditServer.vue'),
                 },
                 {
                     path: '/app/schemas',

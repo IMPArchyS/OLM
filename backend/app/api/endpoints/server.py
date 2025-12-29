@@ -51,6 +51,34 @@ def create(db: DbSession, server: ServerCreate):
     return db_server
 
 
+@router.post("/{id}/restore", status_code=status.HTTP_200_OK)
+def restore(db: DbSession, id: int):
+    db_server = db.get(Server, id)
+    if not db_server:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
+    db_server.deleted_at = None
+    db.add(db_server)
+    db.commit()
+    db.refresh(db_server)
+    return db_server
+
+
+@router.post("/{id}/sync", status_code=status.HTTP_200_OK)
+def sync(db: DbSession, id: int):
+    # TODO implement when exp server is ready for data transfer
+    stmt = select(Server)
+    return db.exec(stmt).all()
+
+
+@router.post("/sync_all", status_code=status.HTTP_200_OK)
+def sync_all(db: DbSession):
+    db_server = db.get(Server, id)
+    if not db_server:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
+    # TODO implement when exp server is ready for data transfer
+    return db_server
+
+
 @router.patch("/{id}", response_model=ServerUpdate)
 def update(db: DbSession, id: int, server: ServerUpdate):
     db_server = db.get(Server, id)
