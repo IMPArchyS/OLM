@@ -122,6 +122,16 @@ const router = createRouter({
                         permission: 'schema.update',
                     },
                 },
+                {
+                    path: '/app/users',
+                    name: 'users',
+                    component: () => import('@/views/app/users/Users.vue'),
+                },
+                {
+                    path: '/app/roles',
+                    name: 'roles',
+                    component: () => import('@/views/app/roles/Roles.vue'),
+                },
             ],
         },
         {

@@ -6,8 +6,11 @@ export default {
         servers: 'Servers',
         schemas: 'Schemas',
         reports: 'Reports',
-        settings: 'Settings',
+        settings: 'Lab Settings',
+        userSettings: 'Settings',
         lab: 'Lab',
+        users: 'Users',
+        perms: 'Roles and permissions',
     },
     auth: {
         login: 'Login',

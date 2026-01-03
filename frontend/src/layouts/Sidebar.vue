@@ -15,8 +15,7 @@ interface MainLayoutContext {
     toggleSidebar: () => void;
 }
 
-const { sidebarCollapsed, sidebarVisible, windowWidth, toggleSidebar } =
-    inject<MainLayoutContext>('mainLayout')!;
+const { sidebarCollapsed, sidebarVisible, windowWidth, toggleSidebar } = inject<MainLayoutContext>('mainLayout')!;
 
 const isActiveRoute = (routePath: string) => {
     // For servers and schemas, check if current route starts with the path
@@ -61,11 +60,7 @@ const showLabels = computed(() => !isCollapsed.value);
             <div style="flex: 1; overflow-y: auto; padding: 20px 0">
                 <!-- Main Navigation -->
                 <div class="mb-6">
-                    <div
-                        v-if="showLabels"
-                        class="px-4 mb-2 text-caption font-weight-medium text-uppercase text-white"
-                        style="letter-spacing: 0.05em"
-                    >
+                    <div v-if="showLabels" class="px-4 mb-2 text-caption font-weight-medium text-uppercase text-white" style="letter-spacing: 0.05em">
                         {{ t('nav.lab') }}
                     </div>
 
@@ -78,12 +73,7 @@ const showLabels = computed(() => !isCollapsed.value);
                     >
                         <v-icon icon="mdi-view-dashboard" size="24" />
                     </div>
-                    <div
-                        v-else
-                        @click="navigate('/app/dashboard')"
-                        class="nav-item-expanded"
-                        :class="{ active: isActiveRoute('/app/dashboard') }"
-                    >
+                    <div v-else @click="navigate('/app/dashboard')" class="nav-item-expanded" :class="{ active: isActiveRoute('/app/dashboard') }">
                         <v-icon icon="mdi-view-dashboard" size="24" />
                         <span class="ml-4">{{ t('nav.dashboard') }}</span>
                     </div>
@@ -97,12 +87,7 @@ const showLabels = computed(() => !isCollapsed.value);
                     >
                         <v-icon icon="mdi-clock-outline" size="24" />
                     </div>
-                    <div
-                        v-else
-                        @click="navigate('/app/queue')"
-                        class="nav-item-expanded"
-                        :class="{ active: isActiveRoute('/app/queue') }"
-                    >
+                    <div v-else @click="navigate('/app/queue')" class="nav-item-expanded" :class="{ active: isActiveRoute('/app/queue') }">
                         <v-icon icon="mdi-clock-outline" size="24" />
                         <span class="ml-4">{{ t('nav.queue_experiments') }}</span>
                     </div>
@@ -135,12 +120,7 @@ const showLabels = computed(() => !isCollapsed.value);
                     >
                         <v-icon icon="mdi-file-document-outline" size="24" />
                     </div>
-                    <div
-                        v-else
-                        @click="navigate('/app/reports')"
-                        class="nav-item-expanded"
-                        :class="{ active: isActiveRoute('/app/reports') }"
-                    >
+                    <div v-else @click="navigate('/app/reports')" class="nav-item-expanded" :class="{ active: isActiveRoute('/app/reports') }">
                         <v-icon icon="mdi-file-document-outline" size="24" />
                         <span class="ml-4">{{ t('nav.reports') }}</span>
                     </div>
@@ -148,11 +128,7 @@ const showLabels = computed(() => !isCollapsed.value);
 
                 <!-- Settings Navigation -->
                 <div>
-                    <div
-                        v-if="showLabels"
-                        class="px-4 mb-2 text-caption font-weight-medium text-uppercase text-white"
-                        style="letter-spacing: 0.05em"
-                    >
+                    <div v-if="showLabels" class="px-4 mb-2 text-caption font-weight-medium text-uppercase text-white" style="letter-spacing: 0.05em">
                         {{ t('nav.settings') }}
                     </div>
 
@@ -165,12 +141,7 @@ const showLabels = computed(() => !isCollapsed.value);
                     >
                         <v-icon icon="mdi-server" size="24" />
                     </div>
-                    <div
-                        v-else
-                        @click="navigate('/app/servers')"
-                        class="nav-item-expanded"
-                        :class="{ active: isActiveRoute('/app/servers') }"
-                    >
+                    <div v-else @click="navigate('/app/servers')" class="nav-item-expanded" :class="{ active: isActiveRoute('/app/servers') }">
                         <v-icon icon="mdi-server" size="24" />
                         <span class="ml-4">{{ t('nav.servers') }}</span>
                     </div>
@@ -184,14 +155,43 @@ const showLabels = computed(() => !isCollapsed.value);
                     >
                         <v-icon icon="mdi-clipboard-list-outline" size="24" />
                     </div>
-                    <div
-                        v-else
-                        @click="navigate('/app/schemas')"
-                        class="nav-item-expanded"
-                        :class="{ active: isActiveRoute('/app/schemas') }"
-                    >
+                    <div v-else @click="navigate('/app/schemas')" class="nav-item-expanded" :class="{ active: isActiveRoute('/app/schemas') }">
                         <v-icon icon="mdi-clipboard-list-outline" size="24" />
                         <span class="ml-4">{{ t('nav.schemas') }}</span>
+                    </div>
+                </div>
+                <!-- Settings Navigation -->
+                <div>
+                    <div v-if="showLabels" class="px-4 mb-2 text-caption font-weight-medium text-uppercase text-white" style="letter-spacing: 0.05em">
+                        {{ t('nav.userSettings') }}
+                    </div>
+
+                    <!-- Users -->
+                    <div
+                        v-if="isCollapsed"
+                        @click="navigate('/app/users')"
+                        class="nav-item-collapsed"
+                        :class="{ active: isActiveRoute('/app/users') }"
+                    >
+                        <v-icon icon="mdi-account" size="24" />
+                    </div>
+                    <div v-else @click="navigate('/app/users')" class="nav-item-expanded" :class="{ active: isActiveRoute('/app/users') }">
+                        <v-icon icon="mdi-account" size="24" />
+                        <span class="ml-4">{{ t('nav.users') }}</span>
+                    </div>
+
+                    <!-- Roles and perms -->
+                    <div
+                        v-if="isCollapsed"
+                        @click="navigate('/app/roles')"
+                        class="nav-item-collapsed"
+                        :class="{ active: isActiveRoute('/app/roles') }"
+                    >
+                        <v-icon icon="mdi-lock" size="24" />
+                    </div>
+                    <div v-else @click="navigate('/app/roles')" class="nav-item-expanded" :class="{ active: isActiveRoute('/app/roles') }">
+                        <v-icon icon="mdi-lock" size="24" />
+                        <span class="ml-4">{{ t('nav.perms') }}</span>
                     </div>
                 </div>
             </div>
