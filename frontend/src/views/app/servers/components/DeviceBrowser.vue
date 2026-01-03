@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, computed } from 'vue';
+import { watch, computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDevices } from '@/composables/useDevices';
 import type { Server } from '@/types/api';
@@ -12,12 +12,20 @@ const props = defineProps<{
 
 const { devices, loading, error, fetchDevicesByServer, deviceSoftwareMap } = useDevices();
 
-// Create devices with software for display
 const devicesWithSoftware = computed(() => {
     return devices.value.map((device) => ({
         ...device,
         software: deviceSoftwareMap.value[device.id] || [],
     }));
+});
+
+const showDeletedDevices = ref(false);
+const filteredDevices = computed(() => {
+    if (showDeletedDevices.value) {
+        return devicesWithSoftware.value;
+    } else {
+        return devicesWithSoftware.value.filter((device) => !device.deleted_at);
+    }
 });
 
 watch(
@@ -45,6 +53,9 @@ watch(
             <v-divider></v-divider>
 
             <v-card-text>
+                <div class="d-flex justify-start mb-4">
+                    <v-switch v-model="showDeletedDevices" :label="t('devices.showDeleted')" color="info" hide-details></v-switch>
+                </div>
                 <!-- No server selected state -->
                 <v-alert v-if="!selectedServer" type="info" variant="tonal" icon="mdi-information-outline" class="ma-4">
                     {{ t('devices.selectServer') }}
@@ -59,7 +70,7 @@ watch(
                         { title: t('devices.type'), key: 'device_type.name', sortable: true },
                         { title: t('devices.software'), key: 'software', sortable: false },
                     ]"
-                    :items="devicesWithSoftware"
+                    :items="filteredDevices"
                     :loading="loading"
                     :loading-text="t('devices.loadingDevices')"
                     class="elevation-1"

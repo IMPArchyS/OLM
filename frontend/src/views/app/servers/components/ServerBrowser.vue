@@ -14,11 +14,11 @@ const emit = defineEmits<{
 }>();
 
 const selectedDeviceServer = ref<Server | null>(null);
-const showDeleted = ref(false);
+const showDeletedServers = ref(false);
 
 const filteredServers = computed(() => {
-    if (showDeleted.value) {
-        return servers.value.filter((server) => server.deleted_at);
+    if (showDeletedServers.value) {
+        return servers.value;
     } else {
         return servers.value.filter((server) => !server.deleted_at);
     }
@@ -85,26 +85,43 @@ const handleSyncAll = async () => {
             <v-card-text>
                 <!-- Toggle for deleted servers -->
                 <div class="d-flex justify-start mb-4">
-                    <v-switch v-model="showDeleted" :label="t('servers.showDeleted')" color="info" hide-details></v-switch>
+                    <v-switch v-model="showDeletedServers" :label="t('servers.showDeleted')" color="info" hide-details></v-switch>
                 </div>
 
                 <v-data-table
                     :headers="[
-                        { title: t('servers.id'), key: 'id', sortable: true },
-                        { title: t('servers.name'), key: 'name', sortable: true },
-                        { title: t('servers.ipAddress'), key: 'ip_address', sortable: true },
-                        { title: t('servers.apiDomain'), key: 'api_domain', sortable: true },
+                        {
+                            title: t('servers.id'),
+                            key: 'id',
+                            sortable: true,
+                        },
+                        {
+                            title: t('servers.name'),
+                            key: 'name',
+                            sortable: true,
+                        },
+                        {
+                            title: t('servers.ipAddress'),
+                            key: 'ip_address',
+                            sortable: true,
+                        },
+                        {
+                            title: t('servers.apiDomain'),
+                            key: 'api_domain',
+                            sortable: true,
+                        },
                         {
                             title: t('servers.available'),
                             key: 'available',
-                            align: 'center' as const,
                         },
                         {
                             title: t('servers.production'),
                             key: 'production',
-                            align: 'center' as const,
                         },
-                        { title: t('servers.enabled'), key: 'enabled', align: 'center' as const },
+                        {
+                            title: t('servers.enabled'),
+                            key: 'enabled',
+                        },
                         {
                             title: t('servers.actions'),
                             key: 'actions',

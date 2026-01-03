@@ -82,6 +82,7 @@ export default {
         addDevice: 'Add Device',
         editDevice: 'Edit Device',
         deleteDevice: 'Delete Device',
+        showDeleted: 'Show Deleted Devices',
         viewDevice: 'View Device',
         syncDevice: 'Sync Device',
         syncDevices: 'Sync Devices',
