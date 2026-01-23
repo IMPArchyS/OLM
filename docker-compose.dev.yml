@@ -10,7 +10,8 @@ services:
             POSTGRES_USER: imp
             POSTGRES_DB: olmcentral
         volumes:
-            - pgdata:/var/lib/postgresql/data
+            - pgdata_dev:/var/lib/postgresql/data
+
     backend:
         build: ./backend
         container_name: fastapi_backend
@@ -23,18 +24,26 @@ services:
         volumes:
             - ./backend/app:/app/app
             - ./backend/app/migrations:/app/migrations
+        environment:
+            - ENVIRONMENT=dev
+
     frontend:
-        build: ./frontend
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+            args:
+                MODE: dev
         container_name: vue_frontend
         ports:
-            - "5173:5173"
+            - '5173:5173'
         volumes:
             - ./frontend:/app
             - /app/node_modules
         environment:
+            - NODE_ENV=dev
             - VITE_API_URL=http://localhost:8000
         depends_on:
             - backend
 
 volumes:
-    pgdata:
+    pgdata_dev:

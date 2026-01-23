@@ -1,18 +1,25 @@
-FROM node:20-alpine
+ARG MODE=production
 
+FROM node:20-alpine AS base
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
 
-# Install dependencies
 RUN npm install
 
-# Copy rest of the app
 COPY . .
 
-# Expose Vite dev server port
+FROM base AS dev
 EXPOSE 5173
+CMD ["npm", "run", "dev"]
 
-# Run dev server (accessible from outside container)
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+FROM base AS build
+RUN npm run build
+
+FROM nginx:alpine AS production
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+
+FROM ${MODE} AS final

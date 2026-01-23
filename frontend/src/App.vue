@@ -1,24 +1,19 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useThemeStore } from './stores/theme'
-import { useLanguageStore } from './stores/language'
-import { useUserStore } from './stores/user'
-import { useTheme } from 'vuetify'
+import { onMounted } from 'vue';
+import { useThemeStore } from './stores/theme';
+import { useLanguageStore } from './stores/language';
+import { useTheme } from 'vuetify';
 
-const themeStore = useThemeStore()
-const languageStore = useLanguageStore()
-const userStore = useUserStore()
-const vuetifyTheme = useTheme()
+const themeStore = useThemeStore();
+const languageStore = useLanguageStore();
+const vuetifyTheme = useTheme();
 
 onMounted(() => {
-    themeStore.initTheme()
-    languageStore.initLanguage()
-    userStore.initUser()
+    themeStore.initTheme();
+    languageStore.initLanguage();
 
-    vuetifyTheme.change(themeStore.theme)
-})
-
-userStore.login('JohnDoeUser', 'john.doe@example.com')
+    vuetifyTheme.change(themeStore.theme);
+});
 </script>
 
 <template>
@@ -35,8 +30,8 @@ userStore.login('JohnDoeUser', 'john.doe@example.com')
 
 body {
     font-family:
-        -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
-        'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }

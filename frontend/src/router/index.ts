@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+import { useUserStore } from '@/stores/user';
 import MainLayout from '@/layouts/MainLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import dashboard from '@/views/app/Dashboard.vue';
@@ -16,6 +18,10 @@ import updatePassword from '@/views/app/users/UpdatePassword.vue';
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
+        {
+            path: '/',
+            redirect: '/auth/login',
+        },
         {
             path: '/auth',
             component: AuthLayout,
@@ -39,7 +45,7 @@ const router = createRouter({
         {
             path: '/app',
             component: MainLayout,
-            // meta: { requiresAuth: true }, // Uncomment when ready to enforce auth
+            meta: { requiresAuth: true },
             children: [
                 {
                     path: '',
@@ -145,6 +151,51 @@ const router = createRouter({
             component: error500,
         },
     ],
+});
+
+// Track if auth has been initialized
+let authInitialized = false;
+
+// Navigation guard to protect routes
+router.beforeEach(async (to, from, next) => {
+    const authStore = useAuthStore();
+
+    // Initialize auth on first navigation (attempt session recovery from cookie)
+    if (!authInitialized) {
+        await authStore.initAuth();
+        authInitialized = true;
+    }
+
+    // Check if route requires authentication
+    const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+
+    if (requiresAuth) {
+        // Route requires authentication
+        if (!authStore.isAuthenticated) {
+            // Try to recover session one more time before redirecting
+            const recovered = await authStore.initAuth();
+
+            if (!recovered) {
+                // Still not authenticated, redirect to login
+                next({
+                    name: 'login',
+                    query: { redirect: to.fullPath }, // Save the intended destination
+                });
+                return;
+            }
+        }
+
+        // Authenticated, allow access
+        next();
+    } else {
+        // Route doesn't require auth
+        if (authStore.isAuthenticated && (to.name === 'login' || to.name === 'register')) {
+            // Already logged in, redirect to dashboard
+            next({ name: 'dashboard' });
+        } else {
+            next();
+        }
+    }
 });
 
 export default router;

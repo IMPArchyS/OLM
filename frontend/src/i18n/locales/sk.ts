@@ -8,6 +8,8 @@ export default {
         reports: 'Reporty',
         settings: 'Nastavenia',
         lab: 'Laboratórium',
+        users: 'Používatelia',
+        perms: 'Role a povolenia',
     },
     auth: {
         login: 'Prihlásenie',
@@ -205,5 +207,11 @@ export default {
     actions: {
         add: 'Pridať',
         back: 'Späť',
+    },
+    users: {
+        title: 'Používatelia',
+    },
+    roles: {
+        title: 'Role a povolenia',
     },
 };
