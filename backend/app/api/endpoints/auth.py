@@ -43,7 +43,7 @@ def register(credentials: RegisterRequest, response: Response):
         token_data = auth_response.json()
         
         response.set_cookie(
-            key="refresh_token",
+            key="olm_refresh_token",
             value=token_data["refresh_token"],
             httponly=True,
             secure=False,
@@ -91,7 +91,7 @@ def login(credentials: LoginRequest, response: Response):
 
 
 @router.post("/refresh", response_model=TokenResponse)
-def refresh(refresh_token: Annotated[str, Cookie()]):
+def refresh(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
     print(f"/REFRESH -> refresh token {refresh_token}");
     if not refresh_token:
         raise HTTPException(
@@ -120,7 +120,7 @@ def refresh(refresh_token: Annotated[str, Cookie()]):
 
 
 @router.post("/logout")
-def logout(refresh_token: Annotated[str, Cookie()]):
+def logout(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
     print(f"/LOGOUT -> refresh token {refresh_token}");
     if not refresh_token:
         raise HTTPException(
