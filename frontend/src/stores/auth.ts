@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import { authClient, setTokens, clearTokens, getAccessToken } from '@/composables/useAxios';
+import { ref } from 'vue';
+import { apiClient, authClient } from '@/composables/useAxios';
 
 interface LoginCredentials {
     username: string;
@@ -19,144 +19,86 @@ interface AuthResponse {
     refresh_token_expires_at: string;
 }
 
+interface User {
+    id: string;
+    username: string;
+    name: string;
+    admin: boolean;
+    role_id: number;
+}
+
+function parseJwt(token: string) {
+    try {
+        const base64Url = token.split('.')[1];
+        if (!base64Url) {
+            return null;
+        }
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(
+            atob(base64)
+                .split('')
+                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join(''),
+        );
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+}
+
 export const useAuthStore = defineStore('auth', () => {
-    const isAuthenticated = ref(false);
-    const isLoading = ref(false);
-    const error = ref<string | null>(null);
-    let refreshInterval: ReturnType<typeof setInterval> | null = null;
+    const accessToken = ref<string | null>('');
+    const refreshToken = ref<string | null>('');
+    const user = ref<User | null>(null);
+    const initialized = ref(false);
+    let refreshIntervalId: number | null = null;
 
-    const hasValidToken = computed(() => {
-        return isAuthenticated.value && !!getAccessToken();
-    });
-
-    /**
-     * Start automatic token refresh (every 4 minutes)
-     */
-    const startTokenRefresh = () => {
-        // Clear any existing interval
-        if (refreshInterval) {
-            clearInterval(refreshInterval);
+    const setToken = (newAccessToken: string | null, newRefreshToken?: string | null) => {
+        accessToken.value = newAccessToken;
+        if (newRefreshToken !== undefined) {
+            refreshToken.value = newRefreshToken;
         }
-
-        console.log('[Auth] Starting automatic token refresh (every 4 minutes)');
-        // Refresh token every 4 minutes (240000ms)
-        refreshInterval = setInterval(async () => {
-            console.log('[Auth] Running automatic token refresh...');
-            try {
-                await refreshToken();
-                console.log('[Auth] Token refreshed successfully');
-            } catch (err) {
-                console.error('[Auth] Auto token refresh failed:', err);
-                // If refresh fails, logout user
-                await logout();
+        if (newAccessToken) {
+            const payload = parseJwt(newAccessToken);
+            if (payload) {
+                user.value = {
+                    id: payload.sub,
+                    username: payload.username,
+                    name: payload.name,
+                    admin: payload.admin,
+                    role_id: payload.role_id,
+                };
             }
-        }, 240000); // 4 minutes
-    };
-
-    /**
-     * Stop automatic token refresh
-     */
-    const stopTokenRefresh = () => {
-        if (refreshInterval) {
-            clearInterval(refreshInterval);
-            refreshInterval = null;
+        } else {
+            user.value = null;
         }
     };
 
-    const refreshToken = async (): Promise<AuthResponse> => {
-        try {
-            console.log('[Auth] Attempting to refresh token...');
-
-            const currentRefreshToken = localStorage.getItem('refresh_token');
-            if (!currentRefreshToken) {
-                throw new Error('No refresh token available');
-            }
-
-            // Call internal endpoint with refresh_token in body
-            const response = await authClient.post<AuthResponse>('/refresh', {
-                refresh_token: currentRefreshToken,
-            });
-            const { access_token, refresh_token } = response.data;
-
-            setTokens(access_token, refresh_token);
-            isAuthenticated.value = true;
-            console.log('[Auth] Token refresh successful');
-
-            return response.data;
-        } catch (err: any) {
-            console.error('[Auth] Token refresh failed:', err.response?.data || err.message);
-            clearTokens();
-            isAuthenticated.value = false;
-            stopTokenRefresh();
-            throw err;
-        }
+    const setTokens = (newAccessToken: string | null, newRefreshToken: string | null) => {
+        setToken(newAccessToken, newRefreshToken);
     };
 
-    /**
-     * Initialize auth - attempt to recover session from localStorage refresh token
-     */
     const initAuth = async (): Promise<boolean> => {
-        console.log('[Auth] Initializing auth...');
-        // If already have a token in memory, we're good
-        if (getAccessToken()) {
-            console.log('[Auth] Found existing access token');
-            isAuthenticated.value = true;
+        try {
+            const response = await apiClient.post('auth/refresh');
+            setToken(response.data.access_token);
             startTokenRefresh();
+            initialized.value = true;
             return true;
+        } catch (err) {
+            console.error('Token refresh failed:', err);
+            initialized.value = true;
+            return false;
         }
-
-        // Try to get a new access token using the refresh token from localStorage
-        const refreshTokenValue = localStorage.getItem('refresh_token');
-        if (refreshTokenValue) {
-            try {
-                console.log('[Auth] Found refresh token, attempting to restore session...');
-                await refreshToken();
-                startTokenRefresh();
-
-                // Fetch current user data after successful session restoration
-                try {
-                    const accessToken = getAccessToken();
-                    if (accessToken) {
-                        const { useUserStore } = await import('@/stores/user');
-                        const userStore = useUserStore();
-                        await userStore.fetchCurrentUser(accessToken);
-                        console.log('[Auth] User data restored');
-                    }
-                } catch (userErr) {
-                    console.error('[Auth] Failed to fetch user data:', userErr);
-                    // Continue anyway, user data can be fetched later if needed
-                }
-
-                return true;
-            } catch (err) {
-                // Refresh token is invalid or expired
-                console.log('[Auth] Failed to restore session:', err);
-                isAuthenticated.value = false;
-                return false;
-            }
-        }
-
-        // No valid session
-        console.log('[Auth] No valid session found');
-        isAuthenticated.value = false;
-        return false;
     };
 
-    /**
-     * Login user
-     */
     const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
-        isLoading.value = true;
-        error.value = null;
-
         try {
-            const response = await authClient.post<AuthResponse>('/login', credentials);
+            const response = await apiClient.post<AuthResponse>('auth/login', credentials);
             const { access_token, refresh_token } = response.data;
 
             setTokens(access_token, refresh_token);
-            isAuthenticated.value = true;
 
-            // Start automatic token refresh
             startTokenRefresh();
 
             return response.data;
@@ -167,30 +109,17 @@ export const useAuthStore = defineStore('auth', () => {
                 err.response?.data?.error ||
                 (typeof err.response?.data === 'string' ? err.response?.data : null) ||
                 'Login failed';
-
-            error.value = errorMessage;
-            isAuthenticated.value = false;
             throw err;
-        } finally {
-            isLoading.value = false;
         }
     };
 
-    /**
-     * Register new user
-     */
     const register = async (data: RegisterData): Promise<AuthResponse> => {
-        isLoading.value = true;
-        error.value = null;
-
         try {
-            const response = await authClient.post<AuthResponse>('/register', data);
+            const response = await authClient.post<AuthResponse>('internal/api/register', data);
             const { access_token, refresh_token } = response.data;
 
             setTokens(access_token, refresh_token);
-            isAuthenticated.value = true;
 
-            // Start automatic token refresh
             startTokenRefresh();
 
             return response.data;
@@ -201,56 +130,56 @@ export const useAuthStore = defineStore('auth', () => {
                 err.response?.data?.error ||
                 (typeof err.response?.data === 'string' ? err.response?.data : null) ||
                 'Registration failed';
-
-            error.value = errorMessage;
-            isAuthenticated.value = false;
             throw err;
-        } finally {
-            isLoading.value = false;
         }
     };
 
-    /**
-     * Logout user
-     */
-    const logout = async (): Promise<void> => {
+    const refreshAccessToken = async () => {
         try {
-            await authClient.post('/logout');
+            const response = await apiClient.post('auth/refresh');
+            setToken(response.data.access_token);
         } catch (err) {
-            // Continue with logout even if API call fails
-        } finally {
-            stopTokenRefresh();
-            clearTokens();
-            isAuthenticated.value = false;
-
-            // Clear user data
-            try {
-                const { useUserStore } = await import('@/stores/user');
-                const userStore = useUserStore();
-                userStore.clearUser();
-            } catch (err) {
-                console.error('[Auth] Failed to clear user data:', err);
-            }
+            console.error('Token refresh failed:', err);
+            logout();
         }
     };
 
-    /**
-     * Clear error message
-     */
-    const clearError = () => {
-        error.value = null;
+    const startTokenRefresh = () => {
+        if (refreshIntervalId !== null) {
+            clearInterval(refreshIntervalId);
+        }
+        refreshIntervalId = setInterval(
+            () => {
+                refreshAccessToken();
+            },
+            4 * 60 * 1000,
+        );
+    };
+
+    const logout = async (): Promise<void> => {
+        await apiClient
+            .post('auth/logout')
+            .then(() => {
+                setToken(null);
+                if (refreshIntervalId !== null) {
+                    clearInterval(refreshIntervalId);
+                    refreshIntervalId = null;
+                }
+            })
+            .catch(() => {
+                setToken(null);
+            });
     };
 
     return {
-        isAuthenticated,
-        isLoading,
-        error,
-        hasValidToken,
+        accessToken,
+        refreshToken,
+        user,
         initAuth,
         login,
         register,
         logout,
-        refreshToken,
-        clearError,
+        startTokenRefresh,
+        refreshAccessToken,
     };
 });

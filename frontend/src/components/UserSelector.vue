@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth';
-import { useUserStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
-const userStore = useUserStore();
 const router = useRouter();
 const isOpen = ref(false);
 
@@ -24,7 +22,6 @@ const handleUpdatePassword = () => {
 const handleLogout = async () => {
     isOpen.value = false;
     await authStore.logout();
-    userStore.clearUser();
     router.push({ name: 'login' });
 };
 
@@ -40,10 +37,10 @@ const handleRegister = () => {
 <template>
     <div>
         <!-- Logged In: User Dropdown -->
-        <v-menu v-if="userStore.isLoggedIn" v-model="isOpen" :close-on-content-click="false">
+        <v-menu v-if="authStore.accessToken" v-model="isOpen" :close-on-content-click="false">
             <template v-slot:activator="{ props }">
                 <v-btn v-bind="props" variant="text" style="margin-right: 20px">
-                    <span style="font-weight: 500">{{ userStore.user?.name }}</span>
+                    <span style="font-weight: 500">{{ authStore.user?.name }}</span>
                     <v-icon
                         :style="{
                             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',

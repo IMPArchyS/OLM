@@ -11,7 +11,8 @@ from app.api.endpoints import (
     option,
     software,
     reservation,
-    admin
+    admin,
+    auth
 )
 
 
@@ -82,6 +83,12 @@ api_router.include_router(
     server.router,
     prefix="/api/server",
     tags=["Servers"],
+)
+
+api_router.include_router(
+    auth.router,
+    prefix="/api/auth",
+    tags=["Auth"],
 )
 
 

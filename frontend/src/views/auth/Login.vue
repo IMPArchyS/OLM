@@ -2,12 +2,10 @@
 import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { useUserStore } from '@/stores/user';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
-const userStore = useUserStore();
 
 const username = ref('');
 const password = ref('');
@@ -25,9 +23,6 @@ const handleLogin = async () => {
             password: password.value,
         });
 
-        // Fetch user data
-        await userStore.fetchUser(username.value);
-
         // Redirect to intended page or dashboard
         const redirect = (route.query.redirect as string) || '/app/dashboard';
         await router.push(redirect);
@@ -44,9 +39,9 @@ const handleLogin = async () => {
     <v-card max-width="400" class="mx-auto mt-5">
         <v-card-title class="text-h5 mb-4">Login</v-card-title>
         <v-card-text>
-            <v-alert v-if="authStore.error" type="error" class="mb-4" closable @click:close="authStore.clearError()">
+            <!-- <v-alert v-if="authStore.error" type="error" class="mb-4" closable @click:close="authStore.clearError()">
                 {{ authStore.error }}
-            </v-alert>
+            </v-alert> -->
 
             <v-form @submit.prevent="handleLogin">
                 <v-text-field

@@ -2,11 +2,9 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { useUserStore } from '@/stores/user';
 
 const router = useRouter();
 const authStore = useAuthStore();
-const userStore = useUserStore();
 
 const username = ref('');
 const name = ref('');
@@ -19,7 +17,7 @@ const handleRegister = async () => {
 
     // Validate passwords match
     if (password.value !== confirmPassword.value) {
-        authStore.error = 'Passwords do not match';
+        console.log('Passwords do not match');
         return;
     }
 
@@ -32,9 +30,6 @@ const handleRegister = async () => {
             username: username.value,
             password: password.value,
         });
-
-        // Fetch user data
-        await userStore.fetchUser(username.value);
 
         // Redirect to dashboard
         await router.push({ name: 'dashboard' });
@@ -50,9 +45,9 @@ const handleRegister = async () => {
     <v-card max-width="400" class="mx-auto mt-5">
         <v-card-title class="text-h5 mb-4">Register</v-card-title>
         <v-card-text>
-            <v-alert v-if="authStore.error" type="error" class="mb-4" closable @click:close="authStore.clearError()">
+            <!-- <v-alert v-if="authStore.error" type="error" class="mb-4" closable @click:close="authStore.clearError()">
                 {{ authStore.error }}
-            </v-alert>
+            </v-alert> -->
 
             <v-form @submit.prevent="handleRegister">
                 <v-text-field

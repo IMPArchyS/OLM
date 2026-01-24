@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { useUserStore } from '@/stores/user';
 import MainLayout from '@/layouts/MainLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import dashboard from '@/views/app/Dashboard.vue';
@@ -153,49 +152,25 @@ const router = createRouter({
     ],
 });
 
-// Track if auth has been initialized
-let authInitialized = false;
-
 // Navigation guard to protect routes
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();
 
-    // Initialize auth on first navigation (attempt session recovery from cookie)
-    if (!authInitialized) {
-        await authStore.initAuth();
-        authInitialized = true;
-    }
-
-    // Check if route requires authentication
-    const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
-
-    if (requiresAuth) {
-        // Route requires authentication
-        if (!authStore.isAuthenticated) {
-            // Try to recover session one more time before redirecting
-            const recovered = await authStore.initAuth();
-
-            if (!recovered) {
-                // Still not authenticated, redirect to login
-                next({
-                    name: 'login',
-                    query: { redirect: to.fullPath }, // Save the intended destination
-                });
-                return;
-            }
+    if (to.meta.requiresAuth || to.meta.requiresAdmin) {
+        if (!authStore.accessToken) {
+            await authStore.initAuth();
         }
 
-        // Authenticated, allow access
-        next();
-    } else {
-        // Route doesn't require auth
-        if (authStore.isAuthenticated && (to.name === 'login' || to.name === 'register')) {
-            // Already logged in, redirect to dashboard
-            next({ name: 'dashboard' });
-        } else {
-            next();
+        if (!authStore.accessToken) {
+            return next({ path: '/login', query: { redirect: to.fullPath } });
         }
+
+        if (to.meta.requiresAdmin && !authStore.user?.admin) {
+            return next({ path: '/' });
+        }
+        return next();
     }
+    next();
 });
 
 export default router;
