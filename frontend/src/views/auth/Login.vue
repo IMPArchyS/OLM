@@ -17,18 +17,15 @@ const handleLogin = async () => {
     isSubmitting.value = true;
 
     try {
-        // Login and get tokens
         await authStore.login({
             username: username.value,
             password: password.value,
         });
 
-        // Redirect to intended page or dashboard
         const redirect = (route.query.redirect as string) || '/app/dashboard';
         await router.push(redirect);
     } catch (error) {
         console.error('Login failed:', error);
-        // Error is already stored in authStore.error
     } finally {
         isSubmitting.value = false;
     }
@@ -46,8 +43,9 @@ const handleLogin = async () => {
             <v-form @submit.prevent="handleLogin">
                 <v-text-field
                     v-model="username"
-                    label="Username"
-                    placeholder="Enter username"
+                    label="Email"
+                    placeholder="Enter email"
+                    type="email"
                     variant="outlined"
                     density="comfortable"
                     required

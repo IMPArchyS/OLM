@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import RoleBrowser from './components/RoleBrowser.vue';
 
 const { t } = useI18n();
 </script>
@@ -11,5 +12,6 @@ const { t } = useI18n();
         </v-card-title>
         <v-divider></v-divider>
         <v-card-text> </v-card-text>
+        <role-browser />
     </v-card>
 </template>

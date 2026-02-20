@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     DB_PORT: str | int | None = None
     DB_PATH: str | None = None
 
-    AUTH_SERVICE_URL: str = "http://host.docker.internal:8080/internal/api"
+    AUTH_SERVICE_URL: str = "http://host.docker.internal:8080/internal/api" # "http://node124.webte.fei.stuba.sk:8080/internal/api"
     AUTH_API_KEY: str = "devapikey"
 
     @computed_field

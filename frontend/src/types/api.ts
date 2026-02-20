@@ -1,3 +1,23 @@
+export interface User {
+    id: number;
+    name: string;
+    created_at?: string;
+    admin: boolean;
+}
+
+export interface Role {
+    id: number;
+    name: string;
+    description: string;
+    permissions: Permision[];
+}
+
+export interface Permision {
+    id: number;
+    name: string;
+    description: string;
+}
+
 export interface Device {
     id: number;
     name: string;

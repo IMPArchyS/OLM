@@ -156,6 +156,13 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();
 
+    const backendPaths = ['/api', '/docs', '/redoc', '/openapi.json', '/ws', '/ovl-auth'];
+
+    if (backendPaths.some((path) => to.path.startsWith(path))) {
+        window.location.href = to.fullPath;
+        return;
+    }
+
     if (to.meta.requiresAuth || to.meta.requiresAdmin) {
         if (!authStore.accessToken) {
             await authStore.initAuth();

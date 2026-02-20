@@ -21,6 +21,9 @@ services:
             - .env
         depends_on:
             - db
+        volumes:
+           - ./backend/app:/app/app
+           - ./backend/app/migrations:/app/migrations
         environment:
             - ENVIRONMENT=build
 
@@ -33,6 +36,10 @@ services:
         container_name: vue_frontend
         ports:
             - '80:80'
+        volumes:
+            - ./frontend:/app
+            - /app/node_modules
+            - /etc/letsencrypt:/etc/letsencrypt:ro
         environment:
             - NODE_ENV=build
         depends_on:

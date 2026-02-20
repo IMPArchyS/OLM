@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from app.api.ws import ws_router
 
 from app.api.endpoints import (
     argument,
@@ -18,6 +19,10 @@ from app.api.endpoints import (
 
 api_router = APIRouter()
 
+api_router.include_router(
+    ws_router,
+    prefix="/ws"
+)
 
 api_router.include_router(
     admin.router,

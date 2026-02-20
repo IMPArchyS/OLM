@@ -115,7 +115,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     const register = async (data: RegisterData): Promise<AuthResponse> => {
         try {
-            const response = await authClient.post<AuthResponse>('internal/api/register', data);
+            const response = await apiClient.post<AuthResponse>('auth/register', data);
             const { access_token, refresh_token } = response.data;
 
             setTokens(access_token, refresh_token);

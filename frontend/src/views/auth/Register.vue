@@ -15,7 +15,6 @@ const isSubmitting = ref(false);
 const handleRegister = async () => {
     if (isSubmitting.value) return;
 
-    // Validate passwords match
     if (password.value !== confirmPassword.value) {
         console.log('Passwords do not match');
         return;
@@ -24,14 +23,12 @@ const handleRegister = async () => {
     isSubmitting.value = true;
 
     try {
-        // Register and get tokens
         await authStore.register({
             name: name.value,
             username: username.value,
             password: password.value,
         });
 
-        // Redirect to dashboard
         await router.push({ name: 'dashboard' });
     } catch (error) {
         console.error('Registration failed:', error);

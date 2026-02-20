@@ -26,20 +26,20 @@ def get_all(db: DbSession):
     return db.exec(stmt).all()
 
 
-@router.get("/{id}", response_model=ReservationPublic)
-def get_by_id(db: DbSession, id: int): 
-    db_reservation = db.get(Reservation, id)
-    if not db_reservation:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Reservation with {id} not found!")
-    return db_reservation
-
-
 @router.get("/current", response_model=ReservationPublic)
 def get_current(db: DbSession):
     stmt = select(Reservation).where(Reservation.start <= now(), Reservation.end >= now()).order_by(asc(Reservation.start))
     db_reservation = db.exec(stmt).first()
     if not db_reservation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No current reservation found!")
+    return db_reservation
+
+
+@router.get("/{id}", response_model=ReservationPublic)
+def get_by_id(db: DbSession, id: int): 
+    db_reservation = db.get(Reservation, id)
+    if not db_reservation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Reservation with {id} not found!")
     return db_reservation
 
 
