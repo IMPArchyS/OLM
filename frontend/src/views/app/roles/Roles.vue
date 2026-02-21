@@ -12,6 +12,6 @@ const { t } = useI18n();
         </v-card-title>
         <v-divider></v-divider>
         <v-card-text> </v-card-text>
-        <role-browser />
+        <RoleBrowser />
     </v-card>
 </template>

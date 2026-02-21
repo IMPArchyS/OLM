@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAuthStore } from '@/stores/auth';
 import { inject, computed } from 'vue';
 import type { Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -7,6 +8,7 @@ import { useRouter, useRoute } from 'vue-router';
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
+const authStore = useAuthStore();
 
 interface MainLayoutContext {
     sidebarCollapsed: Ref<boolean>;
@@ -127,7 +129,7 @@ const showLabels = computed(() => !isCollapsed.value);
                 </div>
 
                 <!-- Settings Navigation -->
-                <div>
+                <div v-if="authStore.roleName === 'olm_admin' || 'olm_teacher'">
                     <div v-if="showLabels" class="px-4 mb-2 text-caption font-weight-medium text-uppercase text-white" style="letter-spacing: 0.05em">
                         {{ t('nav.settings') }}
                     </div>
@@ -161,12 +163,13 @@ const showLabels = computed(() => !isCollapsed.value);
                     </div>
                 </div>
                 <!-- Settings Navigation -->
-                <div>
+                <div v-if="authStore.roleName === 'olm_admin'">
                     <div v-if="showLabels" class="px-4 mb-2 text-caption font-weight-medium text-uppercase text-white" style="letter-spacing: 0.05em">
                         {{ t('nav.userSettings') }}
                     </div>
 
                     <!-- Users -->
+
                     <div
                         v-if="isCollapsed"
                         @click="navigate('/app/users')"

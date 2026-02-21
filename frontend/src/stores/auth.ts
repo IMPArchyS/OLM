@@ -50,6 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
     const accessToken = ref<string | null>('');
     const refreshToken = ref<string | null>('');
     const user = ref<User | null>(null);
+    const roleName = ref<string | null>(null);
     const initialized = ref(false);
     let refreshIntervalId: number | null = null;
 
@@ -68,9 +69,11 @@ export const useAuthStore = defineStore('auth', () => {
                     admin: payload.admin,
                     role_id: payload.role_id,
                 };
+                roleName.value = null;
             }
         } else {
             user.value = null;
+            roleName.value = null;
         }
     };
 
@@ -171,15 +174,43 @@ export const useAuthStore = defineStore('auth', () => {
             });
     };
 
+    const fetchRoleName = async (): Promise<string | null> => {
+        if (roleName.value) {
+            return roleName.value;
+        }
+
+        if (!user.value?.role_id) {
+            return null;
+        }
+
+        try {
+            const response = await authClient.get(`/internal/api/roles/${user.value.role_id}`);
+            roleName.value = response.data?.name ?? null;
+            return roleName.value;
+        } catch (err) {
+            console.error('Failed to fetch role name:', err);
+            roleName.value = null;
+            return null;
+        }
+    };
+
+    const isOlmAdmin = async (): Promise<boolean> => {
+        const name = await fetchRoleName();
+        return name === 'olm_admin';
+    };
+
     return {
         accessToken,
         refreshToken,
         user,
+        roleName,
         initAuth,
         login,
         register,
         logout,
         startTokenRefresh,
         refreshAccessToken,
+        fetchRoleName,
+        isOlmAdmin,
     };
 });

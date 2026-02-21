@@ -131,11 +131,28 @@ const router = createRouter({
                     path: '/app/users',
                     name: 'users',
                     component: () => import('@/views/app/users/Users.vue'),
+                    meta: {
+                        requiresAuth: true,
+                        requiresOlmAdmin: true,
+                    },
                 },
                 {
                     path: '/app/roles',
                     name: 'roles',
                     component: () => import('@/views/app/roles/Roles.vue'),
+                    meta: {
+                        requiresAuth: true,
+                        requiresOlmAdmin: true,
+                    },
+                },
+                {
+                    path: '/app/roles/:id/show',
+                    name: 'roles-show',
+                    component: () => import('@/views/app/roles/ShowRoles.vue'),
+                    meta: {
+                        requiresAuth: true,
+                        requiresOlmAdmin: true,
+                    },
                 },
             ],
         },
@@ -152,18 +169,28 @@ const router = createRouter({
     ],
 });
 
-// Navigation guard to protect routes
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore();
 
     const backendPaths = ['/api', '/docs', '/redoc', '/openapi.json', '/ws', '/ovl-auth'];
+    const authRoutes = ['/auth/login', '/auth/register'];
 
     if (backendPaths.some((path) => to.path.startsWith(path))) {
         window.location.href = to.fullPath;
         return;
     }
 
-    if (to.meta.requiresAuth || to.meta.requiresAdmin) {
+    if (authRoutes.includes(to.path)) {
+        if (!authStore.accessToken) {
+            await authStore.initAuth();
+        }
+
+        if (authStore.accessToken) {
+            return next({ path: '/app/dashboard' });
+        }
+    }
+
+    if (to.meta.requiresAuth || to.meta.requiresOlmAdmin) {
         if (!authStore.accessToken) {
             await authStore.initAuth();
         }
@@ -172,8 +199,11 @@ router.beforeEach(async (to, from, next) => {
             return next({ path: '/login', query: { redirect: to.fullPath } });
         }
 
-        if (to.meta.requiresAdmin && !authStore.user?.admin) {
-            return next({ path: '/' });
+        if (to.meta.requiresOlmAdmin) {
+            const isOlmAdmin = await authStore.isOlmAdmin();
+            if (!isOlmAdmin) {
+                return next({ path: '/' });
+            }
         }
         return next();
     }

@@ -18,10 +18,21 @@ export function useRoles() {
         }
     }
 
+    async function getRoleById(id: number): Promise<Role | null> {
+        try {
+            const response = await authClient.get(`/internal/api/roles/${id}`);
+            return response.data;
+        } catch (e) {
+            console.error(`Error fetching role with id ${id}: `, e);
+        }
+        return null;
+    }
+
     return {
         roles,
         loading,
         error,
         fetchRoles,
+        getRoleById,
     };
 }

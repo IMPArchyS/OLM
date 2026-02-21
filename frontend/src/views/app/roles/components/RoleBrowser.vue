@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useRoles } from '@/composables/useRoles';
+import router from '@/router';
 import type { Role } from '@/types/api';
 import { onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -15,8 +16,8 @@ onMounted(async () => {
     await fetchRoles();
 });
 
-const handleEdit = (item: Role) => {
-    // TODO
+const handleView = (item: Role) => {
+    router.push(`/app/roles/${item.id}/show`);
 };
 
 const handleDelete = (item: Role) => {
@@ -57,7 +58,7 @@ const handleDelete = (item: Role) => {
         >
             <!-- Actions Column -->
             <template v-slot:item.actions="{ item }">
-                <v-btn icon="mdi-pencil" size="small" variant="text" color="primary" @click="handleEdit(item)"></v-btn>
+                <v-btn icon="mdi-pencil" size="small" variant="text" color="primary" @click="handleView(item)"></v-btn>
                 <v-btn icon="mdi-delete" size="small" variant="text" color="error" @click="handleDelete(item)"></v-btn>
             </template>
 
