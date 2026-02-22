@@ -78,12 +78,9 @@ watch(
                 >
                     <!-- Software Column -->
                     <template v-slot:item.software="{ item }">
-                        <v-chip-group v-if="item.software && item.software.length > 0">
-                            <v-chip v-for="software in item.software" :key="software.id" size="small" color="primary" variant="outlined">
-                                {{ software.name }}
-                            </v-chip>
-                        </v-chip-group>
-                        <span v-else class="text-medium-emphasis text-caption">—</span>
+                        <v-chip class="mr-1" v-for="software in item.software" :key="software.id" size="small" variant="outlined">
+                            {{ software.name }}
+                        </v-chip>
                     </template>
 
                     <!-- No Data -->

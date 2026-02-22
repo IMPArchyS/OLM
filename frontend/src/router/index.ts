@@ -200,8 +200,9 @@ router.beforeEach(async (to, from, next) => {
         }
 
         if (to.meta.requiresOlmAdmin) {
-            const isOlmAdmin = await authStore.isOlmAdmin();
-            if (!isOlmAdmin) {
+            await authStore.fetchRoleName();
+            const isOlmAdmin = authStore.roleName;
+            if (isOlmAdmin !== 'olm_admin') {
                 return next({ path: '/' });
             }
         }

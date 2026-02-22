@@ -85,6 +85,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const response = await apiClient.post('auth/refresh');
             setToken(response.data.access_token);
+            await fetchRoleName();
             startTokenRefresh();
             initialized.value = true;
             return true;
@@ -101,6 +102,7 @@ export const useAuthStore = defineStore('auth', () => {
             const { access_token, refresh_token } = response.data;
 
             setTokens(access_token, refresh_token);
+            await fetchRoleName();
 
             startTokenRefresh();
 
@@ -122,6 +124,7 @@ export const useAuthStore = defineStore('auth', () => {
             const { access_token, refresh_token } = response.data;
 
             setTokens(access_token, refresh_token);
+            await fetchRoleName();
 
             startTokenRefresh();
 
@@ -141,6 +144,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const response = await apiClient.post('auth/refresh');
             setToken(response.data.access_token);
+            await fetchRoleName();
         } catch (err) {
             console.error('Token refresh failed:', err);
             logout();
@@ -194,11 +198,6 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    const isOlmAdmin = async (): Promise<boolean> => {
-        const name = await fetchRoleName();
-        return name === 'olm_admin';
-    };
-
     return {
         accessToken,
         refreshToken,
@@ -211,6 +210,5 @@ export const useAuthStore = defineStore('auth', () => {
         startTokenRefresh,
         refreshAccessToken,
         fetchRoleName,
-        isOlmAdmin,
     };
 });
