@@ -22,5 +22,3 @@ authStore.initAuth().finally(() => {
         app.mount('#app');
     });
 });
-
-export { authStore };

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { apiClient, authClient } from '@/composables/useAxios';
+import router from '@/router';
 
 interface LoginCredentials {
     username: string;
@@ -172,9 +173,11 @@ export const useAuthStore = defineStore('auth', () => {
                     clearInterval(refreshIntervalId);
                     refreshIntervalId = null;
                 }
+                router.push('/auth/login');
             })
             .catch(() => {
                 setToken(null);
+                router.push('/auth/login');
             });
     };
 

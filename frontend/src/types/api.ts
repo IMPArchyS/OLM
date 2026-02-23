@@ -97,6 +97,18 @@ export interface Server {
     deleted_at?: string;
 }
 
+export interface ReservedExperiment {
+    id: number;
+    input: {};
+    output: {};
+    note: string;
+    simulation_time: number;
+    sampling_rate: number;
+    experiment_id: number;
+    device_id: number;
+    schema_id?: number;
+}
+
 export interface OptionInput {
     name: string;
     value: string;

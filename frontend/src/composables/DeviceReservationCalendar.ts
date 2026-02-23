@@ -47,7 +47,7 @@ export function useDeviceReservationCalendar(props: Props) {
                         const userResponse = await authClient.get(`/internal/api/users/${reservation.user_id}`);
                         return {
                             ...reservation,
-                            username: userResponse.data.username,
+                            username: userResponse.data.name,
                         };
                     } catch (error) {
                         console.error(`Error fetching user ${reservation.user_id}:`, error);

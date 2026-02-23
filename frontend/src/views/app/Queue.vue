@@ -3,8 +3,6 @@ import { ref } from 'vue';
 import ExperimentSelector from '@/components/ExperimentSelector.vue';
 import { useI18n } from 'vue-i18n';
 import type { CommandSpec } from '@/types/api';
-import { useDevices } from '@/composables/useDevices';
-import { apiClient } from '@/composables/useAxios';
 
 const { t } = useI18n();
 
@@ -22,32 +20,6 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 
 const addToQueue = async () => {
     console.log('Add to queue - Form Data:', JSON.stringify(formData.value, null, 2));
-
-    if (!formData.value.experiment_id) {
-        console.error('No experiment selected');
-        return;
-    }
-
-    const { getDeviceByExperimentId } = useDevices();
-    const device = await getDeviceByExperimentId(formData.value.experiment_id);
-
-    if (!device) {
-        console.error('Device not found for experiment:', formData.value.experiment_id);
-        return;
-    }
-
-    const device_id = device.id;
-    console.log(JSON.stringify({ device_id, simulation_time: formData.value.simulation_time }));
-    try {
-        await apiClient.post('/reservation/queue', {
-            device_id,
-            simulation_time: formData.value.simulation_time,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        });
-    } catch (error) {
-        console.error('Error saving reservation:', error);
-        alert('Failed to create reservation');
-    }
 };
 </script>
 

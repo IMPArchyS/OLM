@@ -1,18 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import MainLayout from '@/layouts/MainLayout.vue';
-import AuthLayout from '@/layouts/AuthLayout.vue';
-import dashboard from '@/views/app/Dashboard.vue';
-import queue from '@/views/app/Queue.vue';
-import reservations from '@/views/app/Reservations.vue';
-import reports from '@/views/app/Reports.vue';
-import servers from '@/views/app/servers/Servers.vue';
-import login from '@/views/auth/Login.vue';
-import register from '@/views/auth/Register.vue';
-import error404 from '@/views/errors/Error404.vue';
-import error500 from '@/views/errors/Error500.vue';
-import updateProfile from '@/views/app/users/UpdateProfile.vue';
-import updatePassword from '@/views/app/users/UpdatePassword.vue';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -23,7 +10,7 @@ const router = createRouter({
         },
         {
             path: '/auth',
-            component: AuthLayout,
+            component: () => import('@/layouts/AuthLayout.vue'),
             children: [
                 {
                     path: '',
@@ -32,18 +19,18 @@ const router = createRouter({
                 {
                     path: '/auth/login',
                     name: 'login',
-                    component: login,
+                    component: () => import('@/views/auth/Login.vue'),
                 },
                 {
                     path: '/auth/register',
                     name: 'register',
-                    component: register,
+                    component: () => import('@/views/auth/Register.vue'),
                 },
             ],
         },
         {
             path: '/app',
-            component: MainLayout,
+            component: () => import('@/layouts/MainLayout.vue'),
             meta: { requiresAuth: true },
             children: [
                 {
@@ -53,37 +40,37 @@ const router = createRouter({
                 {
                     path: '/app/update-profile',
                     name: 'update-profile',
-                    component: updateProfile,
+                    component: () => import('@/views/app/users/UpdateProfile.vue'),
                 },
                 {
                     path: '/app/update-password',
                     name: 'update-password',
-                    component: updatePassword,
+                    component: () => import('@/views/app/users/UpdatePassword.vue'),
                 },
                 {
                     path: '/app/dashboard',
                     name: 'dashboard',
-                    component: dashboard,
+                    component: () => import('@/views/app/Dashboard.vue'),
                 },
                 {
                     path: '/app/queue',
                     name: 'queue',
-                    component: queue,
+                    component: () => import('@/views/app/Queue.vue'),
                 },
                 {
                     path: '/app/reservations',
                     name: 'reservations',
-                    component: reservations,
+                    component: () => import('@/views/app/Reservations.vue'),
                 },
                 {
                     path: '/app/reports',
                     name: 'reports',
-                    component: reports,
+                    component: () => import('@/views/app/Reports.vue'),
                 },
                 {
                     path: '/app/servers',
                     name: 'servers',
-                    component: servers,
+                    component: () => import('@/views/app/servers/Servers.vue'),
                 },
                 {
                     path: '/app/servers/create',
@@ -159,12 +146,12 @@ const router = createRouter({
         {
             path: '/:pathMatch(.*)*',
             name: 'notFound',
-            component: error404,
+            component: () => import('@/views/errors/Error404.vue'),
         },
         {
             path: '/500',
             name: 'serverError',
-            component: error500,
+            component: () => import('@/views/errors/Error500.vue'),
         },
     ],
 });
@@ -196,7 +183,7 @@ router.beforeEach(async (to, from, next) => {
         }
 
         if (!authStore.accessToken) {
-            return next({ path: '/login', query: { redirect: to.fullPath } });
+            return next({ path: 'auth/login' });
         }
 
         if (to.meta.requiresOlmAdmin) {

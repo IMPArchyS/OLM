@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Response, status
 from sqlmodel import select
-from app.api.dependencies import DbSession
+from app.api.dependencies import CurrentUserId, DbSession
 
 from app.models.device import Device
 from app.models.device_type import DeviceType, DeviceTypeCreate
@@ -30,8 +30,9 @@ def get_by_id(db: DbSession, id: int):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create(db: DbSession, reserved_experiment: ReservedExperimentCreate):
+def create(db: DbSession, reserved_experiment: ReservedExperimentCreate, user_id: CurrentUserId):
     db_reserved_exp = ReservedExperiment.model_validate(reserved_experiment)
+    db_reserved_exp.user_id = user_id
     db.add(db_reserved_exp)
     db.commit()
     db.refresh(db_reserved_exp)

@@ -22,6 +22,7 @@ class ReservedExperiment(ReservedExperimentBase, table=True):
     __tablename__ = "reserved_experiment" # type: ignore
     
     id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(default=None)
     
     filled: bool = Field(default=False, index=True)
     remote_id: int | None = Field(default=None)
@@ -47,6 +48,7 @@ class ReservedExperimentCreate(ReservedExperimentBase):
 
 class ReservedExperimentPublic(ReservedExperimentBase):
     id: int
+    user_id: int
     filled: bool
     remote_id: int
     created_at: datetime

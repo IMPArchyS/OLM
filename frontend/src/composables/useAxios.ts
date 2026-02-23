@@ -1,4 +1,4 @@
-import { authStore } from '@/main';
+import { useAuthStore } from '@/stores/auth';
 import axios from 'axios';
 
 const apiClient = axios.create({
@@ -22,6 +22,7 @@ const authClient = axios.create({
 
 apiClient.interceptors.request.use(
     (config) => {
+        const authStore = useAuthStore();
         const token = authStore.accessToken;
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -35,6 +36,7 @@ apiClient.interceptors.request.use(
 
 authClient.interceptors.request.use(
     (config) => {
+        const authStore = useAuthStore();
         const token = authStore.accessToken;
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
@@ -42,6 +44,28 @@ authClient.interceptors.request.use(
         return config;
     },
     (error) => {
+        return Promise.reject(error);
+    },
+);
+
+apiClient.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        if (error.response?.status === 401) {
+            const authStore = useAuthStore();
+            await authStore.logout();
+        }
+        return Promise.reject(error);
+    },
+);
+
+authClient.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        if (error.response?.status === 401) {
+            const authStore = useAuthStore();
+            await authStore.logout();
+        }
         return Promise.reject(error);
     },
 );
