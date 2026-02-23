@@ -7,7 +7,7 @@ import router from '@/router';
 import { useToast } from '@/composables/useToast';
 
 const { t } = useI18n();
-const { servers, loading, error, fetchServers, getServer, syncServer, softDeleteServer } = useServers();
+const { servers, loading, error, fetchServers, getServer, syncServer, syncAllServers, softDeleteServer } = useServers();
 const { showError, showSuccess, showWarning } = useToast();
 
 const emit = defineEmits<{
@@ -78,7 +78,30 @@ const handleSync = async (item: Server) => {
 };
 
 const handleSyncAll = async () => {
-    await fetchServers();
+    const results = await syncAllServers();
+
+    if (results === null) {
+        showError('Fatal error');
+        return;
+    }
+
+    results.forEach((result) => {
+        syncedAvailability.value[result.id] = result.available;
+    });
+
+    const availableCount = results.filter((r) => r.available).length;
+    const unavailableCount = results.filter((r) => !r.available).length;
+    const errorCount = results.filter((r) => r.error).length;
+
+    if (errorCount > 0) {
+        showWarning(`Synced ${results.length} servers: ${availableCount} available, ${unavailableCount} unavailable, ${errorCount} errors`);
+    } else if (availableCount === results.length) {
+        showSuccess(`All ${results.length} servers are available`);
+    } else if (unavailableCount === results.length) {
+        showWarning(`All ${results.length} servers are unavailable`);
+    } else {
+        showSuccess(`Synced ${results.length} servers: ${availableCount} available, ${unavailableCount} unavailable`);
+    }
 };
 </script>
 

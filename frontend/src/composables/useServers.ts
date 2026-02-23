@@ -118,6 +118,16 @@ export function useServers() {
         return null;
     }
 
+    async function syncAllServers(): Promise<Array<{ id: number; available: boolean; error?: string }> | null> {
+        try {
+            const response = await apiClient.post('/server/sync_all');
+            return response.data;
+        } catch (e) {
+            console.error('Error syncing all servers:', e);
+        }
+        return null;
+    }
+
     return {
         servers,
         loading,
@@ -132,6 +142,7 @@ export function useServers() {
         getServer,
         getServerById,
         syncServer,
+        syncAllServers,
         createServer,
         softDeleteServer,
     };
