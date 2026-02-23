@@ -50,12 +50,9 @@ const goToReservations = () => {
 
 const fetchReservations = async () => {
     try {
-        const response = await apiClient.get('/reservation/', {
-            params: { queued: false },
-        });
-        reservations.value = response.data.filter(
-            (reservation: Reservation) => !reservation.queued,
-        );
+        const response = await apiClient.get('/reservation/me');
+        console.log(response);
+        reservations.value = response.data;
     } catch (e) {
         console.error('Failed to fetch reservations:', e);
         reservations.value = [];
@@ -92,10 +89,7 @@ onUnmounted(() => {
         </v-card-title>
         <v-divider></v-divider>
         <v-card-text>
-            <div
-                v-if="loading"
-                style="display: flex; justify-content: center; align-items: center; padding: 32px"
-            >
+            <div v-if="loading" style="display: flex; justify-content: center; align-items: center; padding: 32px">
                 <v-progress-circular indeterminate color="primary" size="64" />
             </div>
             <div v-else style="display: flex; flex-direction: column; gap: 16px">

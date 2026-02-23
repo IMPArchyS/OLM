@@ -20,6 +20,19 @@ const authClient = axios.create({
     withCredentials: true,
 });
 
+apiClient.interceptors.request.use(
+    (config) => {
+        const token = authStore.accessToken;
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    },
+);
+
 authClient.interceptors.request.use(
     (config) => {
         const token = authStore.accessToken;

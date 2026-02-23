@@ -13,6 +13,7 @@ class ReservationBase(SQLModel):
 
 class Reservation(ReservationBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(default=None)
     
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
@@ -33,6 +34,8 @@ class ReservationQueue(SQLModel):
 
 class ReservationPublic(ReservationBase):
     id: int 
+    user_id: int
+    device_id: int
     created_at: datetime
     modified_at: datetime 
 
@@ -41,3 +44,4 @@ class ReservationUpdate(SQLModel):
     start: datetime | None = None
     end: datetime | None = None
     device_id: int | None = None
+    user_id: int | None = None

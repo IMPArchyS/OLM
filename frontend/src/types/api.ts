@@ -49,6 +49,7 @@ export interface Reservation {
     end: string;
     device_id: number;
     queued: boolean;
+    user_id: number;
     username?: string;
 }
 

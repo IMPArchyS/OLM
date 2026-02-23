@@ -8,7 +8,7 @@ import skLocale from '@fullcalendar/core/locales/sk';
 import { useI18n } from 'vue-i18n';
 import type { Device, Reservation } from '@/types/api';
 import type { ReservationForm } from '@/types/forms';
-import { apiClient } from './useAxios';
+import { apiClient, authClient } from './useAxios';
 
 interface Props {
     selectedDeviceId?: number | null;
@@ -38,7 +38,28 @@ export function useDeviceReservationCalendar(props: Props) {
             const response = await apiClient.get('/reservation/', {
                 params: { device_id: props.selectedDeviceId },
             });
-            reservations.value = response.data;
+            const reservationsData = response.data;
+
+            // Fetch usernames for each reservation
+            const reservationsWithUsernames = await Promise.all(
+                reservationsData.map(async (reservation: Reservation) => {
+                    try {
+                        const userResponse = await authClient.get(`/internal/api/users/${reservation.user_id}`);
+                        return {
+                            ...reservation,
+                            username: userResponse.data.username,
+                        };
+                    } catch (error) {
+                        console.error(`Error fetching user ${reservation.user_id}:`, error);
+                        return {
+                            ...reservation,
+                            username: 'Unknown User',
+                        };
+                    }
+                }),
+            );
+
+            reservations.value = reservationsWithUsernames;
         } catch (error) {
             console.error('Error fetching reservations:', error);
         } finally {
@@ -72,10 +93,7 @@ export function useDeviceReservationCalendar(props: Props) {
         }));
 
         const maintenanceEvents = [];
-        if (
-            props.selectedDeviceData?.maintenance_start &&
-            props.selectedDeviceData?.maintenance_end
-        ) {
+        if (props.selectedDeviceData?.maintenance_start && props.selectedDeviceData?.maintenance_end) {
             const today = new Date();
             for (let i = -365; i < 365; i++) {
                 const eventDate = new Date(today);
@@ -121,10 +139,7 @@ export function useDeviceReservationCalendar(props: Props) {
 
         if (!props.selectedDeviceId) return;
 
-        if (
-            props.selectedDeviceData?.maintenance_start &&
-            props.selectedDeviceData?.maintenance_end
-        ) {
+        if (props.selectedDeviceData?.maintenance_start && props.selectedDeviceData?.maintenance_end) {
             const startDate = selectInfo.start;
             const endDate = selectInfo.end;
             const maintenanceStart = props.selectedDeviceData.maintenance_start;
@@ -167,9 +182,7 @@ export function useDeviceReservationCalendar(props: Props) {
                     (effectiveEnd > dayMaintenanceStart && effectiveEnd <= dayMaintenanceEnd) ||
                     (effectiveStart <= dayMaintenanceStart && effectiveEnd >= dayMaintenanceEnd)
                 ) {
-                    alert(
-                        `Cannot create reservation during maintenance period (${maintenanceStart} - ${maintenanceEnd})`,
-                    );
+                    alert(`Cannot create reservation during maintenance period (${maintenanceStart} - ${maintenanceEnd})`);
                     return;
                 }
 
@@ -227,10 +240,7 @@ export function useDeviceReservationCalendar(props: Props) {
                 return;
             }
 
-            if (
-                props.selectedDeviceData?.maintenance_start &&
-                props.selectedDeviceData?.maintenance_end
-            ) {
+            if (props.selectedDeviceData?.maintenance_start && props.selectedDeviceData?.maintenance_end) {
                 const maintenanceStart = props.selectedDeviceData.maintenance_start;
                 const maintenanceEnd = props.selectedDeviceData.maintenance_end;
 
@@ -249,12 +259,7 @@ export function useDeviceReservationCalendar(props: Props) {
 
                 while (currentDate <= endDateDay) {
                     const dayMaintenanceStart = new Date(currentDate);
-                    dayMaintenanceStart.setHours(
-                        maintenanceStartHour,
-                        maintenanceStartMinute,
-                        0,
-                        0,
-                    );
+                    dayMaintenanceStart.setHours(maintenanceStartHour, maintenanceStartMinute, 0, 0);
 
                     const dayMaintenanceEnd = new Date(currentDate);
                     dayMaintenanceEnd.setHours(maintenanceEndHour, maintenanceEndMinute, 0, 0);
@@ -272,14 +277,11 @@ export function useDeviceReservationCalendar(props: Props) {
 
                     // Check if the effective reservation period on this day overlaps with maintenance
                     if (
-                        (effectiveStart >= dayMaintenanceStart &&
-                            effectiveStart < dayMaintenanceEnd) ||
+                        (effectiveStart >= dayMaintenanceStart && effectiveStart < dayMaintenanceEnd) ||
                         (effectiveEnd > dayMaintenanceStart && effectiveEnd <= dayMaintenanceEnd) ||
                         (effectiveStart <= dayMaintenanceStart && effectiveEnd >= dayMaintenanceEnd)
                     ) {
-                        alert(
-                            `Reservation conflicts with daily maintenance period (${maintenanceStart} - ${maintenanceEnd})`,
-                        );
+                        alert(`Reservation conflicts with daily maintenance period (${maintenanceStart} - ${maintenanceEnd})`);
                         return;
                     }
 
@@ -294,10 +296,7 @@ export function useDeviceReservationCalendar(props: Props) {
             };
 
             if (editingReservation.value) {
-                await apiClient.patch(
-                    `/reservation/${editingReservation.value.id}/`,
-                    reservationData,
-                );
+                await apiClient.patch(`/reservation/${editingReservation.value.id}/`, reservationData);
             } else {
                 await apiClient.post('/reservation/', reservationData);
             }
@@ -312,10 +311,7 @@ export function useDeviceReservationCalendar(props: Props) {
     }
 
     async function deleteReservation() {
-        if (
-            !editingReservation.value ||
-            !confirm('Are you sure you want to delete this reservation?')
-        ) {
+        if (!editingReservation.value || !confirm('Are you sure you want to delete this reservation?')) {
             return;
         }
 

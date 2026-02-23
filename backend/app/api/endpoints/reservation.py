@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select, asc
-from app.api.dependencies import DbSession
+from app.api.dependencies import DbSession, CurrentUserId
 
 from app.models.device import Device
 from app.models.reservation import Reservation, ReservationCreate, ReservationPublic, ReservationQueue, ReservationUpdate
@@ -26,9 +26,22 @@ def get_all(db: DbSession):
     return db.exec(stmt).all()
 
 
+@router.get("/me")
+def get_user_all(db: DbSession, user_id: CurrentUserId):
+    stmt = select(Reservation).where(Reservation.user_id == user_id,).order_by(asc(Reservation.start))
+    db_reservation = db.exec(stmt).all()
+    if not db_reservation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No reservations found for user!")
+    return db_reservation
+
+
 @router.get("/current", response_model=ReservationPublic)
-def get_current(db: DbSession):
-    stmt = select(Reservation).where(Reservation.start <= now(), Reservation.end >= now()).order_by(asc(Reservation.start))
+def get_current(db: DbSession, user_id: CurrentUserId):
+    stmt = select(Reservation).where(
+        Reservation.user_id == user_id,
+        Reservation.start <= now(), 
+        Reservation.end >= now()
+    ).order_by(asc(Reservation.start))
     db_reservation = db.exec(stmt).first()
     if not db_reservation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No current reservation found!")
@@ -44,8 +57,9 @@ def get_by_id(db: DbSession, id: int):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create(db: DbSession, reservation: ReservationCreate):
+def create(db: DbSession, reservation: ReservationCreate, user_id: CurrentUserId):
     db_reservation = Reservation.model_validate(reservation)
+    db_reservation.user_id = user_id
     
     if not db.get(Device, reservation.device_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {reservation.device_id} not found!")
