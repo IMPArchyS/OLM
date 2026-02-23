@@ -97,6 +97,10 @@ export interface Server {
     deleted_at?: string;
 }
 
+export interface ServerStatus {
+    id: number;
+    available: boolean;
+}
 export interface ReservedExperiment {
     id: number;
     input: {};

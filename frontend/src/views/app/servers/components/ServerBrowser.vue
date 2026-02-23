@@ -4,9 +4,11 @@ import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { Server } from '@/types/api';
 import router from '@/router';
+import { useToast } from '@/composables/useToast';
 
 const { t } = useI18n();
-const { servers, loading, error, fetchServers, getServer, softDeleteServer } = useServers();
+const { servers, loading, error, fetchServers, getServer, syncServer, softDeleteServer } = useServers();
+const { showError, showSuccess, showWarning } = useToast();
 
 const emit = defineEmits<{
     selectServer: [server: Server];
@@ -56,8 +58,23 @@ const handleView = (item: Server) => {
     router.push(`/app/servers/${item.id}/show`);
 };
 
+const syncedAvailability = ref<Record<number, boolean>>({});
+
 const handleSync = async (item: Server) => {
-    await getServer(item);
+    const result = await syncServer(item.id);
+
+    if (result === null) {
+        showError('Fatal error');
+        return;
+    }
+
+    syncedAvailability.value[result.id] = result.available;
+
+    if (result.available) {
+        showSuccess('Server synced');
+    } else {
+        showWarning('Server unreachable');
+    }
 };
 
 const handleSyncAll = async () => {
@@ -138,8 +155,8 @@ const handleSyncAll = async () => {
                     <!-- Available Column -->
                     <template v-slot:item.available="{ item }">
                         <v-icon
-                            :color="item.available ? 'success' : 'error'"
-                            :icon="item.available ? 'mdi-check-circle' : 'mdi-close-circle'"
+                            :color="(syncedAvailability[item.id] ?? item.available) ? 'success' : 'error'"
+                            :icon="(syncedAvailability[item.id] ?? item.available) ? 'mdi-check-circle' : 'mdi-close-circle'"
                         ></v-icon>
                     </template>
 

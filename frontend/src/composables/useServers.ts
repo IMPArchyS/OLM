@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import type { Server } from '@/types/api';
+import type { Server, ServerStatus } from '@/types/api';
 import { apiClient } from './useAxios';
 import type { CreateServerForm, EditServerForm } from '@/types/forms';
 import { useI18n } from 'vue-i18n';
@@ -108,6 +108,16 @@ export function useServers() {
         }
     }
 
+    async function syncServer(id: number): Promise<ServerStatus | null> {
+        try {
+            const response = await apiClient.post(`/server/${id}/sync`);
+            return response.data;
+        } catch (e) {
+            console.error(`Error Syncing server with id ${id}: `, e);
+        }
+        return null;
+    }
+
     return {
         servers,
         loading,
@@ -121,6 +131,7 @@ export function useServers() {
         restoreServer,
         getServer,
         getServerById,
+        syncServer,
         createServer,
         softDeleteServer,
     };

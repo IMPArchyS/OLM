@@ -12,6 +12,7 @@ from app.models.reserved_experiment import ReservedExperiment
 from app.models.schema import Schema
 from app.models.server import Server, ServerCreate, ServerPublic, ServerPubDetailed, ServerUpdate
 from app.models.utils import now
+import httpx
 
 
 ServerPubDetailed.model_rebuild()
@@ -65,19 +66,95 @@ def restore(db: DbSession, id: int):
 
 @router.post("/{id}/sync", status_code=status.HTTP_200_OK)
 def sync(db: DbSession, id: int):
-    # TODO implement when exp server is ready for data transfer
-    stmt = select(Server)
-    return db.exec(stmt).all()
+    db_server = db.get(Server, id)
+    if not db_server:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
+
+    ip_address = (getattr(db_server, "ip_address", None) or "").strip()
+    if not ip_address:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Server IP address is not configured",
+        )
+
+    if ip_address in ("127.0.0.1", "localhost"):
+        ip_address = "host.docker.internal"
+
+    scheme = "https" if getattr(db_server, "https", False) else "http"
+    port = getattr(db_server, "websocket_port", None)
+
+    base_url = f"{scheme}://{ip_address}"
+    if port:
+        base_url = f"{base_url}:{port}"
+
+    health_url = f"{base_url}/api/server/health"
+
+    db_server.available = False
+    try:
+        response = httpx.get(health_url)
+        if response.status_code < 400:
+            try:
+                body = response.json()
+            except ValueError as e:
+                body = None
+
+            if isinstance(body, dict) and body.get("status") == "ok":
+                db_server.available = True
+
+    except httpx.RequestError as e:
+        db_server.available = False
+
+    db.add(db_server)
+    db.commit()
+    db.refresh(db_server)
+
+    return {"id": db_server.id, "available": db_server.available}
 
 
 @router.post("/sync_all", status_code=status.HTTP_200_OK)
 def sync_all(db: DbSession):
-    db_server = db.get(Server, id)
-    if not db_server:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
-    # TODO implement when exp server is ready for data transfer
-    return db_server
+    stmt = select(Server)
+    servers = db.exec(stmt).all()
+    
+    results = []
+    for db_server in servers:
+        ip_address = (getattr(db_server, "ip_address", None) or "").strip()
+        if not ip_address:
+            results.append({"id": db_server.id, "available": False, "error": "No IP address configured"})
+            continue
 
+        if ip_address in ("127.0.0.1", "localhost"):
+            ip_address = "host.docker.internal"
+
+        scheme = "https" if getattr(db_server, "https", False) else "http"
+        port = getattr(db_server, "websocket_port", None)
+
+        base_url = f"{scheme}://{ip_address}"
+        if port:
+            base_url = f"{base_url}:{port}"
+
+        health_url = f"{base_url}/api/server/health"
+
+        db_server.available = False
+        try:
+            response = httpx.get(health_url)
+            if response.status_code < 400:
+                try:
+                    body = response.json()
+                except ValueError as e:
+                    body = None
+
+                if isinstance(body, dict) and body.get("status") == "ok":
+                    db_server.available = True
+
+        except httpx.RequestError as e:
+            db_server.available = False
+
+        db.add(db_server)
+        results.append({"id": db_server.id, "available": db_server.available})
+    
+    db.commit()
+    return results
 
 @router.patch("/{id}", response_model=ServerUpdate)
 def update(db: DbSession, id: int, server: ServerUpdate):
