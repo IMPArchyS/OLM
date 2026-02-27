@@ -20,7 +20,6 @@ interface MainLayoutContext {
 const { sidebarCollapsed, sidebarVisible, windowWidth, toggleSidebar } = inject<MainLayoutContext>('mainLayout')!;
 
 const isActiveRoute = (routePath: string) => {
-    // For servers and schemas, check if current route starts with the path
     if (routePath === '/app/servers' || routePath === '/app/schemas') {
         return route.path.startsWith(routePath);
     }
@@ -28,7 +27,6 @@ const isActiveRoute = (routePath: string) => {
 };
 const navigate = (routePath: string) => router.push(routePath);
 
-// Computed for responsive behavior
 const isCollapsed = computed(() => sidebarCollapsed.value && windowWidth.value >= 720);
 const showLabels = computed(() => !isCollapsed.value);
 </script>
@@ -160,41 +158,6 @@ const showLabels = computed(() => !isCollapsed.value);
                     <div v-else @click="navigate('/app/schemas')" class="nav-item-expanded" :class="{ active: isActiveRoute('/app/schemas') }">
                         <v-icon icon="mdi-clipboard-list-outline" size="24" />
                         <span class="ml-4">{{ t('nav.schemas') }}</span>
-                    </div>
-                </div>
-                <!-- Settings Navigation -->
-                <div v-if="authStore.roleName === 'olm_admin'">
-                    <div v-if="showLabels" class="px-4 mb-2 text-caption font-weight-medium text-uppercase text-white" style="letter-spacing: 0.05em">
-                        {{ t('nav.userSettings') }}
-                    </div>
-
-                    <!-- Users -->
-
-                    <div
-                        v-if="isCollapsed"
-                        @click="navigate('/app/users')"
-                        class="nav-item-collapsed"
-                        :class="{ active: isActiveRoute('/app/users') }"
-                    >
-                        <v-icon icon="mdi-account" size="24" />
-                    </div>
-                    <div v-else @click="navigate('/app/users')" class="nav-item-expanded" :class="{ active: isActiveRoute('/app/users') }">
-                        <v-icon icon="mdi-account" size="24" />
-                        <span class="ml-4">{{ t('nav.users') }}</span>
-                    </div>
-
-                    <!-- Roles and perms -->
-                    <div
-                        v-if="isCollapsed"
-                        @click="navigate('/app/roles')"
-                        class="nav-item-collapsed"
-                        :class="{ active: isActiveRoute('/app/roles') }"
-                    >
-                        <v-icon icon="mdi-lock" size="24" />
-                    </div>
-                    <div v-else @click="navigate('/app/roles')" class="nav-item-expanded" :class="{ active: isActiveRoute('/app/roles') }">
-                        <v-icon icon="mdi-lock" size="24" />
-                        <span class="ml-4">{{ t('nav.perms') }}</span>
                     </div>
                 </div>
             </div>

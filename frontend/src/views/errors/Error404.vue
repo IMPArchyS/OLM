@@ -5,7 +5,7 @@ const { t } = useI18n();
 </script>
 
 <template>
-    <v-container class="fill-height bg-grey-lighten-4">
+    <v-container class="fill-height">
         <v-row justify="center">
             <v-col cols="12" class="d-flex flex-column flex-sm-row justify-center align-center text-center text-sm-left">
                 <h1 class="text-h1 me-sm-8">404</h1>

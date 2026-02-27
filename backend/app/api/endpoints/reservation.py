@@ -28,10 +28,8 @@ def get_all(db: DbSession):
 
 @router.get("/me")
 def get_user_all(db: DbSession, user_id: CurrentUserId):
-    stmt = select(Reservation).where(Reservation.user_id == user_id,).order_by(asc(Reservation.start))
+    stmt = select(Reservation).where(Reservation.user_id == user_id).order_by(asc(Reservation.start))
     db_reservation = db.exec(stmt).all()
-    if not db_reservation:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No reservations found for user!")
     return db_reservation
 
 

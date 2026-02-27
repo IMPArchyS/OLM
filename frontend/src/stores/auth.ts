@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { apiClient, authClient } from '@/composables/useAxios';
+import { apiClient } from '@/composables/useAxios';
 import router from '@/router';
 
 interface LoginCredentials {
@@ -91,7 +91,7 @@ export const useAuthStore = defineStore('auth', () => {
             initialized.value = true;
             return true;
         } catch (err) {
-            console.error('Token refresh failed:', err);
+            console.error('AUTH: Token refresh failed:', err);
             initialized.value = true;
             return false;
         }
@@ -147,7 +147,7 @@ export const useAuthStore = defineStore('auth', () => {
             setToken(response.data.access_token);
             await fetchRoleName();
         } catch (err) {
-            console.error('Token refresh failed:', err);
+            console.log('Token refresh failed:', err);
             logout();
         }
     };
@@ -191,7 +191,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
 
         try {
-            const response = await authClient.get(`/internal/api/roles/${user.value.role_id}`);
+            const response = await apiClient.get(`/auth/role/${user.value.role_id}`);
             roleName.value = response.data?.name ?? null;
             return roleName.value;
         } catch (err) {

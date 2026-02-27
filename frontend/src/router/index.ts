@@ -40,12 +40,12 @@ const router = createRouter({
                 {
                     path: '/app/update-profile',
                     name: 'update-profile',
-                    component: () => import('@/views/app/users/UpdateProfile.vue'),
+                    component: () => import('@/views/auth/UpdateProfile.vue'),
                 },
                 {
                     path: '/app/update-password',
                     name: 'update-password',
-                    component: () => import('@/views/app/users/UpdatePassword.vue'),
+                    component: () => import('@/views/auth/UpdatePassword.vue'),
                 },
                 {
                     path: '/app/dashboard',
@@ -114,33 +114,6 @@ const router = createRouter({
                         permission: 'schema.update',
                     },
                 },
-                {
-                    path: '/app/users',
-                    name: 'users',
-                    component: () => import('@/views/app/users/Users.vue'),
-                    meta: {
-                        requiresAuth: true,
-                        requiresOlmAdmin: true,
-                    },
-                },
-                {
-                    path: '/app/roles',
-                    name: 'roles',
-                    component: () => import('@/views/app/roles/Roles.vue'),
-                    meta: {
-                        requiresAuth: true,
-                        requiresOlmAdmin: true,
-                    },
-                },
-                {
-                    path: '/app/roles/:id/show',
-                    name: 'roles-show',
-                    component: () => import('@/views/app/roles/ShowRoles.vue'),
-                    meta: {
-                        requiresAuth: true,
-                        requiresOlmAdmin: true,
-                    },
-                },
             ],
         },
         {
@@ -183,7 +156,7 @@ router.beforeEach(async (to, from, next) => {
         }
 
         if (!authStore.accessToken) {
-            return next({ path: 'auth/login' });
+            return next({ path: '/auth/login' });
         }
 
         if (to.meta.requiresOlmAdmin) {

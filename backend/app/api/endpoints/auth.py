@@ -92,7 +92,6 @@ def login(credentials: LoginRequest, response: Response):
 
 @router.post("/refresh", response_model=TokenResponse)
 def refresh(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
-    print(f"/REFRESH -> refresh token {refresh_token}");
     if not refresh_token:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -121,7 +120,6 @@ def refresh(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
 
 @router.post("/logout")
 def logout(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
-    print(f"/LOGOUT -> refresh token {refresh_token}");
     if not refresh_token:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -145,4 +143,94 @@ def logout(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"LOGOUT Failed to connect to auth service: {str(e)}"
+        )
+
+
+
+@router.get("/user")
+def get_all_users(page: int = 1, size: int = 10):
+    try:
+        response = httpx.get(
+            f"{settings.AUTH_SERVICE_URL}/users",
+            params={"page": page, "size": size},
+            headers={"x-api-key": settings.AUTH_API_KEY},
+            timeout=10.0
+        )
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"USERS Auth service error: {e.response.text}"
+        )
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"USERS Failed to connect to auth service: {str(e)}"
+        )
+
+
+@router.get("/user/{id}")
+def get_user_by_id(id: int):
+    try:
+        response = httpx.get(
+            f"{settings.AUTH_SERVICE_URL}/users/{id}",
+            headers={"x-api-key": settings.AUTH_API_KEY},
+            timeout=10.0
+        )
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"USERS/ID Auth service error: {e.response.text}"
+        )
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"USERS/ID Failed to connect to auth service: {str(e)}"
+        )
+
+
+@router.get("/role")
+def get_all_roles():
+    try:
+        response = httpx.get(
+            f"{settings.AUTH_SERVICE_URL}/roles",
+            headers={"x-api-key": settings.AUTH_API_KEY},
+            timeout=10.0
+        )
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"ROLES Auth service error: {e.response.text}"
+        )
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"ROLES Failed to connect to auth service: {str(e)}"
+        )
+
+
+@router.get("/role/{id}")
+def get_role_by_id(id: int):
+    try:
+        response = httpx.get(
+            f"{settings.AUTH_SERVICE_URL}/roles/{id}",
+            headers={"x-api-key": settings.AUTH_API_KEY},
+            timeout=10.0
+        )
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"ROLES/ID Auth service error: {e.response.text}"
+        )
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"ROLES/ID Failed to connect to auth service: {str(e)}"
         )

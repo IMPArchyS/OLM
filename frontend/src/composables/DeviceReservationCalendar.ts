@@ -8,7 +8,7 @@ import skLocale from '@fullcalendar/core/locales/sk';
 import { useI18n } from 'vue-i18n';
 import type { Device, Reservation } from '@/types/api';
 import type { ReservationForm } from '@/types/forms';
-import { apiClient, authClient } from './useAxios';
+import { apiClient } from './useAxios';
 
 interface Props {
     selectedDeviceId?: number | null;
@@ -44,7 +44,7 @@ export function useDeviceReservationCalendar(props: Props) {
             const reservationsWithUsernames = await Promise.all(
                 reservationsData.map(async (reservation: Reservation) => {
                     try {
-                        const userResponse = await authClient.get(`/internal/api/users/${reservation.user_id}`);
+                        const userResponse = await apiClient.get(`/auth/user/${reservation.user_id}`);
                         return {
                             ...reservation,
                             username: userResponse.data.name,
