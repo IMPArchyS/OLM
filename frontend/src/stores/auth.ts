@@ -189,7 +189,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     const fetchProviders = async (): Promise<void> => {
         try {
-            const response = await apiClient.get('/auth/oauth/providers');
+            const response = await apiClient.get('/auth/providers');
             providers.value = response.data;
         } catch (err) {
             console.error('Failed to fetch providers: ', err);
