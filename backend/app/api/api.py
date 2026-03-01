@@ -25,11 +25,6 @@ api_router.include_router(
 )
 
 api_router.include_router(
-    ws_router,
-    prefix="/ws"
-)
-
-api_router.include_router(
     argument.router,
     prefix="/api/argument",
     tags=["Argument"],
@@ -87,4 +82,9 @@ api_router.include_router(
     server.router,
     prefix="/api/server",
     tags=["Servers"],
+)
+
+api_router.include_router(
+    ws_router,
+    prefix="/ws"
 )

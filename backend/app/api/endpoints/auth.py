@@ -192,7 +192,7 @@ async def validate_token(jwt_token: Annotated[str, Cookie(alias="olm_refresh_tok
 
 
 @router.post("/check-permissions")
-async def validate_token(jwt_token: Annotated[str, Cookie(alias="olm_refresh_token")], perms: list[str]):
+async def check_permissions(jwt_token: Annotated[str, Cookie(alias="olm_refresh_token")], perms: list[str]):
     if not jwt_token:
         raise HTTPException(status_code=401, detail="No jwt token")
     

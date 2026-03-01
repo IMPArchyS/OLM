@@ -17,7 +17,7 @@ services:
         ports:
             - "8000:8000"
         env_file:
-            - .env
+            - ./backend/.env
         depends_on:
             - db
         volumes:
@@ -33,14 +33,13 @@ services:
             args:
                 MODE: dev
         container_name: vue_frontend
+        env_file:
+            - ./frontend/.env
         ports:
             - '5173:5173'
         volumes:
             - ./frontend:/app
             - /app/node_modules
-        environment:
-            - NODE_ENV=dev
-            - VITE_API_URL=http://localhost:8000
         depends_on:
             - backend
 
