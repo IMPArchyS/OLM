@@ -208,26 +208,6 @@ def seed(db: DbSession):
     db.commit()
     db.refresh(experiment2)
     
-    
-    # 8. Create ReservedExperiment (depends on Experiment, Device, Schema)
-    if experiment.id is None:
-        raise ValueError("Experiment ID cannot be None")
-    
-    reserved_experiment = ReservedExperiment(
-        input={"temperature_range": "20-30"},
-        output={"readings": []},
-        note="Test reservation",
-        simulation_time=3600,
-        sampling_rate=100,
-        filled=False,
-        experiment_id=experiment.id,
-        device_id=device.id,
-        schema_id=schema.id
-    )
-    db.add(reserved_experiment)
-    db.commit()
-    db.refresh(reserved_experiment)
-    
     return {
         "message": "Database seeded successfully",
         "created": {
@@ -239,7 +219,6 @@ def seed(db: DbSession):
             "device_type_id": device_type.id,
             "device_id": device.id,
             "experiment_id": experiment.id,
-            "reserved_experiment_id": reserved_experiment.id
         }
     }
     
