@@ -12,7 +12,6 @@ from app.api.endpoints import (
     option,
     software,
     reservation,
-    admin,
     auth,
 )
 
@@ -28,12 +27,6 @@ api_router.include_router(
 api_router.include_router(
     ws_router,
     prefix="/ws"
-)
-
-api_router.include_router(
-    admin.router,
-    prefix="/api/admin",
-    tags=["Admin"],
 )
 
 api_router.include_router(
