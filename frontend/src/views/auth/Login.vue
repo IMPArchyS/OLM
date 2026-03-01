@@ -1,14 +1,27 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 
 const username = ref('');
 const password = ref('');
 const isSubmitting = ref(false);
+const errorMessage = ref('');
+const oauthRedirectPath = '/app/dashboard';
+
+onMounted(async () => {
+    await authStore.fetchProviders();
+
+    if (route.params.error === 'auth_failed') {
+        errorMessage.value = 'Authentication failed. Please try again.';
+    }
+});
 
 const handleLogin = async () => {
     if (isSubmitting.value) return;
@@ -28,15 +41,36 @@ const handleLogin = async () => {
         isSubmitting.value = false;
     }
 };
+
+const handleOauthLogin = async (provider: string) => {
+    try {
+        const oauthUrl = await authStore.oauthLogin({
+            provider,
+            redirect: `${window.location.origin}${oauthRedirectPath}`,
+        });
+        window.location.href = oauthUrl;
+    } catch (error) {
+        console.error('OAUTH Login failed:', error);
+    }
+};
 </script>
 
 <template>
     <v-card max-width="400" class="mx-auto mt-5">
         <v-card-title class="text-h5 mb-4">Login</v-card-title>
+        <v-card-text v-if="authStore.providers.length > 0">
+            <v-btn v-for="provider in authStore.providers" :key="provider.id" @click="authStore.loginWithKeycloak()" variant="outlined" class="mb-2">
+                <template #prepend>
+                    <v-img v-if="provider.logo_url" :src="provider.logo_url" width="28" height="28" class="rounded-circle" />
+                </template>
+                {{ provider.display_name }}
+            </v-btn>
+        </v-card-text>
+        <v-divider></v-divider>
         <v-card-text>
-            <!-- <v-alert v-if="authStore.error" type="error" class="mb-4" closable @click:close="authStore.clearError()">
-                {{ authStore.error }}
-            </v-alert> -->
+            <v-alert v-if="errorMessage" type="error" class="mb-4" closable @click:close="errorMessage = ''">
+                {{ errorMessage }}
+            </v-alert>
 
             <v-form @submit.prevent="handleLogin">
                 <v-text-field

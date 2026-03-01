@@ -26,6 +26,16 @@ class RegisterRequest(BaseModel):
     password: str
 
 
+class ProviderResponse(BaseModel):
+    id: int
+    name: str
+    display_name: str
+    logo_url: str
+
+
+class LogoutReponse(BaseModel):
+    success: bool
+
 @router.post("/register", response_model=TokenResponse)
 def register(credentials: RegisterRequest, response: Response):
     try:
@@ -117,6 +127,23 @@ def refresh(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
             detail=f"REFRESH Failed to connect to auth service: {str(e)}"
         )
 
+
+@router.post("/session")
+async def get_session(refresh_token: str | None = Cookie(default=None)):
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="No refresh token")
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{settings.AUTH_SERVICE_URL}/internal/api/refresh",
+            headers={"X-Api-Key": settings.AUTH_API_KEY},
+            json={"refresh_token": refresh_token}
+        )
+    
+    if response.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    return response.json()
 
 @router.post("/logout")
 def logout(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
@@ -234,3 +261,24 @@ def get_role_by_id(id: int):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"ROLES/ID Failed to connect to auth service: {str(e)}"
         )
+
+
+@router.get("/oauth/providers", response_model=list[ProviderResponse])
+def get_oath_providers():
+    try:
+        response = httpx.get(
+            f"{settings.OAUTH_SERVICE_URL}/providers",
+            timeout=10.0
+        )
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"OAUTH/PROVIDERS Auth service error: {e.response.text}"
+        )
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"OAUTH/PROVIDERS Failed to connect to auth service: {str(e)}"
+        ) 

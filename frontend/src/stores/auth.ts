@@ -28,6 +28,18 @@ interface User {
     role_id: number;
 }
 
+interface OauthCredentials {
+    provider: string;
+    redirect: string;
+}
+
+interface OauthProvider {
+    id: number;
+    name: string;
+    display_name: string;
+    logo_url: string;
+}
+
 function parseJwt(token: string) {
     try {
         const base64Url = token.split('.')[1];
@@ -53,6 +65,7 @@ export const useAuthStore = defineStore('auth', () => {
     const user = ref<User | null>(null);
     const roleName = ref<string | null>(null);
     const initialized = ref(false);
+    const providers = ref<OauthProvider[]>([]);
     let refreshIntervalId: number | null = null;
 
     const setToken = (newAccessToken: string | null, newRefreshToken?: string | null) => {
@@ -115,7 +128,7 @@ export const useAuthStore = defineStore('auth', () => {
                 err.response?.data?.error ||
                 (typeof err.response?.data === 'string' ? err.response?.data : null) ||
                 'Login failed';
-            throw err;
+            throw new Error(errorMessage);
         }
     };
 
@@ -137,7 +150,7 @@ export const useAuthStore = defineStore('auth', () => {
                 err.response?.data?.error ||
                 (typeof err.response?.data === 'string' ? err.response?.data : null) ||
                 'Registration failed';
-            throw err;
+            throw new Error(errorMessage);
         }
     };
 
@@ -201,11 +214,47 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
+    const fetchProviders = async (): Promise<void> => {
+        try {
+            const response = await apiClient.get('/auth/oauth/providers');
+            providers.value = response.data;
+        } catch (err) {
+            console.error('Failed to fetch providers: ', err);
+            providers.value = [];
+        }
+    };
+
+    const loginWithKeycloak = () => {
+        const authUrl = 'http://localhost:8080/api/auth/oauth/login';
+        const params = new URLSearchParams({
+            provider: 'keycloak',
+            redirect: window.location.origin + '/auth/callback',
+        });
+
+        window.location.href = `${authUrl}?${params}`;
+    };
+
+    const oauthLogin = async (credentials: OauthCredentials): Promise<string> => {
+        try {
+            const response = await apiClient.get<string>('auth/oauth/login', { params: credentials });
+            return response.data;
+        } catch (err: any) {
+            const errorMessage =
+                err.response?.data?.detail ||
+                err.response?.data?.message ||
+                err.response?.data?.error ||
+                (typeof err.response?.data === 'string' ? err.response?.data : null) ||
+                'Login failed';
+            throw new Error(errorMessage);
+        }
+    };
+
     return {
         accessToken,
         refreshToken,
         user,
         roleName,
+        providers,
         initAuth,
         login,
         register,
@@ -213,5 +262,8 @@ export const useAuthStore = defineStore('auth', () => {
         startTokenRefresh,
         refreshAccessToken,
         fetchRoleName,
+        fetchProviders,
+        oauthLogin,
+        loginWithKeycloak,
     };
 });
