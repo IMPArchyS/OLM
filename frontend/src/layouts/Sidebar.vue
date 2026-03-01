@@ -127,7 +127,7 @@ const showLabels = computed(() => !isCollapsed.value);
                 </div>
 
                 <!-- Settings Navigation -->
-                <div v-if="authStore.roleName === 'olm_admin' || 'olm_teacher'">
+                <div>
                     <div v-if="showLabels" class="px-4 mb-2 text-caption font-weight-medium text-uppercase text-white" style="letter-spacing: 0.05em">
                         {{ t('nav.settings') }}
                     </div>

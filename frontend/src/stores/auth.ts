@@ -63,7 +63,6 @@ export const useAuthStore = defineStore('auth', () => {
     const accessToken = ref<string | null>('');
     const refreshToken = ref<string | null>('');
     const user = ref<User | null>(null);
-    const roleName = ref<string | null>(null);
     const initialized = ref(false);
     const providers = ref<OauthProvider[]>([]);
     let refreshIntervalId: number | null = null;
@@ -83,11 +82,9 @@ export const useAuthStore = defineStore('auth', () => {
                     admin: payload.admin,
                     role_id: payload.role_id,
                 };
-                roleName.value = null;
             }
         } else {
             user.value = null;
-            roleName.value = null;
         }
     };
 
@@ -99,7 +96,6 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const response = await apiClient.post('auth/refresh');
             setToken(response.data.access_token);
-            await fetchRoleName();
             startTokenRefresh();
             initialized.value = true;
             return true;
@@ -116,7 +112,6 @@ export const useAuthStore = defineStore('auth', () => {
             const { access_token, refresh_token } = response.data;
 
             setTokens(access_token, refresh_token);
-            await fetchRoleName();
 
             startTokenRefresh();
 
@@ -138,7 +133,6 @@ export const useAuthStore = defineStore('auth', () => {
             const { access_token, refresh_token } = response.data;
 
             setTokens(access_token, refresh_token);
-            await fetchRoleName();
 
             startTokenRefresh();
 
@@ -158,7 +152,6 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const response = await apiClient.post('auth/refresh');
             setToken(response.data.access_token);
-            await fetchRoleName();
         } catch (err) {
             console.log('Token refresh failed:', err);
             logout();
@@ -192,26 +185,6 @@ export const useAuthStore = defineStore('auth', () => {
                 setToken(null);
                 router.push('/auth/login');
             });
-    };
-
-    const fetchRoleName = async (): Promise<string | null> => {
-        if (roleName.value) {
-            return roleName.value;
-        }
-
-        if (!user.value?.role_id) {
-            return null;
-        }
-
-        try {
-            const response = await apiClient.get(`/auth/role/${user.value.role_id}`);
-            roleName.value = response.data?.name ?? null;
-            return roleName.value;
-        } catch (err) {
-            console.error('Failed to fetch role name:', err);
-            roleName.value = null;
-            return null;
-        }
     };
 
     const fetchProviders = async (): Promise<void> => {
@@ -253,7 +226,6 @@ export const useAuthStore = defineStore('auth', () => {
         accessToken,
         refreshToken,
         user,
-        roleName,
         providers,
         initAuth,
         login,
@@ -261,7 +233,6 @@ export const useAuthStore = defineStore('auth', () => {
         logout,
         startTokenRefresh,
         refreshAccessToken,
-        fetchRoleName,
         fetchProviders,
         oauthLogin,
         loginWithKeycloak,

@@ -1,5 +1,4 @@
-<script setup>
-import { useToast } from '@/composables/useToast';
+<script lang="ts" setup>
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 

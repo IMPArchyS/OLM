@@ -164,13 +164,6 @@ router.beforeEach(async (to, from, next) => {
             return next({ path: '/auth/login' });
         }
 
-        if (to.meta.requiresOlmAdmin) {
-            await authStore.fetchRoleName();
-            const isOlmAdmin = authStore.roleName;
-            if (isOlmAdmin !== 'olm_admin') {
-                return next({ path: '/' });
-            }
-        }
         return next();
     }
     next();

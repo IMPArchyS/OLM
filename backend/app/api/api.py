@@ -13,11 +13,17 @@ from app.api.endpoints import (
     software,
     reservation,
     admin,
-    auth
+    auth,
 )
 
 
 api_router = APIRouter()
+
+api_router.include_router(
+    auth.router,
+    prefix="/api/auth",
+    tags=["Auth"],
+)
 
 api_router.include_router(
     ws_router,
@@ -89,11 +95,3 @@ api_router.include_router(
     prefix="/api/server",
     tags=["Servers"],
 )
-
-api_router.include_router(
-    auth.router,
-    prefix="/api/auth",
-    tags=["Auth"],
-)
-
-

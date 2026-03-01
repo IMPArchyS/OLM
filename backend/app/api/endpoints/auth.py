@@ -25,7 +25,6 @@ class RegisterRequest(BaseModel):
     username: str
     password: str
 
-
 class ProviderResponse(BaseModel):
     id: int
     name: str
@@ -35,6 +34,7 @@ class ProviderResponse(BaseModel):
 
 class LogoutReponse(BaseModel):
     success: bool
+
 
 @router.post("/register", response_model=TokenResponse)
 def register(credentials: RegisterRequest, response: Response):
@@ -173,13 +173,47 @@ def logout(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
         )
 
 
+@router.post("/validate-token")
+async def validate_token(jwt_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
+    if not jwt_token:
+        raise HTTPException(status_code=401, detail="No jwt token")
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{settings.AUTH_SERVICE_URL}/internal/api/validate-token",
+            headers={"X-Api-Key": settings.AUTH_API_KEY},
+            json={"jwt_token": jwt_token}
+        )
+    
+    if response.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    return response.json()
 
-@router.get("/user")
-def get_all_users(page: int = 1, size: int = 10):
+
+@router.post("/check-permissions")
+async def validate_token(jwt_token: Annotated[str, Cookie(alias="olm_refresh_token")], perms: list[str]):
+    if not jwt_token:
+        raise HTTPException(status_code=401, detail="No jwt token")
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{settings.AUTH_SERVICE_URL}/internal/api/check-permissions",
+            headers={"X-Api-Key": settings.AUTH_API_KEY},
+            json={"jwt_token": jwt_token, "permissions": perms}
+        )
+    
+    if response.status_code != 200:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    return response.json()
+
+
+@router.get("/providers", response_model=list[ProviderResponse])
+def get_oath_providers():
     try:
         response = httpx.get(
-            f"{settings.AUTH_SERVICE_URL}/users",
-            params={"page": page, "size": size},
+            f"{settings.AUTH_SERVICE_URL}/providers",
             headers={"x-api-key": settings.AUTH_API_KEY},
             timeout=10.0
         )
@@ -188,13 +222,13 @@ def get_all_users(page: int = 1, size: int = 10):
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
-            detail=f"USERS Auth service error: {e.response.text}"
+            detail=f"PROVIDERS Auth service error: {e.response.text}"
         )
     except httpx.RequestError as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"USERS Failed to connect to auth service: {str(e)}"
-        )
+            detail=f"PROVIDERS Failed to connect to auth service: {str(e)}"
+        ) 
 
 
 @router.get("/user/{id}")
@@ -219,11 +253,11 @@ def get_user_by_id(id: int):
         )
 
 
-@router.get("/role")
-def get_all_roles():
+@router.get("/user/{id}/with-role")
+def get_user_with_role(id: int):
     try:
         response = httpx.get(
-            f"{settings.AUTH_SERVICE_URL}/roles",
+            f"{settings.AUTH_SERVICE_URL}/users/{id}/with-role",
             headers={"x-api-key": settings.AUTH_API_KEY},
             timeout=10.0
         )
@@ -232,20 +266,20 @@ def get_all_roles():
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
-            detail=f"ROLES Auth service error: {e.response.text}"
+            detail=f"USERS/ID Auth service error: {e.response.text}"
         )
     except httpx.RequestError as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"ROLES Failed to connect to auth service: {str(e)}"
+            detail=f"USERS/ID Failed to connect to auth service: {str(e)}"
         )
 
 
-@router.get("/role/{id}")
-def get_role_by_id(id: int):
+@router.get("/user/{id}/permissions")
+def get_user_permissions(id: int):
     try:
         response = httpx.get(
-            f"{settings.AUTH_SERVICE_URL}/roles/{id}",
+            f"{settings.AUTH_SERVICE_URL}/users/{id}/permissions",
             headers={"x-api-key": settings.AUTH_API_KEY},
             timeout=10.0
         )
@@ -254,31 +288,10 @@ def get_role_by_id(id: int):
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
-            detail=f"ROLES/ID Auth service error: {e.response.text}"
+            detail=f"USERS/ID Auth service error: {e.response.text}"
         )
     except httpx.RequestError as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"ROLES/ID Failed to connect to auth service: {str(e)}"
+            detail=f"USERS/ID Failed to connect to auth service: {str(e)}"
         )
-
-
-@router.get("/oauth/providers", response_model=list[ProviderResponse])
-def get_oath_providers():
-    try:
-        response = httpx.get(
-            f"{settings.OAUTH_SERVICE_URL}/providers",
-            timeout=10.0
-        )
-        response.raise_for_status()
-        return response.json()
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(
-            status_code=e.response.status_code,
-            detail=f"OAUTH/PROVIDERS Auth service error: {e.response.text}"
-        )
-    except httpx.RequestError as e:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"OAUTH/PROVIDERS Failed to connect to auth service: {str(e)}"
-        ) 
