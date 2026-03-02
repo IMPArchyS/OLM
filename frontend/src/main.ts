@@ -15,10 +15,7 @@ app.use(createPinia());
 app.use(i18n);
 app.use(vuetify);
 
-const authStore = useAuthStore();
-authStore.initAuth().finally(() => {
-    app.use(router);
-    router.isReady().then(async () => {
-        app.mount('#app');
-    });
+app.use(router);
+router.isReady().then(async () => {
+    app.mount('#app');
 });

@@ -2,7 +2,6 @@ services:
     db:
         container_name: postgres_db
         image: postgres:15
-        restart: always
         ports:
             - "5432:5432"
         environment:
@@ -18,7 +17,7 @@ services:
         ports:
             - "8000:8000"
         env_file:
-            - .env
+            - ./backend/.env
         depends_on:
             - db
         volumes:
@@ -36,12 +35,13 @@ services:
         container_name: vue_frontend
         ports:
             - '80:80'
+            - '443:443'
+        env_file:
+            - ./frontend/.env
         volumes:
             - ./frontend:/app
             - /app/node_modules
             - /etc/letsencrypt:/etc/letsencrypt:ro
-        environment:
-            - NODE_ENV=build
         depends_on:
             - backend
 
