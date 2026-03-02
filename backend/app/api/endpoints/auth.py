@@ -67,7 +67,7 @@ def register(credentials: RegisterRequest, response: Response):
         token_data = auth_response.json()
         
         response.set_cookie(
-            key="olm_refresh_token",
+            key="refresh_token",
             value=token_data["refresh_token"],
             httponly=True,
             secure=False,
@@ -97,7 +97,7 @@ def login(credentials: LoginRequest, response: Response):
         token_data = auth_response.json()
         
         response.set_cookie(
-            key="olm_refresh_token",
+            key="refresh_token",
             value=token_data["refresh_token"],
             httponly=True,  
             secure=False,  
@@ -115,7 +115,7 @@ def login(credentials: LoginRequest, response: Response):
 
 
 @router.post("/refresh", response_model=TokenResponse)
-def refresh(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
+def refresh(refresh_token: str | None = Cookie(default=None)):
     if not refresh_token:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -160,7 +160,7 @@ async def get_session(refresh_token: str | None = Cookie(default=None)):
     return response.json()
 
 @router.post("/logout")
-def logout(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
+def logout(refresh_token: str | None = Cookie(default=None)):
     if not refresh_token:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -188,7 +188,7 @@ def logout(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
 
 
 @router.post("/validate-token")
-async def validate_token(jwt_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
+async def validate_token(jwt_token: Annotated[str, Cookie(alias="refresh_token")]):
     if not jwt_token:
         raise HTTPException(status_code=401, detail="No jwt token")
     
@@ -206,7 +206,7 @@ async def validate_token(jwt_token: Annotated[str, Cookie(alias="olm_refresh_tok
 
 
 @router.post("/check-permissions")
-async def check_permissions(jwt_token: Annotated[str, Cookie(alias="olm_refresh_token")], perms: list[str]):
+async def check_permissions(jwt_token: Annotated[str, Cookie(alias="refresh_token")], perms: list[str]):
     if not jwt_token:
         raise HTTPException(status_code=401, detail="No jwt token")
     
