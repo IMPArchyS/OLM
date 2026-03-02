@@ -1,11 +1,33 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
+import { onBeforeRouteLeave } from 'vue-router';
 import type { Reservation } from '@/types/api';
 import ExperimentSelector from './ExperimentSelector.vue';
 
 const props = defineProps<{ reservation: Reservation }>();
 
 const experimentSelectorRef = ref<InstanceType<typeof ExperimentSelector> | null>(null);
+const websocketRef = ref<WebSocket | null>(null);
+const websocketMessage = ref('');
+
+function closeWebSocket() {
+    const websocket = websocketRef.value;
+    if (!websocket) return;
+
+    if (websocket.readyState === WebSocket.OPEN || websocket.readyState === WebSocket.CONNECTING) {
+        websocket.close(1000, 'Navigation away from page');
+    }
+
+    websocketRef.value = null;
+}
+
+onBeforeUnmount(() => {
+    closeWebSocket();
+});
+
+onBeforeRouteLeave(() => {
+    closeWebSocket();
+});
 
 function runExperiment() {
     const selector = experimentSelectorRef.value;
@@ -23,9 +45,7 @@ function runExperiment() {
     const missing = Object.entries(selectedExperiment.experiment_commands || {})
         .filter(
             ([key, spec]) =>
-                experimentCommandValues[key] === undefined ||
-                experimentCommandValues[key] === null ||
-                experimentCommandValues[key] === '',
+                experimentCommandValues[key] === undefined || experimentCommandValues[key] === null || experimentCommandValues[key] === '',
         )
         .map(([key]) => key);
 
@@ -34,7 +54,6 @@ function runExperiment() {
         return;
     }
 
-    // Reconstruct experiment_commands with full structure (value, type, unit)
     const reconstructedCommands: Record<string, { value: any; type: string; unit?: string }> = {};
 
     Object.entries(selectedExperiment.experiment_commands || {}).forEach(([key, spec]) => {
@@ -52,8 +71,37 @@ function runExperiment() {
         simulation_time: selector.simTime,
         sampling_rate: selector.sampleRate,
     };
-    console.log('Payload to send via WebSocket:', JSON.stringify(payload, null, 2));
-    // TODO: Implement WebSocket communication
+    //console.log('Payload to send via WebSocket:', JSON.stringify(payload, null, 2));
+    websocketMessage.value = '';
+    closeWebSocket();
+
+    const websocket = new WebSocket(`ws://localhost:8000/ws/test/${selectedExperiment.id}`);
+    websocketRef.value = websocket;
+
+    websocket.onopen = () => {
+        console.log('WebSocket Created');
+        //ws.send(JSON.stringify(payload));
+    };
+
+    websocket.onmessage = (event) => {
+        websocketMessage.value = String(event.data);
+        console.log('WebSocket response:', event.data);
+    };
+
+    websocket.onerror = (error) => {
+        websocketMessage.value = 'WebSocket error. Please try running the experiment again.';
+        console.error('WebSocket error:', error);
+    };
+
+    websocket.onclose = () => {
+        websocketRef.value = null;
+        if (!websocketMessage.value) {
+            websocketMessage.value = 'WebSocket closed.';
+        } else {
+            websocketMessage.value = `${websocketMessage.value} (connection closed)`;
+        }
+        console.log('WebSocket closed');
+    };
 }
 </script>
 
@@ -69,6 +117,13 @@ function runExperiment() {
                     </v-btn>
                 </template>
             </ExperimentSelector>
+
+            <v-card v-if="websocketMessage" variant="tonal" class="mt-4">
+                <v-card-title class="text-subtitle-1">WebSocket messages</v-card-title>
+                <v-card-text>
+                    <div>{{ websocketMessage }}</div>
+                </v-card-text>
+            </v-card>
         </v-card-text>
     </v-card>
 </template>
