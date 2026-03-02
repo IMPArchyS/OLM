@@ -126,7 +126,7 @@ DEFAULT_EXPERIMENT = [
             }
         },
         "output_arguments": {"format": "json"},
-        "has_schema": True,
+        "has_schema": False,
         "server_id": 1,
         "device_type_id": 1,
         "device_id": 1,
