@@ -14,18 +14,29 @@ const { showError } = useToast();
 const username = ref('');
 const password = ref('');
 const isSubmitting = ref(false);
-const errorMessage = ref('');
+const showPassword = ref(false);
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const emailRules = [
+    (value: string) => !!value || `${t('auth.email')} ${t('validation.required_male')}`,
+    (value: string) => emailRegex.test(value) || t('validation.invalidFormat'),
+];
 
 onMounted(async () => {
     await authStore.fetchProviders();
 
     if (route.params.error === 'auth_failed') {
-        errorMessage.value = 'Authentication failed. Please try again.';
+        showError(t('error.auth_failed'));
     }
 });
 
 const handleLogin = async () => {
     if (isSubmitting.value) return;
+
+    if (!emailRegex.test(username.value)) {
+        showError(t('validation.invalidFormat'));
+        return;
+    }
 
     isSubmitting.value = true;
 
@@ -33,7 +44,7 @@ const handleLogin = async () => {
         await authStore.login({ username: username.value, password: password.value });
         await router.push('/app/dashboard');
     } catch (error) {
-        showError('Login Failed: ' + error);
+        showError(t('error.login'));
     } finally {
         isSubmitting.value = false;
     }
@@ -49,7 +60,7 @@ const handleOauthLogin = (provider: string) => {
 
 <template>
     <v-card max-width="400" class="mx-auto mt-5">
-        <v-card-title class="text-h5 mb-4">Login</v-card-title>
+        <v-card-title class="text-h5 mb-4">{{ t('auth.login') }}</v-card-title>
         <v-card-text v-if="authStore.providers.length > 0">
             <v-btn
                 v-for="provider in authStore.providers"
@@ -66,16 +77,13 @@ const handleOauthLogin = (provider: string) => {
         </v-card-text>
         <v-divider></v-divider>
         <v-card-text>
-            <v-alert v-if="errorMessage" type="error" class="mb-4" closable @click:close="errorMessage = ''">
-                {{ errorMessage }}
-            </v-alert>
-
             <v-form @submit.prevent="handleLogin">
                 <v-text-field
                     v-model="username"
-                    label="Email"
-                    placeholder="Enter email"
+                    prepend-inner-icon="mdi-email-outline"
+                    :label="$t('auth.email')"
                     type="email"
+                    :rules="emailRules"
                     variant="outlined"
                     density="comfortable"
                     required
@@ -84,21 +92,23 @@ const handleOauthLogin = (provider: string) => {
                 />
                 <v-text-field
                     v-model="password"
-                    label="Password"
-                    placeholder="Enter password"
-                    type="password"
+                    prepend-inner-icon="mdi-lock-outline"
+                    :label="$t('auth.password')"
+                    :type="showPassword ? 'text' : 'password'"
                     variant="outlined"
                     density="comfortable"
+                    :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                    @click:append-inner="showPassword = !showPassword"
                     required
                     :disabled="isSubmitting"
                     class="mb-4"
                 />
                 <v-btn type="submit" color="primary" variant="elevated" block class="mt-2" :loading="isSubmitting" :disabled="!username || !password">
-                    Login
+                    {{ t('auth.login') }}
                 </v-btn>
             </v-form>
             <v-divider class="my-4" />
-            <v-btn :to="{ name: 'register' }" variant="text" block> Create an account </v-btn>
+            <v-btn :to="{ name: 'register' }" variant="text" block> {{ t('auth.createAccount') }} </v-btn>
         </v-card-text>
     </v-card>
 </template>

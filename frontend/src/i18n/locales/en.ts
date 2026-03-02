@@ -20,6 +20,23 @@ export default {
         password: 'Password',
         confirmPassword: 'Confirm Password',
         username: 'Username',
+        alreadyAccount: 'Already have an account? Login',
+        createAccount: 'Create an Account',
+        nameRequired: 'Name is required',
+        emailRequired: 'Email is required',
+        passwordRequired: 'Password is required',
+    },
+    error: {
+        login: 'Login failed',
+        register: 'Register failed',
+        auth_failed: 'Auth failed',
+        matchPassword: "Passwords don't match",
+    },
+    validation: {
+        required: 'is required',
+        invalidFormat: 'Invalid Format',
+        invalidIpFormat: 'Invalid IP address format',
+        invalidPortRange: 'Port must be between 1 and 65535',
     },
     reservations: {
         title: 'Reservations',
@@ -42,11 +59,6 @@ export default {
         success: 'Success',
         confirm: 'Confirm',
         close: 'Close',
-    },
-    validation: {
-        required: 'is required',
-        invalidIpFormat: 'Invalid IP address format',
-        invalidPortRange: 'Port must be between 1 and 65535',
     },
     calendar: {
         today: 'Today',
