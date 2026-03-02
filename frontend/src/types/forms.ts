@@ -1,3 +1,14 @@
+export interface LoginForm {
+    username: string;
+    password: string;
+}
+
+export interface RegisterForm {
+    name: string;
+    username: string;
+    password: string;
+}
+
 export interface ReservationForm {
     deviceId: number;
     startDate: string;

@@ -1,5 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Cookie, HTTPException, Response, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -9,6 +10,19 @@ from app.core.config import settings
 
 
 router = APIRouter()
+
+
+def _auth_error_payload(response: httpx.Response) -> dict:
+    try:
+        payload = response.json()
+    except ValueError:
+        text = response.text.strip()
+        return {"detail": text or "Auth service returned an empty error response"}
+
+    if isinstance(payload, dict):
+        return payload
+
+    return {"detail": payload}
 
 
 class TokenResponse(BaseModel):
@@ -64,9 +78,9 @@ def register(credentials: RegisterRequest, response: Response):
         
         return token_data
     except httpx.HTTPStatusError as e:
-        raise HTTPException(
+        return JSONResponse(
             status_code=e.response.status_code,
-            detail=f"Registration error: {e.response.text}"
+            content=_auth_error_payload(e.response)
         )
 
 
@@ -94,9 +108,9 @@ def login(credentials: LoginRequest, response: Response):
         
         return token_data
     except httpx.HTTPStatusError as e:
-        raise HTTPException(
+        return JSONResponse(
             status_code=e.response.status_code,
-            detail=f"LOGIN Auth service error: {e.response.text}"
+            content=_auth_error_payload(e.response)
         )
 
 
@@ -117,9 +131,9 @@ def refresh(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:
-        raise HTTPException(
+        return JSONResponse(
             status_code=e.response.status_code,
-            detail=f"REFRESH Auth service error: {e.response.text}"
+            content=_auth_error_payload(e.response)
         )
     except httpx.RequestError as e:
         raise HTTPException(
@@ -162,9 +176,9 @@ def logout(refresh_token: Annotated[str, Cookie(alias="olm_refresh_token")]):
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:
-        raise HTTPException(
+        return JSONResponse(
             status_code=e.response.status_code,
-            detail=f"LOGOUT Auth service error: {e.response.text}"
+            content=_auth_error_payload(e.response)
         )
     except httpx.RequestError as e:
         raise HTTPException(
@@ -220,9 +234,9 @@ def get_oath_providers():
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:
-        raise HTTPException(
+        return JSONResponse(
             status_code=e.response.status_code,
-            detail=f"PROVIDERS Auth service error: {e.response.text}"
+            content=_auth_error_payload(e.response)
         )
     except httpx.RequestError as e:
         raise HTTPException(
@@ -242,9 +256,9 @@ def get_user_by_id(id: int):
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:
-        raise HTTPException(
+        return JSONResponse(
             status_code=e.response.status_code,
-            detail=f"USERS/ID Auth service error: {e.response.text}"
+            content=_auth_error_payload(e.response)
         )
     except httpx.RequestError as e:
         raise HTTPException(
@@ -264,9 +278,9 @@ def get_user_with_role(id: int):
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:
-        raise HTTPException(
+        return JSONResponse(
             status_code=e.response.status_code,
-            detail=f"USERS/ID Auth service error: {e.response.text}"
+            content=_auth_error_payload(e.response)
         )
     except httpx.RequestError as e:
         raise HTTPException(
@@ -286,9 +300,9 @@ def get_user_permissions(id: int):
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:
-        raise HTTPException(
+        return JSONResponse(
             status_code=e.response.status_code,
-            detail=f"USERS/ID Auth service error: {e.response.text}"
+            content=_auth_error_payload(e.response)
         )
     except httpx.RequestError as e:
         raise HTTPException(

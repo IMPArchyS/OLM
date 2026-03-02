@@ -2,43 +2,8 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { apiClient } from '@/composables/useAxios';
 import router from '@/router';
-
-interface LoginCredentials {
-    username: string;
-    password: string;
-}
-
-interface RegisterData {
-    name: string;
-    username: string;
-    password: string;
-}
-
-interface AuthResponse {
-    access_token: string;
-    refresh_token: string;
-    refresh_token_expires_at: string;
-}
-
-interface User {
-    id: string;
-    username: string;
-    name: string;
-    admin: boolean;
-    role_id: number;
-}
-
-interface OauthCredentials {
-    provider: string;
-    redirect: string;
-}
-
-interface OauthProvider {
-    id: number;
-    name: string;
-    display_name: string;
-    logo_url: string;
-}
+import type { User, AuthResponse, OauthCredentials, OauthProvider } from '@/types/authTypes';
+import type { LoginForm, RegisterForm } from '@/types/forms';
 
 function parseJwt(token: string) {
     try {
@@ -63,7 +28,6 @@ export const useAuthStore = defineStore('auth', () => {
     const accessToken = ref<string | null>('');
     const refreshToken = ref<string | null>('');
     const user = ref<User | null>(null);
-    const initialized = ref(false);
     const providers = ref<OauthProvider[]>([]);
     let refreshIntervalId: number | null = null;
 
@@ -97,37 +61,28 @@ export const useAuthStore = defineStore('auth', () => {
             const response = await apiClient.post('auth/refresh');
             setToken(response.data.access_token);
             startTokenRefresh();
-            initialized.value = true;
             return true;
         } catch (err) {
-            console.error('AUTH: Token refresh failed:', err);
-            initialized.value = true;
+            console.error('[AUTH]: INIT - Token refresh failed:', err);
             return false;
         }
     };
 
-    const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
+    const login = async (loginData: LoginForm): Promise<AuthResponse> => {
         try {
-            const response = await apiClient.post<AuthResponse>('auth/login', credentials);
+            const response = await apiClient.post<AuthResponse>('auth/login', loginData);
             const { access_token, refresh_token } = response.data;
 
             setTokens(access_token, refresh_token);
-
             startTokenRefresh();
 
             return response.data;
         } catch (err: any) {
-            const errorMessage =
-                err.response?.data?.detail ||
-                err.response?.data?.message ||
-                err.response?.data?.error ||
-                (typeof err.response?.data === 'string' ? err.response?.data : null) ||
-                'Login failed';
-            throw new Error(errorMessage);
+            throw new Error(err.response?.data?.detail);
         }
     };
 
-    const register = async (data: RegisterData): Promise<AuthResponse> => {
+    const register = async (data: RegisterForm): Promise<AuthResponse> => {
         try {
             const response = await apiClient.post<AuthResponse>('auth/register', data);
             const { access_token, refresh_token } = response.data;
@@ -183,6 +138,10 @@ export const useAuthStore = defineStore('auth', () => {
             })
             .catch(() => {
                 setToken(null);
+                if (refreshIntervalId !== null) {
+                    clearInterval(refreshIntervalId);
+                    refreshIntervalId = null;
+                }
                 router.push('/auth/login');
             });
     };
@@ -221,7 +180,6 @@ export const useAuthStore = defineStore('auth', () => {
         user,
         providers,
         initAuth,
-        setToken,
         login,
         register,
         logout,

@@ -22,7 +22,6 @@ const handleUpdatePassword = () => {
 const handleLogout = async () => {
     isOpen.value = false;
     await authStore.logout();
-    router.push({ name: 'login' });
 };
 
 const handleLogin = () => {

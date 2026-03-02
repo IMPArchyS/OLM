@@ -3,17 +3,18 @@ import { onMounted, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
+import { useToast } from '@/composables/useToast';
 
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const { showError } = useToast();
 
 const username = ref('');
 const password = ref('');
 const isSubmitting = ref(false);
 const errorMessage = ref('');
-const oauthRedirectPath = '/app/dashboard';
 
 onMounted(async () => {
     await authStore.fetchProviders();
@@ -29,14 +30,10 @@ const handleLogin = async () => {
     isSubmitting.value = true;
 
     try {
-        await authStore.login({
-            username: username.value,
-            password: password.value,
-        });
-
+        await authStore.login({ username: username.value, password: password.value });
         await router.push('/app/dashboard');
     } catch (error) {
-        console.error('Login failed:', error);
+        showError('Login Failed: ' + error);
     } finally {
         isSubmitting.value = false;
     }

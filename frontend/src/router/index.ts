@@ -155,7 +155,7 @@ router.beforeEach(async (to, from, next) => {
         }
     }
 
-    if (to.meta.requiresAuth || to.meta.requiresOlmAdmin) {
+    if (to.meta.requiresAuth) {
         if (!authStore.accessToken) {
             await authStore.initAuth();
         }
