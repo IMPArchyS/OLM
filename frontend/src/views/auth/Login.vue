@@ -42,16 +42,11 @@ const handleLogin = async () => {
     }
 };
 
-const handleOauthLogin = async (provider: string) => {
-    try {
-        const oauthUrl = await authStore.oauthLogin({
-            provider,
-            redirect: `${window.location.origin}${oauthRedirectPath}`,
-        });
-        window.location.href = oauthUrl;
-    } catch (error) {
-        console.error('OAUTH Login failed:', error);
-    }
+const handleOauthLogin = (provider: string) => {
+    authStore.oauthLogin({
+        provider,
+        redirect: window.location.origin + '/auth/callback',
+    });
 };
 </script>
 
@@ -59,7 +54,13 @@ const handleOauthLogin = async (provider: string) => {
     <v-card max-width="400" class="mx-auto mt-5">
         <v-card-title class="text-h5 mb-4">Login</v-card-title>
         <v-card-text v-if="authStore.providers.length > 0">
-            <v-btn v-for="provider in authStore.providers" :key="provider.id" @click="authStore.loginWithKeycloak()" variant="outlined" class="mb-2">
+            <v-btn
+                v-for="provider in authStore.providers"
+                :key="provider.id"
+                @click="handleOauthLogin(provider.name)"
+                variant="outlined"
+                class="mb-2"
+            >
                 <template #prepend>
                     <v-img v-if="provider.logo_url" :src="provider.logo_url" width="28" height="28" class="rounded-circle" />
                 </template>

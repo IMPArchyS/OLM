@@ -197,30 +197,23 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    const loginWithKeycloak = () => {
-        const authUrl = 'http://localhost:8080/api/auth/oauth/login';
+    const oauthLogin = (credentials: OauthCredentials) => {
         const params = new URLSearchParams({
-            provider: 'keycloak',
-            redirect: window.location.origin + '/auth/callback',
+            provider: credentials.provider,
+            redirect: credentials.redirect,
         });
-
-        window.location.href = `${authUrl}?${params}`;
+        window.location.href = `${import.meta.env.VITE_AUTH_SERVICE_URL + '/api/auth/oauth/login'}?${params}`;
     };
 
-    const oauthLogin = async (credentials: OauthCredentials): Promise<string> => {
+    async function handleOAuthCallback() {
         try {
-            const response = await apiClient.get<string>('auth/oauth/login', { params: credentials });
-            return response.data;
-        } catch (err: any) {
-            const errorMessage =
-                err.response?.data?.detail ||
-                err.response?.data?.message ||
-                err.response?.data?.error ||
-                (typeof err.response?.data === 'string' ? err.response?.data : null) ||
-                'Login failed';
-            throw new Error(errorMessage);
+            const response = await apiClient.post('auth/session');
+            setTokens(response.data.access_token, response.data.refresh_token);
+        } catch (err) {
+            console.log('Token refresh failed:', err);
+            throw new Error('OAuth callback failed');
         }
-    };
+    }
 
     return {
         accessToken,
@@ -228,13 +221,12 @@ export const useAuthStore = defineStore('auth', () => {
         user,
         providers,
         initAuth,
+        setToken,
         login,
         register,
         logout,
-        startTokenRefresh,
-        refreshAccessToken,
         fetchProviders,
         oauthLogin,
-        loginWithKeycloak,
+        handleOAuthCallback,
     };
 });

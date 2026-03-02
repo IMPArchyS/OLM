@@ -1,24 +1,18 @@
 <script lang="ts" setup>
+import { apiClient } from '@/composables/useAxios';
+import { useAuthStore } from '@/stores/auth';
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 onMounted(async () => {
     try {
-        const response = await fetch('/api/auth/session', {
-            method: 'POST',
-            credentials: 'include',
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('access_token', data.access_token);
-            router.push('/');
-        } else {
-            router.push({ name: 'login', params: { error: 'auth_failed' } });
-        }
+        await authStore.handleOAuthCallback();
+        await router.push('/app/dashboard');
     } catch (e) {
+        console.error('OAuth callback failed:', e);
         router.push({ name: 'login', params: { error: 'auth_failed' } });
     }
 });

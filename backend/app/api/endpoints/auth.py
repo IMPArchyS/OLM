@@ -135,7 +135,7 @@ async def get_session(refresh_token: str | None = Cookie(default=None)):
     
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            f"{settings.AUTH_SERVICE_URL}/internal/api/refresh",
+            f"{settings.AUTH_SERVICE_URL}/refresh",
             headers={"X-Api-Key": settings.AUTH_API_KEY},
             json={"refresh_token": refresh_token}
         )
@@ -180,7 +180,7 @@ async def validate_token(jwt_token: Annotated[str, Cookie(alias="olm_refresh_tok
     
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            f"{settings.AUTH_SERVICE_URL}/internal/api/validate-token",
+            f"{settings.AUTH_SERVICE_URL}/validate-token",
             headers={"X-Api-Key": settings.AUTH_API_KEY},
             json={"jwt_token": jwt_token}
         )
@@ -198,7 +198,7 @@ async def check_permissions(jwt_token: Annotated[str, Cookie(alias="olm_refresh_
     
     async with httpx.AsyncClient() as client:
         response = await client.post(
-            f"{settings.AUTH_SERVICE_URL}/internal/api/check-permissions",
+            f"{settings.AUTH_SERVICE_URL}/check-permissions",
             headers={"X-Api-Key": settings.AUTH_API_KEY},
             json={"jwt_token": jwt_token, "permissions": perms}
         )
