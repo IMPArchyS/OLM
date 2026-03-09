@@ -74,37 +74,30 @@ def sync(db: DbSession, id: int):
     }
 
 
-# @router.post("/server/all", status_code=status.HTTP_200_OK)
-# def sync_all(db: DbSession):
-#     stmt = select(Server)
-#     servers = db.exec(stmt).all()
+@router.post("/sync_all", status_code=status.HTTP_200_OK)
+def sync_all(db: DbSession):
+    servers = db.exec(select(Server)).all()
     
-#     results = []
-#     for db_server in servers:
-#         health_url = resolve_url(db_server)
-#         if not health_url:
-#             results.append({"id": db_server.id, "available": False, "error": "Server missing domain"})
-#             continue
+    results = []
+    for db_server in servers:
+        health_url = resolve_url(db_server)
+        if not health_url:
+            results.append({"id": db_server.id, "available": False, "error": "Server missing domain"})
+            continue
         
-#         health_url += "/api/server/sync"
+        health_url += "/api/server/sync"
+        db_server.available = ping_remote_server(db, ServerPublic.model_validate(db_server), health_url)
 
-#         db_server.available = False
-#         sync_ok = False
-#         db_server.available, sync_ok = sync_server_from_remote(db, db_server, health_url)
-
-#         if (not sync_ok) and db_server.id is not None:
-#             sync_delete_server_data(db, db_server.id)
-
-#         db.add(db_server)
-#         results.append(
-#             {
-#                 "id": db_server.id,
-#                 "available": db_server.available,
-#             }
-#         )
+        db.add(db_server)
+        db.commit()
+        results.append(
+            {
+                "id": db_server.id,
+                "available": db_server.available,
+            }
+        )
     
-#     db.commit()
-#     return results
+    return results
 
 
 @router.get("/")
