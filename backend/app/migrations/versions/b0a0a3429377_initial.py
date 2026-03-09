@@ -68,7 +68,8 @@ def upgrade() -> None:
     sa.Column('server_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['device_type_id'], ['device_type.id'], ),
     sa.ForeignKeyConstraint(['server_id'], ['server.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('server_id', 'name', name='uq_device_server_name')
     )
     op.create_index(op.f('ix_device_name'), 'device', ['name'], unique=False)
     op.create_table('schema',

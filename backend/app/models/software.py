@@ -37,3 +37,9 @@ class SoftwarePublic(SoftwareBase):
 
 class SoftwareUpdate(SoftwareBase):
     pass 
+
+
+class SoftwareSync(SoftwareBase):
+    id: int 
+    created_at: datetime
+    modified_at: datetime 

@@ -18,22 +18,11 @@ from app.api.endpoints import (
 
 api_router = APIRouter()
 
+
 api_router.include_router(
     auth.router,
     prefix="/api/auth",
     tags=["Auth"],
-)
-
-api_router.include_router(
-    argument.router,
-    prefix="/api/argument",
-    tags=["Argument"],
-)
-
-api_router.include_router(
-    option.router,
-    prefix="/api/option",
-    tags=["Option"],
 )
 
 api_router.include_router(
@@ -43,9 +32,9 @@ api_router.include_router(
 )
 
 api_router.include_router(
-    device_type.router,
-    prefix="/api/device_type",
-    tags=["Device types"],
+    server.router,
+    prefix="/api/server",
+    tags=["Servers"],
 )
 
 api_router.include_router(
@@ -55,15 +44,15 @@ api_router.include_router(
 )
 
 api_router.include_router(
-    software.router,
-    prefix="/api/software",
-    tags=["Softwares"],
+    device_type.router,
+    prefix="/api/device_type",
+    tags=["Device types"],
 )
 
 api_router.include_router(
-    schema.router,
-    prefix="/api/schema",
-    tags=["Schemas"],
+    software.router,
+    prefix="/api/software",
+    tags=["Softwares"],
 )
 
 api_router.include_router(
@@ -79,9 +68,21 @@ api_router.include_router(
 )
 
 api_router.include_router(
-    server.router,
-    prefix="/api/server",
-    tags=["Servers"],
+    schema.router,
+    prefix="/api/schema",
+    tags=["Schemas"],
+)
+
+api_router.include_router(
+    argument.router,
+    prefix="/api/argument",
+    tags=["Argument"],
+)
+
+api_router.include_router(
+    option.router,
+    prefix="/api/option",
+    tags=["Option"],
 )
 
 api_router.include_router(

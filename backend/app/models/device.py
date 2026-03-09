@@ -1,7 +1,8 @@
 from datetime import datetime, time
 from typing import TYPE_CHECKING, List
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 from app.models.device_type import DeviceTypePublic
+from app.models.software import SoftwarePublic
 from app.models.utils import now
 from app.models.device_software import DeviceSoftware
 
@@ -21,6 +22,7 @@ class DeviceBase(SQLModel):
 
 
 class Device(DeviceBase, table=True):
+    __table_args__ = (UniqueConstraint("server_id", "name", name="uq_device_server_name"),)
     id: int | None = Field(default=None, primary_key=True)
     
     created_at: datetime = Field(default_factory=now)
@@ -40,7 +42,8 @@ class Device(DeviceBase, table=True):
 
 
 class DeviceCreate(DeviceBase):
-    pass
+    device_type_id: int
+    server_id: int
 
 
 class DevicePublic(DeviceBase):
@@ -49,6 +52,7 @@ class DevicePublic(DeviceBase):
     modified_at: datetime
     deleted_at: datetime | None
     device_type: DeviceTypePublic
+    softwares: list[SoftwarePublic]
 
 
 class DeviceUpdate(SQLModel):

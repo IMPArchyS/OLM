@@ -1,16 +1,12 @@
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
 from app.models.device import Device, DeviceCreate, DevicePublic, DeviceUpdate
-from app.models.device_type import DeviceType, DeviceTypeCreate
-from app.models.device_software import DeviceSoftware
-from app.models.software import Software, SoftwarePublic
-from app.models.experiment import Experiment
-from app.models.reserved_experiment import ReservedExperiment
-from app.models.schema import Schema
+from app.models.device_type import DeviceType
+from app.models.software import Software
 from app.models.server import Server
-from app.models.reservation import Reservation
+from app.models.utils import now
 
 
 router = APIRouter()
@@ -93,6 +89,7 @@ def update(db: DbSession, id: int, device: DeviceUpdate):
     if device.server_id is not None and not db.get(Server, device.server_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {device.server_id} not found!")    
     
+    db_device.modified_at = now()
     db.add(db_device)
     db.commit()
     db.refresh(db_device)

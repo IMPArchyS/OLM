@@ -306,6 +306,41 @@ def upgrade() -> None:
             )
         )
 
+    op.execute(
+        sa.text(
+            """
+            DO $$
+            DECLARE
+                target_table text;
+                target_sequence text;
+            BEGIN
+                FOREACH target_table IN ARRAY ARRAY[
+                    'software',
+                    'device_type',
+                    'schema',
+                    'argument',
+                    'option',
+                    'server',
+                    'device',
+                    'experiment'
+                ]
+                LOOP
+                    SELECT pg_get_serial_sequence(target_table, 'id')
+                    INTO target_sequence;
+
+                    IF target_sequence IS NOT NULL THEN
+                        EXECUTE format(
+                            'SELECT setval(%L, COALESCE(MAX(id), 0), true) FROM %I',
+                            target_sequence,
+                            target_table
+                        );
+                    END IF;
+                END LOOP;
+            END $$;
+            """
+        )
+    )
+
 def downgrade() -> None:
     for provider in DEFAULT_EXPERIMENT:
         op.execute(
