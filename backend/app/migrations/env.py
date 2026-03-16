@@ -16,7 +16,7 @@ from app.models.server import Server
 from app.models.reservation import Reservation
 from app.models.device_software import DeviceSoftware
 from app.models.schema import Schema, SchemaType
-from app.models.reserved_experiment import ReservedExperiment
+from app.models.experiment_log import ExperimentLog
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

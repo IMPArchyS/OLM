@@ -5,9 +5,9 @@ from app.api.endpoints import (
     argument,
     device_type,
     device,
+    experiment_log,
     server,
     experiment,
-    reserved_experiment,
     schema,
     option,
     software,
@@ -62,7 +62,7 @@ api_router.include_router(
 )
 
 api_router.include_router(
-    reserved_experiment.router,
+    experiment_log.router,
     prefix="/api/reserved_experiment",
     tags=["Reserved Experiments"],
 )

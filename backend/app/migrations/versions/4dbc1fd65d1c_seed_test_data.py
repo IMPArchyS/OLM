@@ -12,6 +12,7 @@ from typing import Sequence, Union
 import sqlmodel
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
@@ -85,9 +86,9 @@ DEFAULT_OPTIONS = [
 DEFAULT_SERVER = [
     {
         "id": 1,
-        "name": "Main Server",
-        "ip_address": "1127.0.0.1",
-        "api_domain": "api.example.com",
+        "name": "Main",
+        "ip_address": "127.0.0.1",
+        "api_domain": "localhost",
         "websocket_port": 8001,
         "available": False,
         "production": False,
@@ -98,6 +99,7 @@ DEFAULT_DEVICE = [
     {
         "id": 1,
         "name": "tom1a",
+        "remote_id": 0,
         "device_type_id": 1,
         "server_id": 1
     }
@@ -117,16 +119,20 @@ DEFAULT_DEVICESOFTWARE = [
 DEFAULT_EXPERIMENT = [
     {
         "id": 1,
-        "commands": {"init": "expression","start": "expression","change": "expression","stop": "expression"},
-        "experiment_commands": {
-            "fan_voltage": {
+        "commands": ["start", "change", "stop"], # init
+        "input_arguments": {
+            "sin_amplitude": {
                 "value": 0,
                 "type": "number",
                 "unit": "V"
+            },
+            "sin_frequency": {
+                "value": 0,
+                "type": "number",
+                "unit": "A"
             }
         },
-        "output_arguments": {"format": "json"},
-        "has_schema": False,
+        "output_arguments": ["sin_y"],
         "server_id": 1,
         "device_type_id": 1,
         "device_id": 1,
@@ -134,20 +140,55 @@ DEFAULT_EXPERIMENT = [
     },
     {
         "id": 2,
-        "commands": {"init": "expression","start": "expression","change": "expression","stop": "expression"},
-        "experiment_commands": {
-            "fan_voltage": {
+        "commands": ["start", "change", "stop"],
+        "input_arguments": {
+            "cos_amplitude": {
                 "value": 0,
                 "type": "number",
                 "unit": "V"
+            },
+            "cos_frequency": {
+                "value": 0,
+                "type": "number",
+                "unit": "A"
             }
         },
-        "output_arguments": {"format": "json"},
-        "has_schema": True,
+        "output_arguments": ["cos_y"],
         "server_id": 1,
         "device_type_id": 1,
         "device_id": 1,
-        "software_id": 2
+        "software_id": 1
+    },
+    {
+        "id": 3,
+        "commands": ["start", "change", "stop"],
+        "input_arguments": {
+            "sin_amplitude": {
+                "value": 0,
+                "type": "number",
+                "unit": "V"
+            },
+            "sin_frequency": {
+                "value": 0,
+                "type": "number",
+                "unit": "A"
+            },
+            "cos_amplitude": {
+                "value": 0,
+                "type": "number",
+                "unit": "V"
+            },
+            "cos_frequency": {
+                "value": 0,
+                "type": "number",
+                "unit": "A"
+            }
+        },
+        "output_arguments": ["sin_y", "cos_y"],
+        "server_id": 1,
+        "device_type_id": 1,
+        "device_id": 1,
+        "software_id": 1
     }
 ]
 
@@ -288,15 +329,14 @@ def upgrade() -> None:
         op.execute(
             sa.text(
                 """
-                INSERT INTO experiment (id, commands, experiment_commands, output_arguments, has_schema, server_id, device_type_id, device_id, software_id, created_at, modified_at)
-                VALUES (:id, :commands, :experiment_commands, :output_arguments, :has_schema, :server_id, :device_type_id, :device_id, :software_id, :created_at, :modified_at)
+                INSERT INTO experiment (id, commands, input_arguments, output_arguments, server_id, device_type_id, device_id, software_id, created_at, modified_at)
+                VALUES (:id, :commands, :input_arguments, :output_arguments, :server_id, :device_type_id, :device_id, :software_id, :created_at, :modified_at)
                 """
             ).bindparams(
                 sa.bindparam("id", value=provider["id"]),
-                sa.bindparam("commands", value=provider["commands"], type_=sa.JSON),
-                sa.bindparam("experiment_commands", value=provider["experiment_commands"], type_=sa.JSON),
-                sa.bindparam("output_arguments", value=provider["output_arguments"], type_=sa.JSON),
-                sa.bindparam("has_schema", value=provider["has_schema"]),
+                sa.bindparam("commands", value=provider["commands"], type_=postgresql.JSONB),
+                sa.bindparam("input_arguments", value=provider["input_arguments"], type_=postgresql.JSONB),
+                sa.bindparam("output_arguments", value=provider["output_arguments"], type_=postgresql.JSONB),
                 sa.bindparam("server_id", value=provider["server_id"]),
                 sa.bindparam("device_type_id", value=provider["device_type_id"]),
                 sa.bindparam("device_id", value=provider["device_id"]),

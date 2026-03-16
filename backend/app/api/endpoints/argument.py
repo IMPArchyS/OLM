@@ -7,7 +7,7 @@ from app.models.argument import Argument, ArgumentPublic, ArgumentCreate, Argume
 from app.models.device_software import DeviceSoftware
 from app.models.software import Software
 from app.models.experiment import Experiment
-from app.models.reserved_experiment import ReservedExperiment
+from app.models.experiment_log import ExperimentLog
 from app.models.schema import Schema
 from app.models.server import Server
 

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
-from sqlmodel import JSON, Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
+from sqlalchemy.dialects.postgresql import JSONB
 
 from app.models.utils import now
 
@@ -9,18 +10,18 @@ if TYPE_CHECKING:
     from app.models.device_type import DeviceType
     from app.models.software import Software
     from app.models.device import Device
-    from app.models.reserved_experiment import ReservedExperiment
+    from app.models.experiment_log import ExperimentLog
 
 class ExperimentBase(SQLModel):
-    commands: dict[str, Any] | None = Field(default=None, sa_type=JSON)
-    experiment_commands: dict[str, Any] | None = Field(default=None, sa_type=JSON)
-    output_arguments: dict[str, Any] | None = Field(default=None, sa_type=JSON)
+    commands: list[str] | None = Field(default=None, sa_type=JSONB)
+    input_arguments: dict[str, Any] | None = Field(default=None, sa_type=JSONB)
+    output_arguments: list[str] | None = Field(default=None, sa_type=JSONB)
 
 
 class Experiment(ExperimentBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     
-    has_schema: bool = Field(default=False, index=True)
+    device_remote_id: int | None = Field(default=None)
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
     deleted_at: datetime | None = Field(default=None)
@@ -37,7 +38,7 @@ class Experiment(ExperimentBase, table=True):
     software_id: int | None = Field(default=None, foreign_key="software.id")
     software: "Software" = Relationship(back_populates="experiments")
     
-    reserved_experiments: list["ReservedExperiment"] = Relationship(back_populates="experiment", cascade_delete=True)
+    experiment_logs: list["ExperimentLog"] = Relationship(back_populates="experiment", cascade_delete=True)
 
 
 class ExperimentCreate(ExperimentBase):
@@ -46,7 +47,6 @@ class ExperimentCreate(ExperimentBase):
 
 class ExperimentPublic(ExperimentBase):
     id: int
-    has_schema: bool
     created_at: datetime
     modified_at: datetime
     deleted_at: datetime | None
@@ -55,7 +55,6 @@ class ExperimentPublic(ExperimentBase):
 
 
 class ExperimentUpdate(ExperimentBase):
-    has_schema: bool | None = None 
     server_id: int | None = None 
     device_type_id: int | None = None 
     device_id: int | None = None 

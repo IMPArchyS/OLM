@@ -8,7 +8,7 @@ from app.models.device_type import DeviceType
 from app.models.device_software import DeviceSoftware
 from app.models.software import Software
 from app.models.experiment import Experiment, ExperimentCreate, ExperimentPublic, ExperimentUpdate
-from app.models.reserved_experiment import ReservedExperiment
+from app.models.experiment_log import ExperimentLog
 from app.models.schema import Schema
 from app.models.server import Server, ServerCreate
 
