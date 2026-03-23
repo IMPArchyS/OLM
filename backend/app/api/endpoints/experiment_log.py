@@ -22,6 +22,12 @@ def get_all(db: DbSession):
     return db.exec(stmt).all()
 
 
+@router.get("/user/{user_id}", response_model=list[ExperimentLogPublic])
+def get_all_by_user(db: DbSession, user_id: int): 
+    stmt = select(ExperimentLog).where(ExperimentLog.user_id == user_id)
+    return db.exec(stmt).all()
+
+
 @router.get("/{id}", response_model=ExperimentLogPublic)
 def get_by_id(db: DbSession, id: int): 
     db_exp_log = db.get(ExperimentLog, id)
