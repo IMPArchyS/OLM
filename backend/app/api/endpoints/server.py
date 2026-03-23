@@ -5,7 +5,7 @@ from sqlmodel import select
 from app.api.dependencies import DbSession
 
 from app.api.endpoints.sync import sync_add_server_stack
-from app.models.device import DevicePublic
+from app.models.device import DevicePublic, DeviceWithSoftware
 from app.models.server import Server, ServerCreate, ServerPublic, ServerPubDetailed, ServerUpdate
 from app.models.utils import now
 
@@ -114,7 +114,7 @@ def get_by_id(db: DbSession, id: int):
     return db_server
 
 
-@router.get("/{id}/devices", response_model=List[DevicePublic])
+@router.get("/{id}/devices", response_model=List[DeviceWithSoftware])
 def get_server_devices(db: DbSession, id: int):
     db_server = db.get(Server, id)
     if not db_server:

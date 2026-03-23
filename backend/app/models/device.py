@@ -61,3 +61,8 @@ class DeviceUpdate(SQLModel):
     maintenance_end: time | None = None
     device_type_id: int | None = None
     server_id: int | None = None
+
+
+class DeviceWithSoftware(DeviceBase):
+    id: int
+    softwares: list[SoftwarePublic]

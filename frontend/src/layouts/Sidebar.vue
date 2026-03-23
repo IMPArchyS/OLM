@@ -147,7 +147,7 @@ const showLabels = computed(() => !isCollapsed.value);
                     </div>
 
                     <!-- Schemas -->
-                    <div
+                    <!-- <div
                         v-if="isCollapsed"
                         @click="navigate('/app/schemas')"
                         class="nav-item-collapsed"
@@ -158,7 +158,7 @@ const showLabels = computed(() => !isCollapsed.value);
                     <div v-else @click="navigate('/app/schemas')" class="nav-item-expanded" :class="{ active: isActiveRoute('/app/schemas') }">
                         <v-icon icon="mdi-clipboard-list-outline" size="24" />
                         <span class="ml-4">{{ t('nav.schemas') }}</span>
-                    </div>
+                    </div> -->
                 </div>
             </div>
 

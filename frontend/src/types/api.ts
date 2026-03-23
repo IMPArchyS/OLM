@@ -3,7 +3,7 @@ export interface Device {
     name: string;
     maintenance_start: string;
     maintenance_end: string;
-    software?: Software[];
+    softwares?: Software[];
     device_type?: DeviceType;
     deleted_at?: string;
 }

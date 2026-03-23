@@ -10,21 +10,14 @@ const props = defineProps<{
     selectedServer: Server | null;
 }>();
 
-const { devices, loading, error, fetchDevicesByServer, deviceSoftwareMap } = useDevices();
-
-const devicesWithSoftware = computed(() => {
-    return devices.value.map((device) => ({
-        ...device,
-        software: deviceSoftwareMap.value[device.id] || [],
-    }));
-});
+const { devices, loading, error, fetchDevicesByServer } = useDevices();
 
 const showDeletedDevices = ref(false);
 const filteredDevices = computed(() => {
     if (showDeletedDevices.value) {
-        return devicesWithSoftware.value;
+        return devices.value;
     } else {
-        return devicesWithSoftware.value.filter((device) => !device.deleted_at);
+        return devices.value.filter((device) => !device.deleted_at);
     }
 });
 
@@ -78,7 +71,7 @@ watch(
                 >
                     <!-- Software Column -->
                     <template v-slot:item.software="{ item }">
-                        <v-chip class="mr-1" v-for="software in item.software" :key="software.id" size="small" variant="outlined">
+                        <v-chip class="mr-1" v-for="software in item.softwares" :key="software.id" size="small" variant="outlined">
                             {{ software.name }}
                         </v-chip>
                     </template>

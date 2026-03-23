@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
-from app.models.device import Device, DeviceCreate, DevicePublic, DeviceUpdate
+from app.models.device import Device, DeviceCreate, DevicePublic, DeviceUpdate, DeviceWithSoftware
 from app.models.device_type import DeviceType
 from app.models.software import Software
 from app.models.server import Server
@@ -12,13 +12,13 @@ from app.models.utils import now
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("/", response_model=list[DeviceWithSoftware])
 def get_all(db: DbSession): 
     stmt = select(Device)
     return db.exec(stmt).all()
 
 
-@router.get("/available")
+@router.get("/available", response_model=list[DeviceWithSoftware])
 def get_all_available(db: DbSession):
     stmt = select(Device).where(Device.server_id != None).join(Server).where(
         (Server.available == True) & (Server.enabled == True) & (Server.production == True)
