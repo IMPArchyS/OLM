@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { useAuthStore } from '@/stores/auth';
 import type { Command, Experiment, InputArgSpec, Step } from '@/types/api';
 import type { QueueFormData } from '@/types/forms';
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+const authStore = useAuthStore();
 
 interface Props {
     loading: boolean;
@@ -147,6 +149,7 @@ const experimentTitle = (e: Experiment) => `Experiment Id: ${e.id}  - ${e.server
 
 const formData = computed<QueueFormData>(() => {
     return {
+        user_id: authStore.user?.id ?? null,
         experiment_id: selectedExperimentId.value,
         command: selectedCommand.value,
         input_arguments: inputArguments.value,

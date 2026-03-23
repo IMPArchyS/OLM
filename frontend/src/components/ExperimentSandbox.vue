@@ -7,10 +7,12 @@ import type { QueueFormData } from '@/types/forms';
 import { useExperiments } from '@/composables/useExperiments';
 import { useI18n } from 'vue-i18n';
 import { useToast } from '@/composables/useToast';
+import { useAuthStore } from '@/stores/auth';
 
 const props = defineProps<{ reservation: Reservation }>();
 
 const { t } = useI18n();
+const authStore = useAuthStore();
 const { showError } = useToast();
 const { experimentsByDevice, loading, error, fetchExperimentsByDevice } = useExperiments();
 
@@ -71,6 +73,7 @@ function runExperiment() {
 }
 
 const formData = ref<QueueFormData>({
+    user_id: authStore.user?.id ?? null,
     experiment_id: null,
     command: Command.START,
     input_arguments: {},

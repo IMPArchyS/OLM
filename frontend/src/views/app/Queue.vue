@@ -6,12 +6,15 @@ import { Command } from '@/types/api';
 import type { QueueFormData } from '@/types/forms';
 import { useExperiments } from '@/composables/useExperiments';
 import { useToast } from '@/composables/useToast';
+import { useAuthStore } from '@/stores/auth';
 
 const { t } = useI18n();
 const { showError } = useToast();
+const authStore = useAuthStore();
 const { experiments, loading, error, fetchExperiments } = useExperiments();
 
 const formData = ref<QueueFormData>({
+    user_id: authStore.user?.id ?? null,
     experiment_id: null,
     command: Command.START,
     input_arguments: {},
