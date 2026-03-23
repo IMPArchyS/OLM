@@ -10,10 +10,10 @@ const { showError } = useToast();
 
 const selectedDevice = ref<number | null>(null);
 
-const { devicesForSelect, loading, fetchAvailableDevices, getDeviceById } = useDevices();
+const { devicesForReservation, loading, fetchAvailableDevices, getAvailableDeviceById } = useDevices();
 
 const selectedDeviceData = computed(() => {
-    return selectedDevice.value ? getDeviceById(selectedDevice.value) : null;
+    return selectedDevice.value ? getAvailableDeviceById(selectedDevice.value) : null;
 });
 
 onMounted(async () => {
@@ -40,7 +40,7 @@ onMounted(async () => {
             <v-select
                 v-else
                 v-model="selectedDevice"
-                :items="devicesForSelect"
+                :items="devicesForReservation"
                 item-title="displayName"
                 item-value="id"
                 :label="t('reservations.selectDevice')"

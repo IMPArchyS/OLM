@@ -9,7 +9,7 @@ import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
 const { t } = useI18n();
-const { showSuccess, showError, showInfo } = useToast();
+const { showSuccess, showError, showWarning, showInfo } = useToast();
 
 const currentServer = ref<Server>({
     id: 0,
@@ -18,7 +18,7 @@ const currentServer = ref<Server>({
     api_domain: '',
     websocket_port: 0,
 });
-const { nameRules, ipRules, domainRules, portRules, getServerById, restoreServer } = useServers();
+const { nameRules, ipRules, domainRules, portRules, getServerById, syncServer, restoreServer } = useServers();
 const { params } = useRoute();
 
 const serverId = +(params.id as string);
@@ -57,22 +57,18 @@ const handleRestore = async () => {
     }
 };
 
-const handleSync = async () => {
-    try {
-        loading.value = true;
-        const fetchedServer = await getServerById(serverId);
+const handleSync = async (item: Server) => {
+    const result = await syncServer(item.id);
 
-        if (currentServer && fetchedServer) {
-            currentServer.value = fetchedServer;
-        } else {
-            showInfo(t('servers.notFound'));
-            router.back();
-        }
-    } catch (e) {
-        showError(t('common.errorLoadingData'));
-        router.back();
-    } finally {
-        loading.value = false;
+    if (result === null) {
+        showError('Fatal error');
+        return;
+    }
+
+    if (result.available) {
+        showSuccess('Server synced');
+    } else {
+        showWarning('Server unreachable');
     }
 };
 
@@ -137,7 +133,7 @@ const handleBack = () => {
                     <v-btn color="grey" variant="text" @click="handleBack">
                         {{ t('actions.back') }}
                     </v-btn>
-                    <v-btn v-if="!currentServer.deleted_at" color="green" variant="elevated" @click="handleSync">
+                    <v-btn v-if="!currentServer.deleted_at" color="green" variant="elevated" @click="handleSync(currentServer)">
                         {{ t('actions.sync') }}
                     </v-btn>
                     <v-btn v-if="!currentServer.deleted_at" color="primary" variant="elevated" @click="handleEdit">

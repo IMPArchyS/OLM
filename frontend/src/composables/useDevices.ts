@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import type { Device, Software } from '@/types/api';
+import type { Device } from '@/types/api';
 import { apiClient } from './useAxios';
 
 export function useDevices() {
@@ -7,7 +7,6 @@ export function useDevices() {
     const availableDevices = ref<Device[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
-    const deviceSoftwareMap = ref<Record<number, Software[]>>({});
 
     const devicesForReservation = computed(() => {
         return availableDevices.value.map((device) => ({
@@ -18,16 +17,6 @@ export function useDevices() {
 
     function getAvailableDeviceById(deviceId: number): Device | undefined {
         return availableDevices.value.find((d) => d.id === deviceId);
-    }
-
-    async function getDeviceByExperimentId(experimentId: number): Promise<Device | undefined> {
-        try {
-            const response = await apiClient.get(`/experiment/${experimentId}/device`);
-            return response.data;
-        } catch (e) {
-            console.error(`Error fetching device for experiment ${experimentId}:`, e);
-            return undefined;
-        }
     }
 
     async function fetchDevices(): Promise<{ success: boolean; message?: string }> {
@@ -84,16 +73,25 @@ export function useDevices() {
         }
     }
 
+    async function getDeviceByExperimentId(experimentId: number): Promise<Device | undefined> {
+        try {
+            const response = await apiClient.get(`/experiment/${experimentId}/device`);
+            return response.data;
+        } catch (e) {
+            console.error(`Error fetching device for experiment ${experimentId}:`, e);
+            return undefined;
+        }
+    }
+
     return {
         devices,
-        devicesForSelect: devicesForReservation,
+        devicesForReservation,
         loading,
         error,
         fetchDevices,
         fetchAvailableDevices,
         fetchDevicesByServer,
-        getDeviceById: getAvailableDeviceById,
+        getAvailableDeviceById,
         getDeviceByExperimentId,
-        deviceSoftwareMap,
     };
 }
