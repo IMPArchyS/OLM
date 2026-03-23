@@ -9,17 +9,6 @@ from app.models.utils import ensure, now
 router = APIRouter()
 
 
-def sync_device_type(db: DbSession, device_type: DeviceTypeSync):
-    db_device_type = db.exec(select(DeviceType).where(DeviceType.name == device_type.name)).first()
-    
-    if not db_device_type:
-        db_device_type = create(db, DeviceTypeCreate(name=device_type.name))
-    else:
-        db_device_type = update(db, ensure(db_device_type.id), DeviceTypeUpdate(name=device_type.name))
-    
-    return DeviceTypeSync.model_validate(db_device_type, from_attributes=True)
-
-
 @router.get("/", response_model=list[DeviceTypePublic])
 def get_all(db: DbSession): 
     stmt = select(DeviceType)
@@ -34,7 +23,17 @@ def get_by_id(db: DbSession, id: int):
     return db_device_type
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+def sync_device_type(db: DbSession, device_type: DeviceTypeSync):
+    db_device_type = db.exec(select(DeviceType).where(DeviceType.name == device_type.name)).first()
+    
+    if not db_device_type:
+        db_device_type = create(db, DeviceTypeCreate(name=device_type.name))
+    else:
+        db_device_type = update(db, ensure(db_device_type.id), DeviceTypeUpdate(name=device_type.name))
+    
+    return DeviceTypeSync.model_validate(db_device_type, from_attributes=True)
+
+
 def create(db: DbSession, device_type: DeviceTypeCreate):
     db_device_type = DeviceType.model_validate(device_type)
     db.add(db_device_type)
@@ -43,7 +42,6 @@ def create(db: DbSession, device_type: DeviceTypeCreate):
     return db_device_type
 
 
-@router.patch("/{id}", response_model=DeviceTypeUpdate)
 def update(db: DbSession, id: int, device_type: DeviceTypeUpdate):
     db_device_type = db.get(DeviceType, id)
     if not db_device_type:

@@ -41,5 +41,3 @@ class SoftwareUpdate(SoftwareBase):
 
 class SoftwareSync(SoftwareBase):
     id: int 
-    created_at: datetime
-    modified_at: datetime 

@@ -9,15 +9,6 @@ from app.models.utils import ensure, now
 router = APIRouter()
 
 
-def sync_software(db: DbSession, software: SoftwareSync):
-    db_software = db.exec(select(Software).where(Software.name == software.name)).first()
-    
-    if not db_software:
-        create(db, SoftwareCreate(name=software.name))
-    else:
-        update(db, ensure(db_software.id), SoftwareUpdate(name=software.name))
-
-
 @router.get("/")
 def get_all(db: DbSession): 
     stmt = select(Software)
@@ -40,7 +31,15 @@ def get_by_name(db: DbSession, name: str):
     return db_software
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+def sync_software(db: DbSession, software: SoftwareSync):
+    db_software = db.exec(select(Software).where(Software.name == software.name)).first()
+    
+    if not db_software:
+        create(db, SoftwareCreate(name=software.name))
+    else:
+        update(db, ensure(db_software.id), SoftwareUpdate(name=software.name))
+
+
 def create(db: DbSession, software: SoftwareCreate):
     db_software = Software.model_validate(software)
     db.add(db_software)
@@ -49,7 +48,6 @@ def create(db: DbSession, software: SoftwareCreate):
     return db_software
 
 
-@router.patch("/{id}", response_model=SoftwareUpdate)
 def update(db: DbSession, id: int, software: SoftwareUpdate):
     db_software = db.get(Software, id)
     if not db_software:

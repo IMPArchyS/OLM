@@ -18,6 +18,14 @@ def get_all(db: DbSession):
     return db.exec(stmt).all()
 
 
+@router.get("/available")
+def get_all_available(db: DbSession):
+    stmt = select(Device).where(Device.server_id != None).join(Server).where(
+        (Server.available == True) & (Server.enabled == True) & (Server.production == True)
+    )
+    return db.exec(stmt).all()
+
+
 @router.get("/{id}", response_model=DevicePublic)
 def get_by_id(db: DbSession, id: int): 
     db_device = db.get(Device, id)
@@ -34,7 +42,6 @@ def get_device_software(db: DbSession, id: int):
     return db_device.softwares
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, device: DeviceCreate):
     if device.maintenance_start and device.maintenance_end:
         if device.maintenance_start > device.maintenance_end:
@@ -48,7 +55,6 @@ def create(db: DbSession, device: DeviceCreate):
     return db_device
 
 
-@router.post("/{id}/software/{software_id}", status_code=status.HTTP_201_CREATED)
 def add_software_to_device(db: DbSession, id: int, software_id: int):
     db_device = db.get(Device, id)
     if not db_device:
@@ -67,7 +73,6 @@ def add_software_to_device(db: DbSession, id: int, software_id: int):
     db.refresh(db_device)
 
 
-@router.patch("/{id}", response_model=DevicePublic)
 def update(db: DbSession, id: int, device: DeviceUpdate):
     db_device = db.get(Device, id)
     if not db_device:
@@ -96,7 +101,6 @@ def update(db: DbSession, id: int, device: DeviceUpdate):
     return db_device
 
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete(db: DbSession, id: int):
     db_device = db.get(Device, id)
     if not db_device:

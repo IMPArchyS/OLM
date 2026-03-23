@@ -115,7 +115,7 @@ def get_by_id(db: DbSession, id: int):
 
 
 @router.get("/{id}/devices", response_model=List[DevicePublic])
-def get_by_devices_by_server(db: DbSession, id: int):
+def get_server_devices(db: DbSession, id: int):
     db_server = db.get(Server, id)
     if not db_server:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")

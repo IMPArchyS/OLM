@@ -63,8 +63,8 @@ api_router.include_router(
 
 api_router.include_router(
     experiment_log.router,
-    prefix="/api/reserved_experiment",
-    tags=["Reserved Experiments"],
+    prefix="/api/experiment_log",
+    tags=["Experiment Logs"],
 )
 
 api_router.include_router(
