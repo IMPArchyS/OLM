@@ -1,8 +1,8 @@
-import type { ReservedExperiment } from '@/types/api';
+import type { ExperimentLog } from '@/types/api';
 import { ref } from 'vue';
 
 export function useReservedExperiments() {
-    const reservedExperiments = ref<ReservedExperiment[]>([]);
+    const reservedExperiments = ref<ExperimentLog[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
 

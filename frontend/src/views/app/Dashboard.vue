@@ -108,7 +108,7 @@ onUnmounted(() => {
                             </p>
                         </div>
                     </v-alert>
-                    <ExperimentSandbox :reservation="activeReservation" />
+                    <!-- <ExperimentSandbox :reservation="activeReservation" /> -->
                 </div>
 
                 <!-- Next Reservation -->

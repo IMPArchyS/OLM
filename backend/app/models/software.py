@@ -31,8 +31,6 @@ class SoftwareCreate(SoftwareBase):
 
 class SoftwarePublic(SoftwareBase):
     id: int 
-    created_at: datetime
-    modified_at: datetime
 
 
 class SoftwareUpdate(SoftwareBase):

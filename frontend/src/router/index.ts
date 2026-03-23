@@ -101,24 +101,6 @@ const router = createRouter({
                         permission: 'schema.index',
                     },
                 },
-                {
-                    path: '/app/schemas/create',
-                    name: 'schemas-create',
-                    component: () => import('@/views/app/schemas/CreateSchema.vue'),
-                    meta: {
-                        requiresAuth: true,
-                        permission: 'schema.create',
-                    },
-                },
-                {
-                    path: '/app/schemas/:id/edit',
-                    name: 'schemas-edit',
-                    component: () => import('@/views/app/schemas/EditSchema.vue'),
-                    meta: {
-                        requiresAuth: true,
-                        permission: 'schema.update',
-                    },
-                },
             ],
         },
         {

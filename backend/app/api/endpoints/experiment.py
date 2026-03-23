@@ -16,7 +16,7 @@ from app.models.server import Server, ServerCreate
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("/", response_model=list[ExperimentPublic])
 def get_all(db: DbSession): 
     stmt = select(Experiment)
     return db.exec(stmt).all()

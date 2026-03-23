@@ -59,6 +59,8 @@ export default {
         success: 'Success',
         confirm: 'Confirm',
         close: 'Close',
+        yes: 'Yes',
+        no: 'No',
     },
     calendar: {
         today: 'Today',
@@ -213,7 +215,7 @@ export default {
         starts: 'Starts',
         ends: 'Ends',
         user: 'User',
-        ongoing_experiment: 'Experiment Command',
+        ongoing_experiment: 'Ongoing Experiment',
         experiment_name: 'Experiment Name',
         description: 'Description',
         device_id: 'Device ID',
@@ -227,6 +229,13 @@ export default {
         run_experiment: 'Run Experiment',
         simulation_time: 'Simulation Time',
         sampling_rate: 'Sample Rate',
+        setpoint_steps: 'Setpoint Steps',
+        enable_setpoints: 'Use Setpoint Changes',
+        add_setpoint_step: 'Add Setpoint Step',
+        setpoint_steps_count: 'Steps: {current}',
+        setpoint_start_value: 'Setpoint Start Value',
+        setpoint_step_duration: 'Step Duration',
+        setpoint_step_value: 'Step Value',
         no_commands_available: 'No commands available',
     },
     reports: {
@@ -235,6 +244,7 @@ export default {
     queues: {
         title: 'Queue',
         add_to_queue: 'Queue Experiment',
+        no_experiment_found: 'No experiments found',
     },
     profile: {
         title: 'Profile',
@@ -242,10 +252,11 @@ export default {
         updatePassword: 'Update password',
         logOut: 'Log out',
     },
-    experiment_command: {
-        fan_voltage: 'Fan Voltage',
-        lamp_voltage: 'Lamp Voltage',
-        led_voltage: 'LED Voltage',
+    experiment_input_arg: {
+        sin_amplitude: 'Sinus amplitude',
+        sin_frequency: 'Sinus frequency',
+        cos_amplitude: 'Cosinus amplitude',
+        cos_frequency: 'Cosinus frequency',
     },
     page404: {
         title: "Oops! You're lost.",

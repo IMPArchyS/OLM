@@ -1,8 +1,11 @@
 from datetime import datetime
+from datetime import time
 from typing import TYPE_CHECKING, Any
 from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.dialects.postgresql import JSONB
 
+from app.models.server import ServerExperiment
+from app.models.software import SoftwarePublic
 from app.models.utils import now
 
 if TYPE_CHECKING:
@@ -11,6 +14,14 @@ if TYPE_CHECKING:
     from app.models.software import Software
     from app.models.device import Device
     from app.models.experiment_log import ExperimentLog
+
+
+class ExperimentDevicePublic(SQLModel):
+    id: int
+    name: str
+    maintenance_start: time | None = None
+    maintenance_end: time | None = None
+
 
 class ExperimentBase(SQLModel):
     commands: list[str] | None = Field(default=None, sa_type=JSONB)
@@ -47,11 +58,9 @@ class ExperimentCreate(ExperimentBase):
 
 class ExperimentPublic(ExperimentBase):
     id: int
-    created_at: datetime
-    modified_at: datetime
-    deleted_at: datetime | None
-    device_id: int
-    software_id: int
+    server: ServerExperiment
+    device: ExperimentDevicePublic
+    software: SoftwarePublic
 
 
 class ExperimentUpdate(ExperimentBase):

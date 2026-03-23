@@ -42,6 +42,10 @@ class ServerPublic(ServerBase):
     deleted_at: datetime | None
 
 
+class ServerExperiment(SQLModel):
+    id: int
+    name: str
+
 class ServerPubDetailed(ServerPublic):
     devices: List["DevicePublic"] = []
     experiments: List["Experiment"] = []

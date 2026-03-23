@@ -58,6 +58,8 @@ export default {
         success: 'Úspech',
         confirm: 'Potvrdiť',
         close: 'Zavrieť',
+        yes: 'Áno',
+        no: 'Nie',
     },
     calendar: {
         today: 'Dnes',
@@ -186,6 +188,13 @@ export default {
         run_experiment: 'Spustiť experiment',
         simulation_time: 'Simulačný čas',
         sampling_rate: 'Frekvencia vzorkovania',
+        setpoint_steps: 'Počet setpoint krokov',
+        enable_setpoints: 'Použiť zmeny setpointu',
+        add_setpoint_step: 'Pridať setpoint krok',
+        setpoint_steps_count: 'Kroky: {current}',
+        setpoint_start_value: 'Počiatočná hodnota setpointu',
+        setpoint_step_duration: 'Trvanie kroku',
+        setpoint_step_value: 'Hodnota kroku',
         no_commands_available: 'Žiadne príkazy nie sú k dispozícii  ',
     },
     reports: {
@@ -194,6 +203,7 @@ export default {
     queues: {
         title: 'Dávkovanie experimentov',
         add_to_queue: 'Pridať do fronty',
+        no_experiment_found: 'Nenašli sa experimenty',
     },
     profile: {
         title: 'Profil',
@@ -201,10 +211,11 @@ export default {
         updatePassword: 'Zmeniť heslo',
         logOut: 'Odhlásiť sa',
     },
-    experiment_command: {
-        fan_voltage: 'Ventilátor napätie',
-        lamp_voltage: 'Lampa napätie',
-        led_voltage: 'LED napätie',
+    experiment_input_arg: {
+        sin_amplitude: 'Sínus amplitúda',
+        sin_frequency: 'Sínus frekvencia',
+        cos_amplitude: 'Kosínus amplitúda',
+        cos_frequency: 'Kosínus frekvencia',
     },
     page404: {
         title: 'Oops! Stratili sme sa.',

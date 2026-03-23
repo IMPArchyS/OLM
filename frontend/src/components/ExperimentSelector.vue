@@ -1,185 +1,144 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue';
-import type { Experiment, CommandSpec } from '@/types/api';
-import { apiClient } from '@/composables/useAxios';
+import type { Command, Experiment, InputArgSpec, Step } from '@/types/api';
+import type { QueueFormData } from '@/types/forms';
+import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 interface Props {
-    deviceId?: number | null;
-    fixedCommand?: string;
+    loading: boolean;
+    fixedCommand: string;
+    experiments: Experiment[];
 }
 
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-    'update:formData': [
-        data: {
-            experiment_id: number | null;
-            command: string;
-            experiment_commands: Record<string, any>;
-            simulation_time: number;
-            sampling_rate: number;
-        },
-    ];
+    'update:formData': [data: QueueFormData];
 }>();
 
-const experiments = ref<Experiment[]>([]);
 const selectedExperimentId = ref<number | null>(null);
-const selectedCommand = ref<string>('');
-const loading = ref(false);
-const error = ref<string | null>(null);
-const experimentCommandValues = ref<Record<string, any>>({});
-const simTime = ref<number>(0);
-const sampleRate = ref<number>(0);
+const simTime = ref<number>(1);
+const sampleRate = ref<number>(1);
+const useSetpoints = ref<boolean>(false);
+const setpointStartValue = ref<number>(0);
+const setpointSteps = ref<Step[]>([]);
+const inputArguments = ref<Record<string, InputArgSpec>>({});
 
 const selectedExperiment = computed(() => {
-    return experiments.value.find((exp) => exp.id === selectedExperimentId.value) || null;
+    return props.experiments.find((exp) => exp.id === selectedExperimentId.value) || null;
 });
 
-function convertCommandsToSpecs(
-    commands: Record<string, { cmd: string }>,
-): Record<string, CommandSpec> {
-    return Object.fromEntries(
-        Object.entries(commands).map(([key, val]) => [key, { type: 'string', value: val.cmd }]),
-    );
-}
-
-const fetchExperiments = async (deviceId?: number | null) => {
-    loading.value = true;
-    error.value = null;
-
-    try {
-        const url = deviceId ? `/experiment/device/${deviceId}` : '/experiment/';
-        const response = await apiClient.get(url);
-        const data = response.data;
-
-        const experimentsWithNames = await Promise.all(
-            data.map(async (exp: any) => {
-                let experimentName = exp.name;
-
-                if (!experimentName) {
-                    let deviceName = 'device';
-                    let softwareName = 'software';
-
-                    if (exp.device_id) {
-                        try {
-                            const deviceResponse = await apiClient.get(`/device/${exp.device_id}`);
-                            deviceName = deviceResponse.data.name || deviceName;
-                        } catch (e) {
-                            console.error(`Error fetching device ${exp.device_id}:`, e);
-                        }
-                    }
-
-                    if (exp.software_id) {
-                        try {
-                            const softwareResponse = await apiClient.get(
-                                `/software/${exp.software_id}`,
-                            );
-                            softwareName = softwareResponse.data.name || softwareName;
-                        } catch (e) {
-                            console.error(`Error fetching software ${exp.software_id}:`, e);
-                        }
-                    }
-
-                    experimentName = `${deviceName} - ${softwareName}`;
-                }
-
-                return {
-                    id: exp.id,
-                    name: experimentName,
-                    description: exp.description,
-                    device_id: exp.device_id,
-                    has_schema: exp.has_schema,
-                    commands: exp.commands ? convertCommandsToSpecs(exp.commands) : undefined,
-                    experiment_commands: exp.experiment_commands
-                        ? Object.fromEntries(
-                              Object.entries(exp.experiment_commands).map(([key, val]) => [
-                                  key,
-                                  val,
-                              ]),
-                          )
-                        : undefined,
-                };
-            }),
-        );
-
-        experiments.value = experimentsWithNames;
-
-        if (experiments.value.length === 0) {
-            error.value = deviceId
-                ? 'No experiments found for this device'
-                : 'No experiments available';
-        } else {
-            selectedExperimentId.value = experiments.value[0]?.id ?? null;
-        }
-    } catch (e) {
-        console.error('Error fetching experiments:', e);
-        error.value = 'Error fetching experiments';
-        experiments.value = [];
-    } finally {
-        loading.value = false;
-    }
-};
-
-// Watch for deviceId changes and fetch experiments
 watch(
-    () => props.deviceId,
-    (newDeviceId) => {
-        // Always fetch: with deviceId if provided, or all experiments if not
-        fetchExperiments(newDeviceId);
+    () => props.experiments,
+    (experiments) => {
+        if (experiments.length === 0) {
+            selectedExperimentId.value = null;
+            return;
+        }
+
+        const hasSelected = experiments.some((exp) => exp.id === selectedExperimentId.value);
+        if (!hasSelected) {
+            const firstExperiment = experiments[0];
+            selectedExperimentId.value = firstExperiment ? firstExperiment.id : null;
+        }
     },
     { immediate: true },
 );
 
-// Watch for experiment selection changes and reinitialize command values
-watch(selectedExperiment, (newExperiment) => {
-    if (newExperiment) {
-        // Set default values for experiment commands
-        if (newExperiment?.experiment_commands) {
-            experimentCommandValues.value = Object.fromEntries(
-                Object.entries(newExperiment.experiment_commands).map(([key, spec]) => [
-                    key,
-                    spec.value ?? (spec.type === 'number' ? 0 : ''),
-                ]),
-            );
-        }
-        // Set command: use fixedCommand if provided, otherwise use first available command
-        if (props.fixedCommand) {
-            selectedCommand.value = props.fixedCommand;
-        } else if (newExperiment?.commands) {
-            const commandKeys = Object.keys(newExperiment.commands);
-            if (commandKeys.length > 0) {
-                selectedCommand.value = commandKeys[0] ?? '';
-            }
-        }
-    }
+let selectedCommand = computed<Command | null>(() => {
+    return selectedExperiment.value?.commands.find((cmd) => cmd === 'start') || null;
 });
 
-const formData = computed(() => {
-    const parameters: Record<string, CommandSpec> = {};
+watch(
+    selectedExperiment,
+    (experiment) => {
+        if (!experiment) {
+            inputArguments.value = {};
+            useSetpoints.value = false;
+            setpointStartValue.value = 0;
+            setpointSteps.value = [];
+            return;
+        }
+        inputArguments.value = Object.fromEntries(Object.entries(experiment.input_arguments).map(([key, spec]) => [key, { ...spec }]));
+        useSetpoints.value = false;
+        setpointStartValue.value = 0;
+        setpointSteps.value = [];
+    },
+    { immediate: true },
+);
 
-    if (selectedExperiment.value?.experiment_commands) {
-        Object.entries(experimentCommandValues.value).forEach(([key, value]) => {
-            const originalSpec = selectedExperiment.value?.experiment_commands?.[key];
-            if (originalSpec) {
-                parameters[key] = {
-                    value: value,
-                    type: originalSpec.type,
-                    unit: originalSpec.unit ?? null,
-                };
-            }
-        });
+watch(
+    useSetpoints,
+    (enabled) => {
+        if (!enabled) {
+            setpointStartValue.value = 0;
+            setpointSteps.value = [];
+            return;
+        }
+
+        if (setpointSteps.value.length === 0) {
+            setpointSteps.value = [
+                {
+                    duration: 0,
+                    value: 0,
+                },
+            ];
+        }
+    },
+    { immediate: true },
+);
+
+const canAddSetpointStep = computed(() => {
+    return !!selectedExperiment.value && useSetpoints.value;
+});
+
+const addSetpointStep = () => {
+    if (!canAddSetpointStep.value) {
+        return;
+    }
+
+    setpointSteps.value.push({
+        duration: 0,
+        value: 0,
+    });
+};
+
+const removeSetpointStep = (index: number) => {
+    if (setpointSteps.value.length <= 1) {
+        return;
+    }
+
+    setpointSteps.value.splice(index, 1);
+};
+
+const selectedSetpointChanges = computed<QueueFormData['setpoint_changes']>(() => {
+    if (!useSetpoints.value || setpointSteps.value.length === 0) {
+        return {} as Record<string, never>;
     }
 
     return {
+        start_value: setpointStartValue.value,
+        steps: setpointSteps.value,
+    };
+});
+
+const experimentTitle = (e: Experiment) => `Experiment Id: ${e.id}  - ${e.server.name} | ${e.device.name} | ${e.software.name}`;
+
+const formData = computed<QueueFormData>(() => {
+    return {
         experiment_id: selectedExperimentId.value,
         command: selectedCommand.value,
-        experiment_commands: parameters,
+        input_arguments: inputArguments.value,
+        setpoint_changes: selectedSetpointChanges.value,
+        device_id: selectedExperiment.value?.device.id ?? null,
+        software_name: selectedExperiment.value?.software.name ?? null,
         simulation_time: simTime.value,
         sampling_rate: sampleRate.value,
     };
 });
 
-// Emit form data changes
 watch(
     formData,
     (newData) => {
@@ -188,113 +147,126 @@ watch(
     { deep: true },
 );
 
-// Expose data for parent component
 defineExpose({
-    selectedExperiment,
-    selectedCommand,
-    experimentCommandValues,
-    simTime,
-    sampleRate,
     formData,
 });
 </script>
 
 <template>
     <div>
-        <!-- Loading State -->
-        <div v-if="loading" style="display: flex; justify-content: center; padding: 16px">
+        <div v-if="props.loading" style="display: flex; justify-content: center; padding: 16px">
             <v-progress-circular indeterminate color="primary" size="48" />
         </div>
 
-        <!-- Error State -->
-        <v-alert v-else-if="error" type="error" variant="tonal">
-            {{ error }}
-        </v-alert>
-
-        <!-- Experiment Form -->
-        <div
-            v-else-if="experiments.length > 0"
-            style="display: flex; flex-direction: column; gap: 16px"
-        >
-            <!-- Experiment Selector -->
+        <div v-else-if="props.experiments.length > 0" style="display: flex; flex-direction: column; gap: 16px">
             <v-select
                 v-model="selectedExperimentId"
                 :items="experiments"
-                item-title="name"
+                :item-title="experimentTitle"
                 item-value="id"
-                :label="$t('dashboard.select_experiment')"
+                :label="t('dashboard.select_experiment')"
                 variant="outlined"
                 density="comfortable"
             />
 
-            <!-- Schema Selector (only if experiment has schema) -->
             <v-select
-                v-if="selectedExperiment?.has_schema"
+                v-if="selectedExperiment?.schema_id"
                 :items="[]"
-                :label="$t('dashboard.select_schema')"
-                :placeholder="$t('dashboard.no_schemas_available')"
+                :label="t('dashboard.select_schema')"
+                :placeholder="t('dashboard.no_schemas_available')"
                 variant="outlined"
                 density="comfortable"
             />
 
-            <!-- Command Selector (disabled if using fixed command) -->
             <v-select
                 v-if="selectedExperiment?.commands"
                 v-model="selectedCommand"
-                :items="Object.keys(selectedExperiment.commands)"
-                :label="$t('dashboard.select_command')"
-                :placeholder="$t('dashboard.no_commands_available')"
+                :items="selectedExperiment?.commands"
+                :label="t('dashboard.select_command')"
+                :placeholder="t('dashboard.no_commands_available')"
                 :disabled="!!fixedCommand"
                 :readonly="!!fixedCommand"
                 variant="outlined"
                 density="comfortable"
             />
 
-            <!-- Experiment Command Parameters -->
-            <div v-if="selectedExperiment?.experiment_commands">
+            <v-checkbox v-if="selectedExperiment" v-model="useSetpoints" :label="t('dashboard.enable_setpoints')" density="comfortable" />
+
+            <v-number-input
+                v-if="selectedExperiment && useSetpoints"
+                v-model="setpointStartValue"
+                :label="t('dashboard.setpoint_start_value')"
+                variant="outlined"
+                density="comfortable"
+            />
+
+            <div v-if="useSetpoints && setpointSteps.length > 0" style="display: flex; flex-direction: column; gap: 12px; align-items: center">
                 <div
-                    v-for="(spec, key) in selectedExperiment.experiment_commands"
-                    :key="key"
-                    style="margin-bottom: 12px"
+                    v-for="(step, index) in setpointSteps"
+                    :key="`setpoint-step-${index}`"
+                    style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%"
                 >
+                    <v-number-input
+                        :model-value="step.duration"
+                        @update:model-value="(value) => (step.duration = Number(value ?? 0))"
+                        :label="`${t('dashboard.setpoint_step_duration')} #${index + 1}`"
+                        :min="0"
+                        variant="outlined"
+                        density="comfortable"
+                        style="max-width: 220px"
+                    />
+                    <v-number-input
+                        :model-value="step.value"
+                        @update:model-value="(value) => (step.value = Number(value ?? 0))"
+                        :label="`${t('dashboard.setpoint_step_value')} #${index + 1}`"
+                        variant="outlined"
+                        density="comfortable"
+                        style="max-width: 220px"
+                    />
+                    <v-btn color="error" variant="text" icon="mdi-delete" :disabled="setpointSteps.length <= 1" @click="removeSetpointStep(index)" />
+                </div>
+            </div>
+
+            <div v-if="selectedExperiment && useSetpoints" style="display: flex; flex-direction: column; gap: 8px; align-items: center">
+                <v-btn :disabled="!canAddSetpointStep" color="info" variant="tonal" prepend-icon="mdi-plus" @click="addSetpointStep">
+                    {{ t('dashboard.add_setpoint_step') }}
+                </v-btn>
+            </div>
+
+            <!-- Experiment Command Parameters  " -->
+            <div v-if="Object.keys(inputArguments).length > 0">
+                <div v-for="(spec, key) in inputArguments" :key="key" style="margin-bottom: 12px">
                     <v-text-field
                         v-if="spec.type === 'string'"
-                        :label="
-                            spec.unit
-                                ? `${$t('experiment_command.' + key)} (${spec.unit})`
-                                : $t('experiment_command.' + key)
-                        "
-                        v-model="experimentCommandValues[key]"
+                        :label="spec.unit ? `${t('experiment_input_arg.' + key)} (${spec.unit})` : t('experiment_input_arg.' + key)"
+                        v-model="spec.value"
                         variant="outlined"
                         density="comfortable"
                     />
                     <v-number-input
                         v-else-if="spec.type === 'number'"
-                        :label="
-                            spec.unit
-                                ? `${$t('experiment_command.' + key)} (${spec.unit})`
-                                : $t('experiment_command.' + key)
-                        "
-                        v-model="experimentCommandValues[key]"
-                        :min="0"
+                        :label="spec.unit ? `${t('experiment_input_arg.' + key)} (${spec.unit})` : t('experiment_input_arg.' + key)"
+                        :model-value="Number(spec.value)"
+                        @update:model-value="(value) => (spec.value = Number(value ?? 0))"
                         variant="outlined"
                         density="comfortable"
                     />
                 </div>
             </div>
 
-            <!-- Universal Simulation Parameters -->
             <v-number-input
+                v-if="selectedExperiment"
                 v-model="simTime"
-                :label="$t('dashboard.simulation_time')"
-                :min="0"
+                :label="t('dashboard.simulation_time')"
+                :min="1"
                 variant="outlined"
                 density="comfortable"
             />
             <v-number-input
+                v-if="selectedExperiment"
                 v-model="sampleRate"
-                :label="$t('dashboard.sampling_rate')"
-                :min="0"
+                :label="t('dashboard.sampling_rate')"
+                :min="1"
                 variant="outlined"
                 density="comfortable"
             />
@@ -303,15 +275,15 @@ defineExpose({
             <slot
                 :selected-experiment="selectedExperiment"
                 :selected-command="selectedCommand"
-                :experiment-command-values="experimentCommandValues"
+                :experiment-input-args-values="inputArguments"
                 :sim-time="simTime"
                 :sample-rate="sampleRate"
             />
         </div>
 
         <!-- Empty State -->
-        <v-alert v-else type="warning" variant="tonal">
-            {{ $t('dashboard.no_experiment_found') }}
+        <v-alert v-else type="error" variant="tonal">
+            {{ t('queues.no_experiment_found') }}
         </v-alert>
     </div>
 </template>
