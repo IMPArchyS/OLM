@@ -21,6 +21,7 @@ const emit = defineEmits<{
 const selectedExperimentId = ref<number | null>(null);
 const simTime = ref<number>(1);
 const sampleRate = ref<number>(1);
+const selectedCommand = ref<Command | null>(null);
 const useSetpoints = ref<boolean>(false);
 const setpointStartValue = ref<number>(0);
 const setpointSteps = ref<Step[]>([]);
@@ -47,9 +48,27 @@ watch(
     { immediate: true },
 );
 
-let selectedCommand = computed<Command | null>(() => {
-    return selectedExperiment.value?.commands.find((cmd) => cmd === 'start') || null;
-});
+watch(
+    [selectedExperiment, () => props.fixedCommand],
+    ([experiment, fixedCommand]) => {
+        if (!experiment) {
+            selectedCommand.value = null;
+            return;
+        }
+
+        if (fixedCommand) {
+            const fixed = experiment.commands.find((cmd) => cmd === fixedCommand) ?? null;
+            selectedCommand.value = fixed;
+            return;
+        }
+
+        const hasCurrent = selectedCommand.value ? experiment.commands.includes(selectedCommand.value) : false;
+        if (!hasCurrent) {
+            selectedCommand.value = experiment.commands.find((cmd) => cmd === 'start') ?? experiment.commands[0] ?? null;
+        }
+    },
+    { immediate: true },
+);
 
 watch(
     selectedExperiment,

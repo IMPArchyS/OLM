@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
-import type { Reservation } from '@/types/api';
+import { Command, type Reservation } from '@/types/api';
 import ExperimentSelector from './ExperimentSelector.vue';
+import type { QueueFormData } from '@/types/forms';
+import { useExperiments } from '@/composables/useExperiments';
+import { useI18n } from 'vue-i18n';
+import { useToast } from '@/composables/useToast';
 
 const props = defineProps<{ reservation: Reservation }>();
 
-const experimentSelectorRef = ref<InstanceType<typeof ExperimentSelector> | null>(null);
+const { t } = useI18n();
+const { showError } = useToast();
+const { experimentsByDevice, loading, error, fetchExperimentsByDevice } = useExperiments();
+
 const websocketRef = ref<WebSocket | null>(null);
 const websocketMessage = ref('');
 
@@ -30,93 +37,78 @@ onBeforeRouteLeave(() => {
 });
 
 function runExperiment() {
-    const selector = experimentSelectorRef.value;
-    if (!selector) return;
+    console.log(JSON.stringify(formData.value, null, 2));
 
-    const selectedExperiment = selector.selectedExperiment;
-    const selectedCommand = selector.selectedCommand;
-    const experimentCommandValues = selector.experimentCommandValues;
+    // websocketMessage.value = '';
+    // closeWebSocket();
 
-    if (!selectedExperiment) {
-        console.error('No experiment selected');
-        return;
-    }
+    // const websocket = new WebSocket(`ws://localhost:8000/ws/test`);
+    // websocketRef.value = websocket;
 
-    const missing = Object.entries(selectedExperiment.experiment_commands || {})
-        .filter(
-            ([key, spec]) =>
-                experimentCommandValues[key] === undefined || experimentCommandValues[key] === null || experimentCommandValues[key] === '',
-        )
-        .map(([key]) => key);
+    // websocket.onopen = () => {
+    //     console.log('WebSocket Created');
+    // };
 
-    if (missing.length > 0) {
-        alert('Please fill in all experiment command values: ' + missing.join(', '));
-        return;
-    }
+    // websocket.onmessage = (event) => {
+    //     websocketMessage.value = String(event.data);
+    //     console.log('WebSocket response:', event.data);
+    // };
 
-    const reconstructedCommands: Record<string, { value: any; type: string; unit?: string }> = {};
+    // websocket.onerror = (error) => {
+    //     websocketMessage.value = 'WebSocket error. Please try running the experiment again.';
+    //     console.error('WebSocket error:', error);
+    // };
 
-    Object.entries(selectedExperiment.experiment_commands || {}).forEach(([key, spec]) => {
-        reconstructedCommands[key] = {
-            value: experimentCommandValues[key],
-            type: spec.type,
-            ...(spec.unit && { unit: spec.unit }),
-        };
-    });
-
-    const payload = {
-        experiment_id: selectedExperiment.id,
-        command: selectedCommand,
-        experiment_commands: reconstructedCommands,
-        simulation_time: selector.simTime,
-        sampling_rate: selector.sampleRate,
-    };
-    //console.log('Payload to send via WebSocket:', JSON.stringify(payload, null, 2));
-    websocketMessage.value = '';
-    closeWebSocket();
-
-    const websocket = new WebSocket(`ws://localhost:8000/ws/test/${selectedExperiment.id}`);
-    websocketRef.value = websocket;
-
-    websocket.onopen = () => {
-        console.log('WebSocket Created');
-        //ws.send(JSON.stringify(payload));
-    };
-
-    websocket.onmessage = (event) => {
-        websocketMessage.value = String(event.data);
-        console.log('WebSocket response:', event.data);
-    };
-
-    websocket.onerror = (error) => {
-        websocketMessage.value = 'WebSocket error. Please try running the experiment again.';
-        console.error('WebSocket error:', error);
-    };
-
-    websocket.onclose = () => {
-        websocketRef.value = null;
-        if (!websocketMessage.value) {
-            websocketMessage.value = 'WebSocket closed.';
-        } else {
-            websocketMessage.value = `${websocketMessage.value} (connection closed)`;
-        }
-        console.log('WebSocket closed');
-    };
+    // websocket.onclose = () => {
+    //     websocketRef.value = null;
+    //     if (!websocketMessage.value) {
+    //         websocketMessage.value = 'WebSocket closed.';
+    //     } else {
+    //         websocketMessage.value = `${websocketMessage.value} (connection closed)`;
+    //     }
+    //     console.log('WebSocket closed');
+    // };
 }
+
+const formData = ref<QueueFormData>({
+    experiment_id: null,
+    command: Command.START,
+    input_arguments: {},
+    setpoint_changes: {},
+    device_id: null,
+    software_name: null,
+    simulation_time: 0,
+    sampling_rate: 0,
+});
+
+onMounted(async () => {
+    const result = await fetchExperimentsByDevice(props.reservation.device_id);
+    if (!result.success) {
+        showError(result.message || 'Failed');
+    }
+});
+
+const handleFormDataUpdate = (data: typeof formData.value) => {
+    formData.value = data;
+};
 </script>
 
 <template>
-    <v-card class="mt-4 overflow-auto!" style="height: calc(100vh - 260px)">
+    <v-card class="mt-4 overflow-auto!">
         <v-card-title>{{ $t('dashboard.ongoing_experiment') }}</v-card-title>
 
         <v-card-text>
-            <ExperimentSelector ref="experimentSelectorRef" :device-id="reservation.device_id">
-                <template #default>
-                    <v-btn color="primary" variant="elevated" @click="runExperiment">
-                        {{ $t('dashboard.run_experiment') }}
-                    </v-btn>
-                </template>
-            </ExperimentSelector>
+            <ExperimentSelector fixed-command="" :loading="loading" :experiments="experimentsByDevice" @update:formData="handleFormDataUpdate" />
+            <v-btn
+                v-if="experimentsByDevice.length > 0"
+                color="info"
+                prepend-icon="mdi-plus"
+                @click="runExperiment"
+                class="mt-4"
+                :disabled="formData.experiment_id === null"
+            >
+                {{ $t('dashboard.run_experiment') }}
+            </v-btn>
 
             <v-card v-if="websocketMessage" variant="tonal" class="mt-4">
                 <v-card-title class="text-subtitle-1">WebSocket messages</v-card-title>
