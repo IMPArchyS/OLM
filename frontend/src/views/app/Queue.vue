@@ -9,20 +9,23 @@ import { useToast } from '@/composables/useToast';
 import { useAuthStore } from '@/stores/auth';
 
 const { t } = useI18n();
-const { showError } = useToast();
+const { showError, showInfo } = useToast();
 const authStore = useAuthStore();
-const { experiments, loading, error, fetchExperiments } = useExperiments();
+const { experiments, loading, error, fetchExperiments, queueSelectedExperiment } = useExperiments();
 
 const formData = ref<QueueFormData>({
     user_id: authStore.user?.id ?? null,
-    experiment_id: null,
+    id: null,
+    server_id: null,
     command: Command.START,
     input_arguments: {},
+    output_arguments: [],
     setpoint_changes: {},
+    schema_id: null,
     device_id: null,
     software_name: null,
     simulation_time: 0,
-    sampling_rate: 0,
+    sample_rate: 0,
 });
 
 onMounted(async () => {
@@ -37,7 +40,16 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 };
 
 const addToQueue = async () => {
+    const selectedExperiment = experiments.value.find((exp) => exp.id === formData.value.id);
+    formData.value.output_arguments = selectedExperiment?.output_arguments ?? [];
+
     console.log(JSON.stringify(formData.value, null, 2));
+    const result = await queueSelectedExperiment(formData.value);
+    if (!result.success) {
+        showError(result.message || 'Failed');
+    } else {
+        showInfo(result.message || 'Queued');
+    }
 };
 </script>
 
@@ -54,7 +66,7 @@ const addToQueue = async () => {
                 prepend-icon="mdi-plus"
                 @click="addToQueue"
                 class="mt-4"
-                :disabled="formData.experiment_id === null"
+                :disabled="formData.id === null"
             >
                 {{ t('queues.add_to_queue') }}
             </v-btn>

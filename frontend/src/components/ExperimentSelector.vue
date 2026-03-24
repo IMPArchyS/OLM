@@ -150,14 +150,17 @@ const experimentTitle = (e: Experiment) => `Experiment Id: ${e.id}  - ${e.server
 const formData = computed<QueueFormData>(() => {
     return {
         user_id: authStore.user?.id ?? null,
-        experiment_id: selectedExperimentId.value,
+        server_id: selectedExperiment.value?.server.id ?? null,
+        id: selectedExperimentId.value,
         command: selectedCommand.value,
         input_arguments: inputArguments.value,
+        output_arguments: selectedExperiment.value?.output_arguments ?? [],
         setpoint_changes: selectedSetpointChanges.value,
+        schema_id: null,
         device_id: selectedExperiment.value?.device.id ?? null,
         software_name: selectedExperiment.value?.software.name ?? null,
         simulation_time: simTime.value,
-        sampling_rate: sampleRate.value,
+        sample_rate: sampleRate.value,
     };
 });
 

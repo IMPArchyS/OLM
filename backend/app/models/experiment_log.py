@@ -1,8 +1,10 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel
+from sqlalchemy import Column
 from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.types import TypeDecorator
 
 from app.models.utils import now
 
@@ -10,8 +12,25 @@ if TYPE_CHECKING:
     from app.models.experiment import Experiment
 
 
+class PydanticJSONB(TypeDecorator):
+    impl = JSONB
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        def to_jsonable(obj):
+            if isinstance(obj, BaseModel):
+                return obj.model_dump(mode="json")
+            if isinstance(obj, list):
+                return [to_jsonable(item) for item in obj]
+            if isinstance(obj, dict):
+                return {key: to_jsonable(item) for key, item in obj.items()}
+            return obj
+
+        return to_jsonable(value)
+
+
 class ExperimentRun(BaseModel):
-    input_history: dict[str, Any]
+    input_history: list[dict[str, Any]] | dict[str, Any]
     output_history: list[dict[str, Any]]
     started_at: datetime
     finished_at: datetime | None
@@ -20,7 +39,7 @@ class ExperimentRun(BaseModel):
 
 
 class ExperimentLogBase(SQLModel):
-    runs: list[ExperimentRun] | None = Field(default=None, sa_type=JSONB)
+    runs: list[ExperimentRun] | None = Field(default=None, sa_column=Column(PydanticJSONB))
     note: str | None = Field(default=None, index=True)
 
 
@@ -32,7 +51,7 @@ class ExperimentLog(ExperimentLogBase, table=True):
     
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
-    closed_at: datetime = Field(default=None)
+    closed_at: datetime | None = Field(default=None)
     deleted_at: datetime | None = Field(default=None)
     # Relationships
     experiment_id: int = Field(foreign_key="experiment.id")

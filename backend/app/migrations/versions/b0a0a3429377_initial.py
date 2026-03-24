@@ -166,7 +166,7 @@ def upgrade() -> None:
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('modified_at', sa.DateTime(), nullable=False),
-    sa.Column('closed_at', sa.DateTime(), nullable=False),
+    sa.Column('closed_at', sa.DateTime(), nullable=True),
     sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('experiment_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['experiment_id'], ['experiment.id'], ),

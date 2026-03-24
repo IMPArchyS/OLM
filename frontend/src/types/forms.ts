@@ -36,12 +36,15 @@ export interface EditServerForm {
 
 export interface QueueFormData {
     user_id: number | null;
-    experiment_id: number | null;
+    id: number | null;
+    server_id: number | null;
     command: Command | null;
     input_arguments: Record<string, InputArgSpec>;
+    output_arguments: string[];
     setpoint_changes: StepSequence | Record<string, never>;
+    schema_id: number | null;
     simulation_time: number;
     device_id: number | null;
     software_name: SoftwareName | null;
-    sampling_rate: number;
+    sample_rate: number;
 }

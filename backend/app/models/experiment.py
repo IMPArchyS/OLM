@@ -1,6 +1,8 @@
+from enum import Enum
 from datetime import datetime
 from datetime import time
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypedDict
+from pydantic import model_validator
 from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -14,6 +16,30 @@ if TYPE_CHECKING:
     from app.models.software import Software
     from app.models.device import Device
     from app.models.experiment_log import ExperimentLog
+
+
+class Command(str, Enum):
+    INIT = "init"
+    START = "start"
+    CHANGE = "change"
+    STOP = "stop"
+
+
+class SoftwareName(str, Enum):
+    OPENLOOP = "openloop"
+    MATLAB = "matlab"
+    SCILAB = "scilab"
+    OPENMODELICA = "openmodelica"
+
+
+class Step(TypedDict):
+    duration: float 
+    value: float 
+
+
+class StepSequence(TypedDict):
+    start_value: float
+    steps: list[Step]
 
 
 class ExperimentDevicePublic(SQLModel):
@@ -68,3 +94,24 @@ class ExperimentUpdate(ExperimentBase):
     device_type_id: int | None = None 
     device_id: int | None = None 
     software_id: int | None = None 
+
+    
+class ExperimentQueue(SQLModel):
+    id: int
+    user_id: int
+    command: Command
+    setpoint_changes: StepSequence | None
+    input_arguments: dict[str, Any]
+    output_arguments: list[str]
+    simulation_time: int
+    sample_rate: int 
+    software_name: SoftwareName
+    device_id: int                    # via remote id          
+    schema_id: int | None             # via remote id
+    
+    @model_validator(mode="before")
+    @classmethod
+    def empty_setpoint_to_none(cls, values):
+        if values.get("setpoint_changes") == {}:
+            values["setpoint_changes"] = None
+        return values

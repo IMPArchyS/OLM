@@ -39,6 +39,9 @@ onBeforeRouteLeave(() => {
 });
 
 function runExperiment() {
+    const selectedExperiment = experimentsByDevice.value.find((exp) => exp.id === formData.value.id);
+    formData.value.output_arguments = selectedExperiment?.output_arguments ?? [];
+
     console.log(JSON.stringify(formData.value, null, 2));
 
     // websocketMessage.value = '';
@@ -74,14 +77,17 @@ function runExperiment() {
 
 const formData = ref<QueueFormData>({
     user_id: authStore.user?.id ?? null,
-    experiment_id: null,
+    server_id: null,
+    id: null,
     command: Command.START,
     input_arguments: {},
+    output_arguments: [],
     setpoint_changes: {},
+    schema_id: null,
     device_id: null,
     software_name: null,
     simulation_time: 0,
-    sampling_rate: 0,
+    sample_rate: 0,
 });
 
 onMounted(async () => {
@@ -108,7 +114,7 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                 prepend-icon="mdi-plus"
                 @click="runExperiment"
                 class="mt-4"
-                :disabled="formData.experiment_id === null"
+                :disabled="formData.id === null"
             >
                 {{ $t('dashboard.run_experiment') }}
             </v-btn>

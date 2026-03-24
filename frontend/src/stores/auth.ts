@@ -39,12 +39,14 @@ export const useAuthStore = defineStore('auth', () => {
         if (newAccessToken) {
             const payload = parseJwt(newAccessToken);
             if (payload) {
+                const parsedUserId = Number(payload.sub);
+                const parsedRoleId = Number(payload.role_id);
                 user.value = {
-                    id: payload.sub,
+                    id: Number.isFinite(parsedUserId) ? parsedUserId : 0,
                     username: payload.username,
                     name: payload.name,
                     admin: payload.admin,
-                    role_id: payload.role_id,
+                    role_id: Number.isFinite(parsedRoleId) ? parsedRoleId : 0,
                 };
             }
         } else {

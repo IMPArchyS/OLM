@@ -1,6 +1,7 @@
 import type { Experiment } from '@/types/api';
 import { ref } from 'vue';
 import { apiClient } from './useAxios';
+import type { QueueFormData } from '@/types/forms';
 
 export function useExperiments() {
     const experiments = ref<Experiment[]>([]);
@@ -46,6 +47,23 @@ export function useExperiments() {
         }
     }
 
+    async function queueSelectedExperiment(experiment: QueueFormData): Promise<{ success: boolean; message?: string }> {
+        loading.value = true;
+
+        try {
+            const response = await apiClient.post(`/experiment/queue`, experiment);
+            return { success: true };
+        } catch (e: any) {
+            console.error('Error fetching experimentsByDevice:', e);
+            return {
+                success: false,
+                message: e.response?.data?.message || 'Failed to fetch available experimentsByDevice',
+            };
+        } finally {
+            loading.value = false;
+        }
+    }
+
     return {
         experiments,
         experimentsByDevice,
@@ -53,5 +71,6 @@ export function useExperiments() {
         error,
         fetchExperiments,
         fetchExperimentsByDevice,
+        queueSelectedExperiment,
     };
 }
