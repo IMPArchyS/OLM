@@ -32,3 +32,4 @@ coverage
 
 *.pem
 *.key
+nginx.conf
