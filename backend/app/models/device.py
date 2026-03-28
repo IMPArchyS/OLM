@@ -65,4 +65,6 @@ class DeviceUpdate(SQLModel):
 
 class DeviceWithSoftware(DeviceBase):
     id: int
+    deleted_at: datetime | None
+    device_type: DeviceTypePublic
     softwares: list[SoftwarePublic]

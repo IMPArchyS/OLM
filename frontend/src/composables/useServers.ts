@@ -39,7 +39,7 @@ export function useServers() {
 
     async function updateServer(server: EditServerForm): Promise<{ success: boolean; message?: string }> {
         try {
-            await apiClient.patch(`/server/${server.id}/`, server);
+            await apiClient.patch(`/server/${server.id}`, server);
             return { success: true };
         } catch (e: any) {
             console.error('Error creating server:', e);
@@ -101,7 +101,7 @@ export function useServers() {
 
     async function softDeleteServer(server: Server) {
         try {
-            await apiClient.delete(`/server/${server.id}/delete`);
+            await apiClient.delete(`/server/${server.id}`);
         } catch (e) {
             console.error('Error deleting server:', e);
             throw e;

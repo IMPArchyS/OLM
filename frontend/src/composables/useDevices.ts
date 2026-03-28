@@ -24,6 +24,7 @@ export function useDevices() {
 
         try {
             const response = await apiClient.get('/device/');
+            console.log(response.data);
             devices.value = response.data;
             return { success: true };
         } catch (e: any) {

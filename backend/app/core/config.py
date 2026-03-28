@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     AUTH_SERVICE_URL: str = "http://host.docker.internal:8080/internal/api" # "http://node124.webte.fei.stuba.sk:8080/internal/api"
     OAUTH_SERVICE_URL: str = "http://host.docker.internal:8080/api/auth/oauth"
     AUTH_API_KEY: str = "devapikey"
+    EXPERIMENTAL_API_KEY: str = "experimentalapikey"
 
     @computed_field
     @property

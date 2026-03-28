@@ -32,9 +32,6 @@ class DeviceTypeCreate(DeviceTypeBase):
 
 class DeviceTypePublic(DeviceTypeBase):
     id: int
-    created_at: datetime
-    modified_at: datetime
-    experiments: List["ExperimentPublic"]
 
 
 class DeviceTypeUpdate(DeviceTypeBase):

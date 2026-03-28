@@ -20,7 +20,7 @@ def get_all(db: DbSession):
 
 @router.get("/available", response_model=list[DeviceWithSoftware])
 def get_all_available(db: DbSession):
-    stmt = select(Device).where(Device.server_id != None).join(Server).where(
+    stmt = select(Device).where((Device.server_id != None) & (Device.deleted_at == None)).join(Server).where(
         (Server.available == True) & (Server.enabled == True) & (Server.production == True)
     )
     return db.exec(stmt).all()

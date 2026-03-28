@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 async def _forward_queue_and_store_log(base_url: str, experiment: ExperimentQueue):
     try:
         async with httpx.AsyncClient(timeout=None) as client:
-            response = await client.post(f"{base_url}/api/experiment", json=experiment.model_dump())
+            response = await client.post(f"{base_url}/api/server/experiment", json=experiment.model_dump())
         response.raise_for_status()
 
         body = response.json()

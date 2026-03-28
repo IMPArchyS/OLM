@@ -17,6 +17,7 @@ const filteredDevices = computed(() => {
     if (showDeletedDevices.value) {
         return devices.value;
     } else {
+        console.log(devices.value.filter((device) => !device.deleted_at));
         return devices.value.filter((device) => !device.deleted_at);
     }
 });

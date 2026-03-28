@@ -8,7 +8,7 @@ from app.api.endpoints.sync import sync_add_server_stack
 from app.models.device import DevicePublic, DeviceWithSoftware
 from app.models.server import Server, ServerCreate, ServerPublic, ServerPubDetailed, ServerUpdate
 from app.models.utils import now
-
+from app.core.config import settings
 
 # ServerPubDetailed.model_rebuild()
 
@@ -37,7 +37,7 @@ def resolve_url(server: Server):
 def ping_remote_server(db: DbSession, server: ServerPublic, health_url: str):
     available = False
     try:
-        response = httpx.get(health_url)
+        response = httpx.get(health_url, headers={"x-api-key": settings.EXPERIMENTAL_API_KEY})
         if response.status_code < 400:
             body = response.json()
 

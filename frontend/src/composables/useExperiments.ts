@@ -13,7 +13,7 @@ export function useExperiments() {
         loading.value = true;
 
         try {
-            const response = await apiClient.get('/experiment');
+            const response = await apiClient.get('/experiment/');
             experiments.value = response.data;
             return { success: true };
         } catch (e: any) {

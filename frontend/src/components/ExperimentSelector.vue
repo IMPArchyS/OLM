@@ -268,7 +268,7 @@ defineExpose({
                         variant="outlined"
                         density="comfortable"
                     />
-                    <v-number-input
+                    <v-text-field
                         v-else-if="spec.type === 'number'"
                         :label="spec.unit ? `${t('experiment_input_arg.' + key)} (${spec.unit})` : t('experiment_input_arg.' + key)"
                         :model-value="Number(spec.value)"
@@ -279,19 +279,17 @@ defineExpose({
                 </div>
             </div>
 
-            <v-number-input
+            <v-text-field
                 v-if="selectedExperiment"
                 v-model="simTime"
                 :label="t('dashboard.simulation_time')"
-                :min="1"
                 variant="outlined"
                 density="comfortable"
             />
-            <v-number-input
+            <v-text-field
                 v-if="selectedExperiment"
                 v-model="sampleRate"
                 :label="t('dashboard.sampling_rate')"
-                :min="1"
                 variant="outlined"
                 density="comfortable"
             />
