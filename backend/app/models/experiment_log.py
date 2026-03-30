@@ -44,8 +44,7 @@ class ExperimentRun(BaseModel):
 
 
 class ExperimentLogBase(SQLModel):
-    # Field(default=None, sa_column=Column(PydanticJSONB)) 
-    run: ExperimentRun | None = Field(default=None, sa_type=JSONB)
+    run: ExperimentRun | None = Field(default=None, sa_column=Column(PydanticJSONB)) 
     note: str | None = Field(default=None, index=True)
 
 
@@ -80,6 +79,10 @@ class ExperimentLogCreate(ExperimentLogBase):
     experiment_id: int
     device_id: int
     server_id: int
+    started_at: datetime
+    finished_at: datetime | None
+    stopped_at: datetime | None
+    timedout_at: datetime | None
 
 
 class ExperimentLogPublic(ExperimentLogBase):
@@ -88,6 +91,9 @@ class ExperimentLogPublic(ExperimentLogBase):
     device_id: int
     server_id: int
     started_at: datetime
+    finished_at: datetime | None
+    stopped_at: datetime | None
+    timedout_at: datetime | None
     modified_at: datetime
     deleted_at: datetime | None
 

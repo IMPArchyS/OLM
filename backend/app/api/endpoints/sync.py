@@ -2,14 +2,14 @@ from typing import Iterable
 
 from pydantic import ValidationError
 
-from sqlmodel import select
+from sqlmodel import select, col
 
 from app.api.dependencies import DbSession
 from app.models.device import Device, DeviceSyncPayload
 from app.models.device_type import DeviceType
 from app.models.server import ServerPublic
 from app.models.software import Software
-from app.models.utils import now
+from app.models.utils import ensure, now
 
 
 # --- Payload parsing ---
@@ -30,7 +30,7 @@ def _get_or_create_software_map(db: DbSession, names: Iterable[str]) -> dict[str
     names = sorted(set(names))
     if not names:
         return {}
-    existing = db.exec(select(Software).where(Software.name.in_(names))).all()
+    existing = db.exec(select(Software).where(col(Software.name).in_(names))).all()
     by_name = {s.name: s for s in existing}
     for name in names:
         if name not in by_name:
@@ -43,7 +43,7 @@ def _get_or_create_device_type_map(db: DbSession, names: Iterable[str]) -> dict[
     names = sorted(set(names))
     if not names:
         return {}
-    existing = db.exec(select(DeviceType).where(DeviceType.name.in_(names))).all()
+    existing = db.exec(select(DeviceType).where(col(DeviceType.name).in_(names))).all()
     by_name = {dt.name: dt for dt in existing}
     for name in names:
         if name not in by_name:
@@ -116,12 +116,12 @@ def sync_add_server_stack(db: DbSession, server: ServerPublic, payload: list[dic
 
     db.flush()
 
-    server_devices = db.exec(select(Device).where(Device.server_id == server.id)).all()
+    server_devices = list(db.exec(select(Device).where(Device.server_id == server.id)).all())
     existing_by_name = {d.name: d for d in server_devices}
 
     for p in devices:
         device_type = device_type_by_name[p.device_type.name]
-        db_device = _upsert_device(db, server.id, p, existing_by_name, device_type.id)
+        db_device = _upsert_device(db, server.id, p, existing_by_name, ensure(device_type.id))
         _sync_device_softwares(db_device, [sw.name for sw in p.software], software_by_name)
 
     _mark_missing_as_deleted(db, server_devices, {d.name for d in devices})

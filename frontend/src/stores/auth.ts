@@ -54,7 +54,8 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    const setTokens = (newAccessToken: string | null, newRefreshToken: string | null) => {
+    const setTokens = (newAccessToken: string, newRefreshToken: string | null) => {
+        localStorage.setItem('OLMAccessToken', newAccessToken);
         setToken(newAccessToken, newRefreshToken);
     };
 
@@ -108,6 +109,7 @@ export const useAuthStore = defineStore('auth', () => {
     const refreshAccessToken = async () => {
         try {
             const response = await apiClient.post('auth/refresh');
+            localStorage.setItem('OLMAccessToken', response.data.access_token);
             setToken(response.data.access_token);
         } catch (err) {
             console.log('Token refresh failed:', err);
@@ -136,6 +138,7 @@ export const useAuthStore = defineStore('auth', () => {
                     clearInterval(refreshIntervalId);
                     refreshIntervalId = null;
                 }
+                localStorage.removeItem('OLMAccessToken');
                 router.push('/auth/login');
             })
             .catch(() => {
@@ -146,6 +149,35 @@ export const useAuthStore = defineStore('auth', () => {
                 }
                 router.push('/auth/login');
             });
+    };
+
+    const updateProfile = async (data: any): Promise<{ success: boolean; message?: string }> => {
+        try {
+            const response = await apiClient.patch<User>('auth/update-user', data);
+            if (user.value) {
+                user.value.name = response.data.name;
+            }
+            return { success: true };
+        } catch (e: any) {
+            console.error('Error updating user name:', e);
+            return {
+                success: false,
+                message: e.response?.data?.message || 'Error updating user name',
+            };
+        }
+    };
+
+    const updatePassword = async (data: any): Promise<{ success: boolean; message?: string }> => {
+        try {
+            const response = await apiClient.patch<boolean>('auth/change-password', data);
+            return { success: true };
+        } catch (e: any) {
+            console.error('Error updating user password:', e);
+            return {
+                success: false,
+                message: e.response?.data?.message || 'Error updating user password',
+            };
+        }
     };
 
     const fetchProviders = async (): Promise<void> => {
@@ -185,6 +217,8 @@ export const useAuthStore = defineStore('auth', () => {
         login,
         register,
         logout,
+        updateProfile,
+        updatePassword,
         fetchProviders,
         oauthLogin,
         handleOAuthCallback,

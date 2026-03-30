@@ -25,6 +25,9 @@ export default {
         nameRequired: 'Name is required',
         emailRequired: 'Email is required',
         passwordRequired: 'Password is required',
+        oldPassword: 'Old password',
+        newPassword: 'New password',
+        repeatPassword: 'Repeat password',
     },
     error: {
         login: 'Login failed',

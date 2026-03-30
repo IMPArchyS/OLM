@@ -39,6 +39,16 @@ class RegisterRequest(BaseModel):
     username: str
     password: str
 
+class ChangeNameRequest(BaseModel):
+    jwt_token: str
+    name: str
+
+class ChangePasswordRequest(BaseModel):
+    jwt_token: str
+    password_old: str  
+    password_new: str
+    password_new_repeat: str
+
 class ProviderResponse(BaseModel):
     id: int
     name: str
@@ -309,3 +319,50 @@ def get_user_permissions(id: int):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"USERS/ID Failed to connect to auth service: {str(e)}"
         )
+
+
+@router.patch("/update-user")
+def update_username(credentials: ChangeNameRequest):
+    try:
+        response = httpx.patch(
+            f"{settings.AUTH_SERVICE_URL}/update-user",
+            json={"jwt_token": credentials.jwt_token, "name": credentials.name},
+            headers={"x-api-key": settings.AUTH_API_KEY},
+            timeout=10.0
+        )
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        return JSONResponse(
+            status_code=e.response.status_code,
+            content=_auth_error_payload(e.response)
+        )
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"USERS/ID Failed to connect to auth service: {str(e)}"
+        )
+
+
+@router.patch("/change-password")
+def change_password(credentials: ChangePasswordRequest):
+    try:
+        response = httpx.patch(
+            f"{settings.AUTH_SERVICE_URL}/change-password",
+            json={"jwt_token": credentials.jwt_token, "password_old": credentials.password_old, 
+                "password_new": credentials.password_new, "password_new_repeat": credentials.password_new_repeat},
+            headers={"x-api-key": settings.AUTH_API_KEY},
+            timeout=10.0
+        )
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        return JSONResponse(
+            status_code=e.response.status_code,
+            content=_auth_error_payload(e.response)
+        )
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"USERS/ID Failed to connect to auth service: {str(e)}"
+        ) 

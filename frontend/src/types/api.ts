@@ -62,18 +62,16 @@ export interface ExperimentLog {
     server_id: number;
     device_id: number;
     software_name: SoftwareName;
-    runs: ExperimentRun[];
-    created_at: string;
-    closed_at?: string;
+    run: ExperimentRun;
+    started_at: string;
+    finished_at?: string;
+    stopped_at?: string;
+    timedout_at?: string;
 }
 
 export interface ExperimentRun {
     input_history: ExperimentHistoryItem[];
     output_history: Record<string, any>[];
-    started_at: string;
-    finished_at?: string;
-    stopped_at?: string;
-    timedout_at?: string;
 }
 
 export interface ExperimentHistoryItem {

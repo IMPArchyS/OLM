@@ -24,6 +24,9 @@ export default {
         nameRequired: 'Meno je povinné',
         emailRequired: 'Email je povinný',
         passwordRequired: 'Heslo je povinné',
+        oldPassword: 'Staré heslo',
+        newPassword: 'Nové heslo',
+        repeatPassword: 'zopakovať heslo',
     },
     error: {
         login: 'Prihlásenie zlyhalo',
