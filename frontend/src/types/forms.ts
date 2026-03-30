@@ -37,7 +37,6 @@ export interface EditServerForm {
 export interface QueueFormData {
     user_id: number | null;
     id: number | null;
-    server_id: number | null;
     command: Command | null;
     input_arguments: Record<string, InputArgSpec>;
     output_arguments: string[];

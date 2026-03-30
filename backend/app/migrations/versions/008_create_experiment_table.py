@@ -29,13 +29,9 @@ def upgrade() -> None:
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('modified_at', sa.DateTime(), nullable=False),
     sa.Column('deleted_at', sa.DateTime(), nullable=True),
-    sa.Column('server_id', sa.Integer(), nullable=False),
-    sa.Column('device_type_id', sa.Integer(), nullable=True),
     sa.Column('device_id', sa.Integer(), nullable=True),
     sa.Column('software_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['device_id'], ['device.id'], ),
-    sa.ForeignKeyConstraint(['device_type_id'], ['device_type.id'], ),
-    sa.ForeignKeyConstraint(['server_id'], ['server.id'], ),
     sa.ForeignKeyConstraint(['software_id'], ['software.id'], ),
     sa.PrimaryKeyConstraint('id')
     )

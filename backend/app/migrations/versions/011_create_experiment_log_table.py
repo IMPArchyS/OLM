@@ -34,7 +34,11 @@ def upgrade() -> None:
     sa.Column('modified_at', sa.DateTime(), nullable=False),
     sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('experiment_id', sa.Integer(), nullable=False),
+    sa.Column('device_id', sa.Integer(), nullable=False),
+    sa.Column('server_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['experiment_id'], ['experiment.id'], ),
+    sa.ForeignKeyConstraint(['device_id'], ['device.id'], ),
+    sa.ForeignKeyConstraint(['server_id'], ['server.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_experiment_log_note'), 'experiment_log', ['note'], unique=False)

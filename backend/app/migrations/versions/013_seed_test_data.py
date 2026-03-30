@@ -1,7 +1,7 @@
 """seed_test_data
 
-Revision ID: 012_seed_test_data
-Revises: 011_create_experiment_log_table
+Revision ID: 013_seed_test_data
+Revises: 012_create_experiment_device_tbl
 Create Date: 2026-03-01 20:27:35.260488
 
 """
@@ -16,8 +16,8 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision: str = '012_seed_test_data'
-down_revision: Union[str, Sequence[str], None] = '011_create_experiment_log_table'
+revision: str = '013_seed_test_data'
+down_revision: Union[str, Sequence[str], None] = '012_create_experiment_device_tbl'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -128,10 +128,13 @@ DEFAULT_EXPERIMENT = [
             }
         },
         "output_arguments": ["sin_y"],
-        "server_id": 1,
-        "device_type_id": 1,
-        "device_id": 1,
         "software_id": 1
+    }
+]
+DEFAULT_EXPERIMENTDEVICE = [
+    {
+        "experiment_id": 1,
+        "device_id": 1,
     }
 ]
 
@@ -272,20 +275,29 @@ def upgrade() -> None:
         op.execute(
             sa.text(
                 """
-                INSERT INTO experiment (id, commands, input_arguments, output_arguments, server_id, device_type_id, device_id, software_id, created_at, modified_at)
-                VALUES (:id, :commands, :input_arguments, :output_arguments, :server_id, :device_type_id, :device_id, :software_id, :created_at, :modified_at)
+                INSERT INTO experiment (id, commands, input_arguments, output_arguments, software_id, created_at, modified_at)
+                VALUES (:id, :commands, :input_arguments, :output_arguments, :software_id, :created_at, :modified_at)
                 """
             ).bindparams(
                 sa.bindparam("id", value=provider["id"]),
                 sa.bindparam("commands", value=provider["commands"], type_=postgresql.JSONB),
                 sa.bindparam("input_arguments", value=provider["input_arguments"], type_=postgresql.JSONB),
                 sa.bindparam("output_arguments", value=provider["output_arguments"], type_=postgresql.JSONB),
-                sa.bindparam("server_id", value=provider["server_id"]),
-                sa.bindparam("device_type_id", value=provider["device_type_id"]),
-                sa.bindparam("device_id", value=provider["device_id"]),
                 sa.bindparam("software_id", value=provider["software_id"]),
                 sa.bindparam("created_at", value=now),
                 sa.bindparam("modified_at", value=now),
+            )
+        )
+    for provider in DEFAULT_EXPERIMENTDEVICE:
+        op.execute(
+            sa.text(
+                """
+                INSERT INTO experiment_device (experiment_id, device_id)
+                VALUES (:experiment_id, :device_id)
+                """
+            ).bindparams(
+                sa.bindparam("experiment_id", value=provider["experiment_id"]),
+                sa.bindparam("device_id", value=provider["device_id"]),
             )
         )
 
@@ -329,6 +341,15 @@ def upgrade() -> None:
     )
 
 def downgrade() -> None:
+    for provider in DEFAULT_EXPERIMENTDEVICE:
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM experiment_device
+                WHERE experiment_id = :experiment_id AND device_id = :device_id
+                """
+            ).bindparams(experiment_id=provider["experiment_id"], device_id=provider["device_id"])
+        )
     for provider in DEFAULT_EXPERIMENT:
         op.execute(
             sa.text(

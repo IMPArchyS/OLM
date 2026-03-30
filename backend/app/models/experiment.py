@@ -6,13 +6,11 @@ from pydantic import model_validator
 from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.dialects.postgresql import JSONB
 
-from app.models.server import ServerExperiment
+from app.models.experiment_device import ExperimentDevice
 from app.models.software import SoftwarePublic
 from app.models.utils import now
 
 if TYPE_CHECKING:
-    from app.models.server import Server
-    from app.models.device_type import DeviceType
     from app.models.software import Software
     from app.models.device import Device
     from app.models.experiment_log import ExperimentLog
@@ -62,14 +60,7 @@ class Experiment(ExperimentBase, table=True):
     modified_at: datetime = Field(default_factory=now)
     deleted_at: datetime | None = Field(default=None)
     # Relationships
-    server_id: int = Field(foreign_key="server.id")
-    server: "Server" = Relationship(back_populates="experiments")
-    
-    device_type_id: int | None = Field(default=None, foreign_key="device_type.id")
-    device_type: "DeviceType" = Relationship(back_populates="experiments")
-    
-    device_id: int | None = Field(default=None, foreign_key="device.id")
-    device: "Device" = Relationship(back_populates="experiments")
+    devices: list["Device"] = Relationship(back_populates="experiments", link_model=ExperimentDevice)
     
     software_id: int | None = Field(default=None, foreign_key="software.id")
     software: "Software" = Relationship(back_populates="experiments")
@@ -78,20 +69,17 @@ class Experiment(ExperimentBase, table=True):
 
 
 class ExperimentCreate(ExperimentBase):
-    server_id: int
+    device_ids: list[int] | None = None
 
 
 class ExperimentPublic(ExperimentBase):
     id: int
-    server: ServerExperiment
-    device: ExperimentDevicePublic
+    devices: list[ExperimentDevicePublic] = []
     software: SoftwarePublic
 
 
 class ExperimentUpdate(ExperimentBase):
-    server_id: int | None = None 
-    device_type_id: int | None = None 
-    device_id: int | None = None 
+    device_ids: list[int] | None = None
     software_id: int | None = None 
 
     

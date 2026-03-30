@@ -1,22 +1,40 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import ExperimentSelector from '@/components/ExperimentSelector.vue';
 import { useI18n } from 'vue-i18n';
 import { Command } from '@/types/api';
 import type { QueueFormData } from '@/types/forms';
 import { useExperiments } from '@/composables/useExperiments';
+import { useServers } from '@/composables/useServers';
+import { useDevices } from '@/composables/useDevices';
 import { useToast } from '@/composables/useToast';
 import { useAuthStore } from '@/stores/auth';
 
 const { t } = useI18n();
 const { showError, showInfo } = useToast();
 const authStore = useAuthStore();
-const { experiments, loading, error, fetchExperiments, queueSelectedExperiment } = useExperiments();
+const { experimentsByDevice, loading, queueSelectedExperiment, fetchExperimentsByDevice } = useExperiments();
+const { servers, fetchServers } = useServers();
+const { devices, fetchDevicesByServer } = useDevices();
+
+const selectedServerId = ref<number | null>(null);
+const selectedDeviceId = ref<number | null>(null);
+
+const selectableServers = computed(() => {
+    return servers.value.filter((server) => !server.deleted_at && server.available && server.enabled && server.production);
+});
+
+const selectableDevices = computed(() => {
+    return devices.value.filter((device) => !device.deleted_at);
+});
+
+const selectableExperiments = computed(() => {
+    return selectedDeviceId.value ? experimentsByDevice.value : [];
+});
 
 const formData = ref<QueueFormData>({
     user_id: authStore.user?.id ?? null,
     id: null,
-    server_id: null,
     command: Command.START,
     input_arguments: {},
     output_arguments: [],
@@ -29,18 +47,41 @@ const formData = ref<QueueFormData>({
 });
 
 onMounted(async () => {
-    const result = await fetchExperiments();
+    await fetchServers();
+});
+
+watch(selectedServerId, async (newServerId) => {
+    selectedDeviceId.value = null;
+    formData.value.id = null;
+
+    if (!newServerId) {
+        return;
+    }
+
+    await fetchDevicesByServer(newServerId);
+});
+
+watch(selectedDeviceId, async (newDeviceId) => {
+    formData.value.id = null;
+    if (!newDeviceId) {
+        return;
+    }
+
+    const result = await fetchExperimentsByDevice(newDeviceId);
     if (!result.success) {
         showError(result.message || 'Failed');
     }
 });
 
 const handleFormDataUpdate = (data: typeof formData.value) => {
-    formData.value = data;
+    formData.value = {
+        ...data,
+        device_id: selectedDeviceId.value,
+    };
 };
 
 const addToQueue = async () => {
-    const selectedExperiment = experiments.value.find((exp) => exp.id === formData.value.id);
+    const selectedExperiment = selectableExperiments.value.find((exp) => exp.id === formData.value.id);
     formData.value.output_arguments = selectedExperiment?.output_arguments ?? [];
 
     console.log(JSON.stringify(formData.value, null, 2));
@@ -59,14 +100,44 @@ const addToQueue = async () => {
             <span class="text-h5">{{ t('queues.title') }}</span>
         </v-card-title>
         <v-card-text class="mt-5">
-            <ExperimentSelector fixed-command="start" :loading="loading" :experiments="experiments" @update:formData="handleFormDataUpdate" />
+            <div style="display: flex; flex-direction: column; gap: 16px">
+                <v-select
+                    v-model="selectedServerId"
+                    :items="selectableServers"
+                    item-title="name"
+                    item-value="id"
+                    label="Select server"
+                    variant="outlined"
+                    density="comfortable"
+                />
+
+                <v-select
+                    v-model="selectedDeviceId"
+                    :items="selectableDevices"
+                    item-title="name"
+                    item-value="id"
+                    :disabled="!selectedServerId"
+                    label="Select device"
+                    variant="outlined"
+                    density="comfortable"
+                />
+
+                <ExperimentSelector
+                    fixed-command="start"
+                    :loading="loading"
+                    :experiments="selectableExperiments"
+                    :selected-device-id="selectedDeviceId"
+                    @update:formData="handleFormDataUpdate"
+                />
+            </div>
+
             <v-btn
-                v-if="experiments.length > 0"
+                v-if="selectableExperiments.length > 0"
                 color="info"
                 prepend-icon="mdi-plus"
                 @click="addToQueue"
                 class="mt-4"
-                :disabled="formData.id === null"
+                :disabled="formData.id === null || selectedServerId === null || selectedDeviceId === null"
             >
                 {{ t('queues.add_to_queue') }}
             </v-btn>

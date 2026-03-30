@@ -76,8 +76,9 @@ export function useDevices() {
 
     async function getDeviceByExperimentId(experimentId: number): Promise<Device | undefined> {
         try {
-            const response = await apiClient.get(`/experiment/${experimentId}/device`);
-            return response.data;
+            const response = await apiClient.get(`/experiment/${experimentId}/devices`);
+            const devicesByExperiment = response.data as Device[];
+            return devicesByExperiment[0];
         } catch (e) {
             console.error(`Error fetching device for experiment ${experimentId}:`, e);
             return undefined;

@@ -6,12 +6,14 @@ from app.models.device_type import DeviceTypePublic, DeviceTypeSyncPayload
 from app.models.software import SoftwarePublic, SoftwareSyncPayload
 from app.models.utils import now
 from app.models.device_software import DeviceSoftware
+from app.models.experiment_device import ExperimentDevice
 
 if TYPE_CHECKING:
     from app.models.software import Software
     from app.models.device_type import DeviceType
     from app.models.server import Server
     from app.models.experiment import Experiment
+    from app.models.experiment_log import ExperimentLog
     from app.models.reservation import Reservation
 
 
@@ -36,7 +38,8 @@ class Device(DeviceBase, table=True):
     server: "Server" = Relationship(back_populates="devices")
     
     softwares: List["Software"] = Relationship(back_populates="devices", link_model=DeviceSoftware)
-    experiments: List["Experiment"] = Relationship(back_populates="device", cascade_delete=True)
+    experiments: List["Experiment"] = Relationship(back_populates="devices", link_model=ExperimentDevice)
+    experiment_logs: List["ExperimentLog"] = Relationship(back_populates="device")
     reservations: List["Reservation"] = Relationship(back_populates="device", cascade_delete=True)
 
 

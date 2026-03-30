@@ -11,6 +11,8 @@ from app.models.experiment import Command
 
 if TYPE_CHECKING:
     from app.models.experiment import Experiment
+    from app.models.device import Device
+    from app.models.server import Server
 
 
 class PydanticJSONB(TypeDecorator):
@@ -66,15 +68,25 @@ class ExperimentLog(ExperimentLogBase, table=True):
     experiment_id: int = Field(foreign_key="experiment.id")
     experiment: "Experiment" = Relationship(back_populates="experiment_logs")
 
+    device_id: int = Field(foreign_key="device.id")
+    device: "Device" = Relationship(back_populates="experiment_logs")
+
+    server_id: int = Field(foreign_key="server.id")
+    server: "Server" = Relationship(back_populates="experiment_logs")
+
 
 class ExperimentLogCreate(ExperimentLogBase):
     user_id: int
     experiment_id: int
+    device_id: int
+    server_id: int
 
 
 class ExperimentLogPublic(ExperimentLogBase):
     id: int
     user_id: int
+    device_id: int
+    server_id: int
     started_at: datetime
     modified_at: datetime
     deleted_at: datetime | None

@@ -77,7 +77,6 @@ function runExperiment() {
 
 const formData = ref<QueueFormData>({
     user_id: authStore.user?.id ?? null,
-    server_id: null,
     id: null,
     command: Command.START,
     input_arguments: {},
@@ -107,7 +106,13 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
         <v-card-title>{{ $t('dashboard.ongoing_experiment') }}</v-card-title>
 
         <v-card-text>
-            <ExperimentSelector fixed-command="" :loading="loading" :experiments="experimentsByDevice" @update:formData="handleFormDataUpdate" />
+            <ExperimentSelector
+                fixed-command=""
+                :loading="loading"
+                :experiments="experimentsByDevice"
+                :selected-device-id="props.reservation.device_id"
+                @update:formData="handleFormDataUpdate"
+            />
             <v-btn
                 v-if="experimentsByDevice.length > 0"
                 color="info"

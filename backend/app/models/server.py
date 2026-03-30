@@ -5,7 +5,7 @@ from app.models.utils import now
 
 if TYPE_CHECKING:
     from app.models.device import Device, DevicePublic
-    from app.models.experiment import Experiment
+    from app.models.experiment_log import ExperimentLog
 
 
 class ServerBase(SQLModel):
@@ -25,7 +25,7 @@ class Server(ServerBase, table=True):
     deleted_at: datetime | None = Field(default=None)
     # Relationships
     devices: List["Device"] = Relationship(back_populates="server")
-    experiments: List["Experiment"] = Relationship(back_populates="server")
+    experiment_logs: List["ExperimentLog"] = Relationship(back_populates="server")
 
 
 class ServerCreate(ServerBase):
@@ -42,13 +42,8 @@ class ServerPublic(ServerBase):
     deleted_at: datetime | None
 
 
-class ServerExperiment(SQLModel):
-    id: int
-    name: str
-
 class ServerPubDetailed(ServerPublic):
     devices: List["DevicePublic"] = []
-    experiments: List["Experiment"] = []
 
 
 class ServerUpdate(SQLModel):

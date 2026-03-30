@@ -52,14 +52,14 @@ export interface Experiment {
     output_arguments: string[];
     simulation_time: number;
     sample_rate: number;
-    server: Server;
-    device: Device;
+    devices: Device[];
     software: Software;
     schema_id?: number;
 }
 
 export interface ExperimentLog {
     id: number;
+    server_id: number;
     device_id: number;
     software_name: SoftwareName;
     runs: ExperimentRun[];

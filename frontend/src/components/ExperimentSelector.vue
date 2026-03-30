@@ -12,6 +12,7 @@ interface Props {
     loading: boolean;
     fixedCommand: string;
     experiments: Experiment[];
+    selectedDeviceId?: number | null;
 }
 
 const props = defineProps<Props>();
@@ -145,19 +146,31 @@ const selectedSetpointChanges = computed<QueueFormData['setpoint_changes']>(() =
     };
 });
 
-const experimentTitle = (e: Experiment) => `Experiment Id: ${e.id}  - ${e.server.name} | ${e.device.name} | ${e.software.name}`;
+const experimentPrimaryDevice = (e: Experiment | null) => {
+    if (!e) {
+        return null;
+    }
+
+    const selectedDevice = e.devices?.find((device) => device.id === props.selectedDeviceId);
+    return selectedDevice ?? e.devices?.[0] ?? null;
+};
+
+const experimentTitle = (e: Experiment) => {
+    const primaryDevice = experimentPrimaryDevice(e);
+    const deviceName = primaryDevice ? primaryDevice.name : 'No device';
+    return `Experiment Id: ${e.id} - ${deviceName} | ${e.software.name}`;
+};
 
 const formData = computed<QueueFormData>(() => {
     return {
         user_id: authStore.user?.id ?? null,
-        server_id: selectedExperiment.value?.server.id ?? null,
         id: selectedExperimentId.value,
         command: selectedCommand.value,
         input_arguments: inputArguments.value,
         output_arguments: selectedExperiment.value?.output_arguments ?? [],
         setpoint_changes: selectedSetpointChanges.value,
         schema_id: null,
-        device_id: selectedExperiment.value?.device.id ?? null,
+        device_id: props.selectedDeviceId ?? experimentPrimaryDevice(selectedExperiment.value)?.id ?? null,
         software_name: selectedExperiment.value?.software.name ?? null,
         simulation_time: simTime.value,
         sample_rate: sampleRate.value,
