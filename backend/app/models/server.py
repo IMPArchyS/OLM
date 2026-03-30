@@ -12,7 +12,7 @@ class ServerBase(SQLModel):
     name: str = Field(index=True)
     ip_address: str = Field(index=True, unique=True)
     api_domain: str = Field(index=True, unique=True)
-    websocket_port: int = Field(index=True, unique=True)
+    port: int = Field(index=True, unique=True)
 
 
 class Server(ServerBase, table=True):
@@ -55,7 +55,7 @@ class ServerUpdate(SQLModel):
     name: str | None = None
     ip_address: str | None = None
     api_domain: str | None = None
-    websocket_port: int | None = None  
+    port: int | None = None  
     available: bool | None = None
     production: bool | None = None 
     enabled: bool | None = None 

@@ -25,7 +25,7 @@ def resolve_url(server: Server):
         api_domain = "host.docker.internal"
 
     scheme = "https" if getattr(server, "https", False) else "http"
-    port = getattr(server, "websocket_port", None)
+    port = getattr(server, "port", None)
 
     base_url = f"{scheme}://{api_domain}"
     if port:

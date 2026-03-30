@@ -1,7 +1,7 @@
 """seed_test_data
 
 Revision ID: 4dbc1fd65d1c
-Revises: b0a0a3429377
+Revises: a0b7d4c1e9f8
 Create Date: 2026-03-01 20:27:35.260488
 
 """
@@ -17,7 +17,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '4dbc1fd65d1c'
-down_revision: Union[str, Sequence[str], None] = 'b0a0a3429377'
+down_revision: Union[str, Sequence[str], None] = 'a0b7d4c1e9f8'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -25,63 +25,62 @@ DEFAULT_SOFTWARE = [
     {
         "id": 1,
         "name": "openloop",
-        
     },
-    {
-        "id": 2,
-        "name": "matlab",
-    }
+    # {
+    #     "id": 2,
+    #     "name": "matlab"
+    # }
 ]
 DEFAULT_DEVICETYPE = [
     {
         "id": 1,
-        "name": "Arduino"
+        "name": "Sinusoid"
     }
 ]
 DEFAULT_SCHEMA = [
-    {
-        "id": 1,
-        "name": "IoT Schema",
-        "note": "Main IoT device schema",
-        "software_id": 2,
-        "device_type_id": 1,
-    }
+    # {
+    #     "id": 1,
+    #     "name": "IoT Schema",
+    #     "note": "Main IoT device schema",
+    #     "software_id": 2,
+    #     "device_type_id": 1,
+    # }
 ]
 DEFAULT_ARGUMENTS = [
-    {
-        "id": 1,
-        "name": "fan_voltage",
-        "label": "Fan Voltage",
-        "default_value": "5.0",
-        "row": 1,
-        "order": 1,
-        "schema_id": 1
-    },
-    {
-        "id": 2,
-        "name": "sampling_mode",
-        "label": "Sampling Mode",
-        "default_value": "continuous",
-        "row": 2,
-        "order": 2,
-        "schema_id": 1
-    }
+    # {
+    #     "id": 1,
+    #     "name": "fan_voltage",
+    #     "label": "Fan Voltage",
+    #     "default_value": "5.0",
+    #     "row": 1,
+    #     "order": 1,
+    #     "schema_id": 1
+    # },
+    # {
+    #     "id": 2,
+    #     "name": "sampling_mode",
+    #     "label": "Sampling Mode",
+    #     "default_value": "continuous",
+    #     "row": 2,
+    #     "order": 2,
+    #     "schema_id": 1
+    # }
 ]
 DEFAULT_OPTIONS = [
-    {
-        "id": 1,
-        "name": "voltage_low",
-        "value": "3.3V",
-        "output_value": "3.3",
-        "argument_id": 1
-    },
-    {
-        "id": 2,
-        "name": "voltage_medium",
-        "value": "5.0V",
-        "output_value": "5.0",
-        "argument_id": 1
-    }
+    # {
+    #     "id": 1,
+    #     "name": "voltage_low",
+    #     "value": "3.3V",
+    #     "output_value": "3.3",
+    #     "argument_id": 1
+    # },
+    # {
+    #     "id": 2,
+    #     "name": "voltage_medium",
+    #     "value": "5.0V",
+    #     "output_value": "5.0",
+    #     "argument_id": 1
+    # }
 ]
 DEFAULT_SERVER = [
     {
@@ -89,7 +88,7 @@ DEFAULT_SERVER = [
         "name": "Main",
         "ip_address": "127.0.0.1",
         "api_domain": "localhost",
-        "websocket_port": 8001,
+        "port": 8001,
         "available": False,
         "production": False,
         "enabled": False
@@ -98,7 +97,7 @@ DEFAULT_SERVER = [
 DEFAULT_DEVICE = [
     {
         "id": 1,
-        "name": "tom1a",
+        "name": "Sinusoid 1",
         "remote_id": 0,
         "device_type_id": 1,
         "server_id": 1
@@ -109,11 +108,6 @@ DEFAULT_DEVICESOFTWARE = [
         "id":1,
         "device_id":1,
         "software_id":1
-    },
-    {
-        "id":2,
-        "device_id":1,
-        "software_id":2,
     }
 ]
 DEFAULT_EXPERIMENT = [
@@ -124,67 +118,17 @@ DEFAULT_EXPERIMENT = [
             "sin_amplitude": {
                 "value": 0,
                 "type": "number",
-                "unit": "V"
+                "unit": "Hz",
+                "order": 1
             },
             "sin_frequency": {
                 "value": 0,
                 "type": "number",
-                "unit": "A"
+                "unit": "Hz",
+                "order": 2
             }
         },
         "output_arguments": ["sin_y"],
-        "server_id": 1,
-        "device_type_id": 1,
-        "device_id": 1,
-        "software_id": 1
-    },
-    {
-        "id": 2,
-        "commands": ["start", "change", "stop"],
-        "input_arguments": {
-            "cos_amplitude": {
-                "value": 0,
-                "type": "number",
-                "unit": "V"
-            },
-            "cos_frequency": {
-                "value": 0,
-                "type": "number",
-                "unit": "A"
-            }
-        },
-        "output_arguments": ["cos_y"],
-        "server_id": 1,
-        "device_type_id": 1,
-        "device_id": 1,
-        "software_id": 1
-    },
-    {
-        "id": 3,
-        "commands": ["start", "change", "stop"],
-        "input_arguments": {
-            "sin_amplitude": {
-                "value": 0,
-                "type": "number",
-                "unit": "V"
-            },
-            "sin_frequency": {
-                "value": 0,
-                "type": "number",
-                "unit": "A"
-            },
-            "cos_amplitude": {
-                "value": 0,
-                "type": "number",
-                "unit": "V"
-            },
-            "cos_frequency": {
-                "value": 0,
-                "type": "number",
-                "unit": "A"
-            }
-        },
-        "output_arguments": ["sin_y", "cos_y"],
         "server_id": 1,
         "device_type_id": 1,
         "device_id": 1,
@@ -281,15 +225,15 @@ def upgrade() -> None:
         op.execute(
             sa.text(
                 """
-                INSERT INTO server (id, name, ip_address, api_domain, websocket_port, available, production, enabled, created_at, modified_at)
-                VALUES (:id, :name, :ip_address, :api_domain, :websocket_port, :available, :production, :enabled, :created_at, :modified_at)
+                INSERT INTO server (id, name, ip_address, api_domain, port, available, production, enabled, created_at, modified_at)
+                VALUES (:id, :name, :ip_address, :api_domain, :port, :available, :production, :enabled, :created_at, :modified_at)
                 """
             ).bindparams(
                 sa.bindparam("id", value=provider["id"]),
                 sa.bindparam("name", value=provider["name"]),
                 sa.bindparam("ip_address", value=provider["ip_address"]),
                 sa.bindparam("api_domain", value=provider["api_domain"]),
-                sa.bindparam("websocket_port", value=provider["websocket_port"]),
+                sa.bindparam("port", value=provider["port"]),
                 sa.bindparam("available", value=provider["available"]),
                 sa.bindparam("production", value=provider["production"]),
                 sa.bindparam("enabled", value=provider["enabled"]),
@@ -353,6 +297,7 @@ def upgrade() -> None:
             DECLARE
                 target_table text;
                 target_sequence text;
+                max_id bigint;
             BEGIN
                 FOREACH target_table IN ARRAY ARRAY[
                     'software',
@@ -369,11 +314,14 @@ def upgrade() -> None:
                     INTO target_sequence;
 
                     IF target_sequence IS NOT NULL THEN
-                        EXECUTE format(
-                            'SELECT setval(%L, COALESCE(MAX(id), 0), true) FROM %I',
-                            target_sequence,
-                            target_table
-                        );
+                        EXECUTE format('SELECT MAX(id) FROM %I', target_table)
+                        INTO max_id;
+
+                        IF max_id IS NULL THEN
+                            EXECUTE format('SELECT setval(%L, 1, false)', target_sequence);
+                        ELSE
+                            EXECUTE format('SELECT setval(%L, %s, true)', target_sequence, max_id);
+                        END IF;
                     END IF;
                 END LOOP;
             END $$;

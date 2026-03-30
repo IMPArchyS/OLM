@@ -7,6 +7,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import TypeDecorator
 
 from app.models.utils import now
+from app.models.experiment import Command
 
 if TYPE_CHECKING:
     from app.models.experiment import Experiment
@@ -29,17 +30,20 @@ class PydanticJSONB(TypeDecorator):
         return to_jsonable(value)
 
 
+class ExperimentInputHistoryItem(BaseModel):
+    command: Command
+    input_args: dict[str, Any]
+    
+
+
 class ExperimentRun(BaseModel):
-    input_history: list[dict[str, Any]] | dict[str, Any]
+    input_history: list[ExperimentInputHistoryItem]
     output_history: list[dict[str, Any]]
-    started_at: datetime
-    finished_at: datetime | None
-    stopped_at: datetime | None
-    timedout_at: datetime | None
 
 
 class ExperimentLogBase(SQLModel):
-    runs: list[ExperimentRun] | None = Field(default=None, sa_column=Column(PydanticJSONB))
+    # Field(default=None, sa_column=Column(PydanticJSONB)) 
+    run: ExperimentRun | None = Field(default=None, sa_type=JSONB)
     note: str | None = Field(default=None, index=True)
 
 
@@ -51,8 +55,13 @@ class ExperimentLog(ExperimentLogBase, table=True):
     
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
-    closed_at: datetime | None = Field(default=None)
     deleted_at: datetime | None = Field(default=None)
+    
+    started_at: datetime = Field(default=None)
+    finished_at: datetime | None = Field(default=None)
+    stopped_at: datetime | None = Field(default=None)
+    timedout_at: datetime | None = Field(default=None)
+    
     # Relationships
     experiment_id: int = Field(foreign_key="experiment.id")
     experiment: "Experiment" = Relationship(back_populates="experiment_logs")
@@ -66,10 +75,10 @@ class ExperimentLogCreate(ExperimentLogBase):
 class ExperimentLogPublic(ExperimentLogBase):
     id: int
     user_id: int
-    created_at: datetime
+    started_at: datetime
     modified_at: datetime
     deleted_at: datetime | None
 
 
 class ExperimentLogUpdate(ExperimentLogBase):
-    closed_at: datetime 
+    finished_at: datetime 
