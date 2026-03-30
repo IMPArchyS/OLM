@@ -19,6 +19,15 @@ const { experimentsByDevice, loading, error, fetchExperimentsByDevice } = useExp
 const websocketRef = ref<WebSocket | null>(null);
 const websocketMessage = ref('');
 
+function buildWebSocketUrl(accessToken: string) {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
+    const resolvedApiUrl = new URL(apiBaseUrl, window.location.origin);
+    const wsProtocol = resolvedApiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    const websocketUrl = new URL('/ws/reservation/current', `${wsProtocol}//${resolvedApiUrl.host}`);
+    websocketUrl.searchParams.set('access_token', accessToken);
+    return websocketUrl.toString();
+}
+
 function closeWebSocket() {
     const websocket = websocketRef.value;
     if (!websocket) return;
@@ -44,35 +53,43 @@ function runExperiment() {
 
     console.log(JSON.stringify(formData.value, null, 2));
 
-    // websocketMessage.value = '';
-    // closeWebSocket();
+    websocketMessage.value = '';
+    closeWebSocket();
 
-    // const websocket = new WebSocket(`ws://localhost:8000/ws/test`);
-    // websocketRef.value = websocket;
+    const accessToken = authStore.accessToken || localStorage.getItem('OLMAccessToken');
+    if (!accessToken) {
+        websocketMessage.value = 'Authentication required before starting the experiment.';
+        showError('Authentication required before starting the experiment.');
+        return;
+    }
 
-    // websocket.onopen = () => {
-    //     console.log('WebSocket Created');
-    // };
+    const websocket = new WebSocket(buildWebSocketUrl(accessToken));
+    websocketRef.value = websocket;
 
-    // websocket.onmessage = (event) => {
-    //     websocketMessage.value = String(event.data);
-    //     console.log('WebSocket response:', event.data);
-    // };
+    websocket.onopen = () => {
+        console.log('WebSocket Created');
+        websocket.send(JSON.stringify(formData.value));
+    };
 
-    // websocket.onerror = (error) => {
-    //     websocketMessage.value = 'WebSocket error. Please try running the experiment again.';
-    //     console.error('WebSocket error:', error);
-    // };
+    websocket.onmessage = (event) => {
+        websocketMessage.value = String(event.data);
+        console.log('WebSocket response:', event.data);
+    };
 
-    // websocket.onclose = () => {
-    //     websocketRef.value = null;
-    //     if (!websocketMessage.value) {
-    //         websocketMessage.value = 'WebSocket closed.';
-    //     } else {
-    //         websocketMessage.value = `${websocketMessage.value} (connection closed)`;
-    //     }
-    //     console.log('WebSocket closed');
-    // };
+    websocket.onerror = (error) => {
+        websocketMessage.value = 'WebSocket error. Please try running the experiment again.';
+        console.error('WebSocket error:', error);
+    };
+
+    websocket.onclose = () => {
+        websocketRef.value = null;
+        if (!websocketMessage.value) {
+            websocketMessage.value = 'WebSocket closed.';
+        } else {
+            websocketMessage.value = `${websocketMessage.value} (connection closed)`;
+        }
+        console.log('WebSocket closed');
+    };
 }
 
 const formData = ref<QueueFormData>({

@@ -12,11 +12,15 @@ app = FastAPI()
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
+    method = request.scope.get("method", "websocket")
+    path = request.scope.get("path", str(request.url.path))
+    client = request.client.host if request.client else "unknown"
+
     logger.error(
         f"HTTPException: {exc.status_code} {exc.detail} | "
-        f"Method: {request.method} | "
-        f"URL: {request.url.path} | "
-        f"Client: {request.client.host if request.client else 'unknown'}"
+        f"Method: {method} | "
+        f"URL: {path} | "
+        f"Client: {client}"
     )
     return JSONResponse(
         status_code=exc.status_code,
