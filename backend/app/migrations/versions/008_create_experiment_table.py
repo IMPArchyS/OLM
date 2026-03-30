@@ -1,7 +1,7 @@
 """create_experiment_table
 
-Revision ID: 70f1e65b9ab2
-Revises: 60ea07f20b63
+Revision ID: 008_create_experiment_table
+Revises: 007_create_device_software_table
 Create Date: 2026-03-30 12:16:00.000000
 
 """
@@ -13,8 +13,8 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision: str = '70f1e65b9ab2'
-down_revision: Union[str, Sequence[str], None] = '60ea07f20b63'
+revision: str = '008_create_experiment_table'
+down_revision: Union[str, Sequence[str], None] = '007_create_device_software_table'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -22,10 +22,10 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     op.create_table('experiment',
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('commands', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('input_arguments', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('output_arguments', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('device_remote_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('modified_at', sa.DateTime(), nullable=False),

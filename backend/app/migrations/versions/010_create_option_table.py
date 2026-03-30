@@ -1,7 +1,7 @@
 """create_option_table
 
-Revision ID: 90a5e3f33d6b
-Revises: 80bc6b2ec7f4
+Revision ID: 010_create_option_table
+Revises: 009_create_reservation_table
 Create Date: 2026-03-30 12:18:00.000000
 
 """
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '90a5e3f33d6b'
-down_revision: Union[str, Sequence[str], None] = '80bc6b2ec7f4'
+revision: str = '010_create_option_table'
+down_revision: Union[str, Sequence[str], None] = '009_create_reservation_table'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -21,10 +21,10 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     op.create_table('option',
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('value', sa.String(), nullable=False),
     sa.Column('output_value', sa.String(), nullable=False),
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('modified_at', sa.DateTime(), nullable=False),
     sa.Column('argument_id', sa.Integer(), nullable=True),

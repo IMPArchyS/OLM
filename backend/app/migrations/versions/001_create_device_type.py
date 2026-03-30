@@ -1,6 +1,6 @@
 """initial
 
-Revision ID: b0a0a3429377
+Revision ID: 001_create_device_type
 Revises: 
 Create Date: 2026-03-01 20:26:49.001088
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'b0a0a3429377'
+revision: str = '001_create_device_type'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -21,8 +21,8 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     op.create_table('device_type',
-    sa.Column('name', sa.String(), nullable=False),
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('modified_at', sa.DateTime(), nullable=False),
     sa.PrimaryKeyConstraint('id')

@@ -1,7 +1,7 @@
 """create_device_software_table
 
-Revision ID: 60ea07f20b63
-Revises: 50d67c89d013
+Revision ID: 007_create_device_software_table
+Revises: 006_create_argument_table
 Create Date: 2026-03-30 12:15:00.000000
 
 """
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '60ea07f20b63'
-down_revision: Union[str, Sequence[str], None] = '50d67c89d013'
+revision: str = '007_create_device_software_table'
+down_revision: Union[str, Sequence[str], None] = '006_create_argument_table'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

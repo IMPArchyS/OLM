@@ -1,7 +1,7 @@
 """create_argument_table
 
-Revision ID: 50d67c89d013
-Revises: 40f8a0f6aa73
+Revision ID: 006_create_argument_table
+Revises: 005_create_schema_table
 Create Date: 2026-03-30 12:14:00.000000
 
 """
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '50d67c89d013'
-down_revision: Union[str, Sequence[str], None] = '40f8a0f6aa73'
+revision: str = '006_create_argument_table'
+down_revision: Union[str, Sequence[str], None] = '005_create_schema_table'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -21,12 +21,12 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     op.create_table('argument',
+    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('label', sa.String(), nullable=False),
     sa.Column('default_value', sa.String(), nullable=False),
     sa.Column('row', sa.Integer(), nullable=False),
     sa.Column('order', sa.Integer(), nullable=False),
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('modified_at', sa.DateTime(), nullable=False),
     sa.Column('schema_id', sa.Integer(), nullable=True),
