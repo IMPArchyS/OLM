@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, List
+from pydantic import BaseModel, ConfigDict
 from sqlmodel import Field, Relationship, SQLModel
 from app.models.utils import now
 from app.models.device_software import DeviceSoftware
@@ -37,5 +38,5 @@ class SoftwareUpdate(SoftwareBase):
     pass 
 
 
-class SoftwareSync(SoftwareBase):
-    id: int 
+class SoftwareSyncPayload(BaseModel):
+    name: str

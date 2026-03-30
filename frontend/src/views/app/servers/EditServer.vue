@@ -99,10 +99,10 @@ const handleCancel = () => {
                         required
                     ></v-text-field>
 
-                    <!-- WebSocket Port -->
+                    <!-- Port -->
                     <v-text-field
-                        v-model.number="formData.websocket_port"
-                        label="WebSocket Port"
+                        v-model.number="formData.port"
+                        label="Port"
                         :rules="portRules"
                         type="number"
                         variant="outlined"

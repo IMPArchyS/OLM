@@ -23,7 +23,7 @@ export function useServers() {
     const domainRules = [(v: string) => !!v || `${t('servers.apiDomain')} ${t('validation.required')}`];
 
     const portRules = [
-        (v: number) => !!v || `${t('servers.wsPort')} ${t('validation.required')}`,
+        (v: number) => !!v || `${t('servers.port')} ${t('validation.required')}`,
         (v: number) => (v > 0 && v <= 65535) || t('validation.invalidPortRange'),
     ];
 

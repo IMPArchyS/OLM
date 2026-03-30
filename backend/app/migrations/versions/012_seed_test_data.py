@@ -34,7 +34,7 @@ DEFAULT_SOFTWARE = [
 DEFAULT_DEVICETYPE = [
     {
         "id": 1,
-        "name": "Sinusoid"
+        "name": "sinusoid"
     }
 ]
 DEFAULT_SCHEMA = [
@@ -97,8 +97,7 @@ DEFAULT_SERVER = [
 DEFAULT_DEVICE = [
     {
         "id": 1,
-        "name": "Sinusoid 1",
-        "remote_id": 0,
+        "name": "sinusoid 1",
         "device_type_id": 1,
         "server_id": 1
     }

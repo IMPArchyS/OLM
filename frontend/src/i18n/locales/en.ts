@@ -81,7 +81,7 @@ export default {
         serverName: 'Server Name',
         serverIP: 'Server IP',
         serverStatus: 'Server Status',
-        wsPort: 'WebSocket Port',
+        port: 'Port',
         id: 'ID',
         name: 'Name',
         ipAddress: 'IP Address',

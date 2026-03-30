@@ -16,7 +16,7 @@ const currentServer = ref<Server>({
     name: '',
     ip_address: '',
     api_domain: '',
-    websocket_port: 0,
+    port: 0,
 });
 const { nameRules, ipRules, domainRules, portRules, getServerById, syncServer, restoreServer } = useServers();
 const { params } = useRoute();
@@ -115,10 +115,10 @@ const handleBack = () => {
                     readonly
                 ></v-text-field>
 
-                <!-- WebSocket Port -->
+                <!-- Port -->
                 <v-text-field
-                    v-model.number="currentServer.websocket_port"
-                    label="WebSocket Port"
+                    v-model.number="currentServer.port"
+                    label="Port"
                     :rules="portRules"
                     type="number"
                     variant="outlined"

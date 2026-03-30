@@ -57,8 +57,7 @@ class ExperimentBase(SQLModel):
 
 class Experiment(ExperimentBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    
-    device_remote_id: int | None = Field(default=None)
+
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
     deleted_at: datetime | None = Field(default=None)
@@ -106,8 +105,8 @@ class ExperimentQueue(SQLModel):
     simulation_time: int
     sample_rate: int 
     software_name: SoftwareName
-    device_id: int                    # via remote id          
-    schema_id: int | None             # via remote id
+    device_id: int
+    schema_id: int | None
     
     @model_validator(mode="before")
     @classmethod

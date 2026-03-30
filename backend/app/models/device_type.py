@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, List
+from pydantic import BaseModel, ConfigDict
 from sqlmodel import Field, Relationship, SQLModel
 from app.models.utils import now
 from app.models.schema import Schema
@@ -38,5 +39,5 @@ class DeviceTypeUpdate(DeviceTypeBase):
     pass 
 
 
-class DeviceTypeSync(DeviceTypeBase):
-    id: int
+class DeviceTypeSyncPayload(BaseModel):
+    name: str

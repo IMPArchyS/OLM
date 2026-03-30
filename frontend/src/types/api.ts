@@ -3,7 +3,7 @@ export interface Server {
     name: string;
     ip_address: string;
     api_domain: string;
-    websocket_port: number;
+    port: number;
     available?: boolean;
     production?: boolean;
     enabled?: boolean;

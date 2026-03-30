@@ -25,7 +25,6 @@ def upgrade() -> None:
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('maintenance_start', sa.Time(), nullable=True),
     sa.Column('maintenance_end', sa.Time(), nullable=True),
-    sa.Column('remote_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('modified_at', sa.DateTime(), nullable=False),
     sa.Column('deleted_at', sa.DateTime(), nullable=True),

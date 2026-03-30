@@ -80,7 +80,7 @@ export default {
         serverName: 'Názov servera',
         serverIP: 'IP servera',
         serverStatus: 'Stav servera',
-        wsPort: 'WebSocket Port',
+        port: 'Port',
         id: 'ID',
         name: 'Názov',
         ipAddress: 'IP Adresa',

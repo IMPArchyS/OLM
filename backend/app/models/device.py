@@ -1,8 +1,9 @@
 from datetime import datetime, time
 from typing import TYPE_CHECKING, List
+from pydantic import BaseModel, ConfigDict, Field as PydanticField, model_validator
 from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
-from app.models.device_type import DeviceTypePublic
-from app.models.software import SoftwarePublic
+from app.models.device_type import DeviceTypePublic, DeviceTypeSyncPayload
+from app.models.software import SoftwarePublic, SoftwareSyncPayload
 from app.models.utils import now
 from app.models.device_software import DeviceSoftware
 
@@ -23,8 +24,7 @@ class DeviceBase(SQLModel):
 class Device(DeviceBase, table=True):
     __table_args__ = (UniqueConstraint("server_id", "name", name="uq_device_server_name"),)
     id: int | None = Field(default=None, primary_key=True)
-    
-    remote_id: int | None = Field(default=None)
+
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
     deleted_at: datetime | None = Field(default=None)
@@ -47,7 +47,6 @@ class DeviceCreate(DeviceBase):
 
 class DevicePublic(DeviceBase):
     id: int
-    remote_id: int | None
     created_at: datetime
     modified_at: datetime
     deleted_at: datetime | None
@@ -68,3 +67,17 @@ class DeviceWithSoftware(DeviceBase):
     deleted_at: datetime | None
     device_type: DeviceTypePublic
     softwares: list[SoftwarePublic]
+
+
+class DeviceSyncPayload(BaseModel):
+    name: str
+    device_type: DeviceTypeSyncPayload
+    maintenance_start: time | None = None
+    maintenance_end: time | None = None
+    software: list[SoftwareSyncPayload] = PydanticField(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_maintenance_window(self):
+        if self.maintenance_start and self.maintenance_end and self.maintenance_start > self.maintenance_end:
+            raise ValueError("maintenance_start cannot be after maintenance_end")
+        return self

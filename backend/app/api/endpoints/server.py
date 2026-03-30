@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, status
 import httpx
+import threading
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
@@ -14,6 +15,22 @@ from app.core.config import settings
 
 
 router = APIRouter()
+
+_sync_state_lock = threading.Lock()
+_sync_in_progress_server_ids: set[int] = set()
+
+
+def try_start_server_sync(server_id: int) -> bool:
+    with _sync_state_lock:
+        if server_id in _sync_in_progress_server_ids:
+            return False
+        _sync_in_progress_server_ids.add(server_id)
+        return True
+
+
+def finish_server_sync(server_id: int) -> None:
+    with _sync_state_lock:
+        _sync_in_progress_server_ids.discard(server_id)
 
 
 def resolve_url(server: Server):
@@ -57,21 +74,30 @@ def sync(db: DbSession, id: int):
     if not db_server:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
 
-    health_url = resolve_url(db_server)
-    if not health_url:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Server missing domain!")
-    
-    health_url += "/api/server/sync"
-    db_server.available = ping_remote_server(db, ServerPublic.model_validate(db_server), health_url)
+    if not try_start_server_sync(id):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Sync already in progress for server {id}",
+        )
 
-    db.add(db_server)
-    db.commit()
-    db.refresh(db_server)
+    try:
+        health_url = resolve_url(db_server)
+        if not health_url:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Server missing domain!")
+        
+        health_url += "/api/server/sync"
+        db_server.available = ping_remote_server(db, ServerPublic.model_validate(db_server), health_url)
 
-    return {
-        "id": db_server.id,
-        "available": db_server.available,
-    }
+        db.add(db_server)
+        db.commit()
+        db.refresh(db_server)
+
+        return {
+            "id": db_server.id,
+            "available": db_server.available,
+        }
+    finally:
+        finish_server_sync(id)
 
 
 @router.post("/sync_all", status_code=status.HTTP_200_OK)
@@ -80,22 +106,35 @@ def sync_all(db: DbSession):
     
     results = []
     for db_server in servers:
-        health_url = resolve_url(db_server)
-        if not health_url:
-            results.append({"id": db_server.id, "available": False, "error": "Server missing domain"})
+        if not try_start_server_sync(db_server.id):
+            results.append(
+                {
+                    "id": db_server.id,
+                    "available": db_server.available,
+                    "skipped": "sync_in_progress",
+                }
+            )
             continue
-        
-        health_url += "/api/server/sync"
-        db_server.available = ping_remote_server(db, ServerPublic.model_validate(db_server), health_url)
 
-        db.add(db_server)
-        db.commit()
-        results.append(
-            {
-                "id": db_server.id,
-                "available": db_server.available,
-            }
-        )
+        try:
+            health_url = resolve_url(db_server)
+            if not health_url:
+                results.append({"id": db_server.id, "available": False, "error": "Server missing domain"})
+                continue
+            
+            health_url += "/api/server/sync"
+            db_server.available = ping_remote_server(db, ServerPublic.model_validate(db_server), health_url)
+
+            db.add(db_server)
+            db.commit()
+            results.append(
+                {
+                    "id": db_server.id,
+                    "available": db_server.available,
+                }
+            )
+        finally:
+            finish_server_sync(db_server.id)
     
     return results
 
