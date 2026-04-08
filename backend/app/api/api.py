@@ -13,6 +13,7 @@ from app.api.endpoints import (
     software,
     reservation,
     auth,
+    webrtc,
 )
 
 
@@ -23,6 +24,12 @@ api_router.include_router(
     auth.router,
     prefix="/api/auth",
     tags=["Auth"],
+)
+
+api_router.include_router(
+    webrtc.router,
+    prefix="/api/webrtc",
+    tags=["webrtc"],
 )
 
 api_router.include_router(
@@ -67,23 +74,23 @@ api_router.include_router(
     tags=["Experiment Logs"],
 )
 
-api_router.include_router(
-    schema.router,
-    prefix="/api/schema",
-    tags=["Schemas"],
-)
+# api_router.include_router(
+#     schema.router,
+#     prefix="/api/schema",
+#     tags=["Schemas"],
+# )
 
-api_router.include_router(
-    argument.router,
-    prefix="/api/argument",
-    tags=["Argument"],
-)
+# api_router.include_router(
+#     argument.router,
+#     prefix="/api/argument",
+#     tags=["Argument"],
+# )
 
-api_router.include_router(
-    option.router,
-    prefix="/api/option",
-    tags=["Option"],
-)
+# api_router.include_router(
+#     option.router,
+#     prefix="/api/option",
+#     tags=["Option"],
+# )
 
 api_router.include_router(
     ws_router,

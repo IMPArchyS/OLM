@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import ExperimentSandbox from '@/components/ExperimentSandbox.vue';
 import type { Reservation } from '@/types/api';
 import { apiClient } from '@/composables/useAxios';
+import CameraView from '@/components/dashboard/CameraView.vue';
+import { useServers } from '@/composables/useServers';
+import { useDevices } from '@/composables/useDevices';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -12,6 +14,13 @@ const router = useRouter();
 const reservations = ref<Reservation[]>([]);
 const loading = ref(true);
 const currentTime = ref(new Date());
+const resolvingCameraTarget = ref(false);
+const cameraDeviceName = ref('');
+const cameraServerId = ref(0);
+
+const { servers, fetchServers } = useServers();
+const { devices, fetchDevicesByServer } = useDevices();
+
 let refreshInterval: number | null = null;
 
 const now = computed(() => currentTime.value);
@@ -59,20 +68,66 @@ const fetchReservations = async () => {
     }
 };
 
+const resolveCameraTarget = async (deviceId: number): Promise<void> => {
+    cameraDeviceName.value = '';
+    cameraServerId.value = 0;
+
+    if (!Number.isFinite(deviceId) || deviceId <= 0) {
+        return;
+    }
+
+    resolvingCameraTarget.value = true;
+
+    try {
+        if (servers.value.length === 0) {
+            await fetchServers();
+        }
+
+        for (const server of servers.value) {
+            await fetchDevicesByServer(server.id);
+            const matchedDevice = devices.value.find((device) => device.id === deviceId);
+
+            if (matchedDevice) {
+                cameraDeviceName.value = matchedDevice.name;
+                cameraServerId.value = server.id;
+                return;
+            }
+        }
+    } catch (e) {
+        console.error('Failed to resolve camera target from reservation device_id:', e);
+    } finally {
+        resolvingCameraTarget.value = false;
+    }
+};
+
+watch(
+    activeReservation,
+    (reservation) => {
+        if (!reservation) {
+            cameraDeviceName.value = '';
+            cameraServerId.value = 0;
+            return;
+        }
+
+        void resolveCameraTarget(reservation.device_id);
+    },
+    { immediate: true },
+);
+
 onMounted(async () => {
     loading.value = true;
     await fetchReservations();
     loading.value = false;
 
-    // Update current time every second for precise real-time updates
-    refreshInterval = window.setInterval(() => {
-        currentTime.value = new Date();
-    }, 1000);
+    // // Update current time every second for precise real-time updates
+    // refreshInterval = window.setInterval(() => {
+    //     currentTime.value = new Date();
+    // }, 1000);
 
-    // Refetch reservations every 5 minutes to get latest data
-    window.setInterval(() => {
-        fetchReservations();
-    }, 300000);
+    // // Refetch reservations every 5 minutes to get latest data
+    // window.setInterval(() => {
+    //     fetchReservations();
+    // }, 300000);
 });
 
 onUnmounted(() => {
@@ -108,7 +163,12 @@ onUnmounted(() => {
                             </p>
                         </div>
                     </v-alert>
-                    <ExperimentSandbox :reservation="activeReservation" />
+                    <!-- <ExperimentSandbox :reservation="activeReservation" /> -->
+                    <v-alert v-if="resolvingCameraTarget" type="info" variant="tonal" class="mt-4">Resolving camera target...</v-alert>
+                    <v-alert v-else-if="!cameraDeviceName || !cameraServerId" type="warning" variant="tonal" class="mt-4">
+                        Unable to resolve server/device for camera stream from this reservation.
+                    </v-alert>
+                    <CameraView v-else :device_name="cameraDeviceName" :server_id="cameraServerId" />
                 </div>
 
                 <!-- Next Reservation -->

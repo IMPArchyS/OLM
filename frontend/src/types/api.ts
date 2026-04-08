@@ -20,6 +20,8 @@ export interface Reservation {
     start: string;
     end: string;
     device_id: number;
+    device_name?: string;
+    server_id?: number;
     user_id: number;
     username?: string;
 }
