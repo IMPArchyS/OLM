@@ -17,6 +17,10 @@ const handleLangChange = (targetLangKey: string) => {
     current.value = targetLangKey;
     locale.value = targetLangKey;
 };
+
+onMounted(() => {
+    locale.value = localStorage.getItem('locale') ?? 'sk';
+});
 </script>
 
 <template>

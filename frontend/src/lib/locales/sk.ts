@@ -36,6 +36,7 @@ export default {
     },
     validation: {
         required: 'povinné pole',
+        requiredWithField: '{field} je povinné pole',
         invalidFormat: 'Neplatný formát',
         invalidIpFormat: 'Neplatný formát IP adresy',
         invalidPortRange: 'Port musí byť medzi 1 a 65535',

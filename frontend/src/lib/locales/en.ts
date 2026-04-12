@@ -19,6 +19,7 @@ export default {
         email: 'Email',
         password: 'Password',
         confirmPassword: 'Confirm Password',
+        name: 'Name',
         username: 'Username',
         alreadyAccount: 'Already have an account? Login',
         createAccount: 'Create an Account',
@@ -37,6 +38,7 @@ export default {
     },
     validation: {
         required: 'is required',
+        requiredWithField: '{field} is required',
         invalidFormat: 'Invalid Format',
         invalidIpFormat: 'Invalid IP address format',
         invalidPortRange: 'Port must be between 1 and 65535',

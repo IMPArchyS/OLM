@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
 import { useToastStore } from '@/stores/toast';
+import rules from '@/utils/validationRules';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -16,10 +17,6 @@ const password = ref('');
 const confirmPassword = ref('');
 const showPassword = ref(false);
 const isSubmitting = ref(false);
-
-const emailRules = [(v: string) => !!v || t('auth.emailRequired'), (v: string) => /.+@.+\..+/.test(v) || t('auth.invalidEmail')];
-const passwordRules = [(v: string) => !!v || t('auth.passwordRequired')];
-const nameRules = [(v: string) => !!v || t('auth.nameRequired')];
 
 const handleRegister = async () => {
     if (isSubmitting.value) return;
@@ -51,7 +48,7 @@ const handleRegister = async () => {
                     v-model="name"
                     prepend-inner-icon="mdi-rename"
                     :label="$t('auth.name')"
-                    :rules="nameRules"
+                    :rules="[rules.requiredFor(t('auth.name'))]"
                     variant="outlined"
                     density="comfortable"
                     required
@@ -63,7 +60,7 @@ const handleRegister = async () => {
                     prepend-inner-icon="mdi-email-outline"
                     :label="$t('auth.email')"
                     type="email"
-                    :rules="emailRules"
+                    :rules="[rules.validEmail, rules.requiredFor(t('auth.email'))]"
                     variant="outlined"
                     density="comfortable"
                     required
@@ -75,7 +72,7 @@ const handleRegister = async () => {
                     prepend-inner-icon="mdi-lock-outline"
                     :label="$t('auth.password')"
                     :type="showPassword ? 'text' : 'password'"
-                    :rules="passwordRules"
+                    :rules="[rules.requiredFor(t('auth.password'))]"
                     variant="outlined"
                     density="comfortable"
                     :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
@@ -89,7 +86,7 @@ const handleRegister = async () => {
                     prepend-inner-icon="mdi-repeat-variant"
                     :label="$t('auth.confirmPassword')"
                     :type="showPassword ? 'text' : 'password'"
-                    :rules="passwordRules"
+                    :rules="[rules.requiredFor(t('auth.confirmPassword'))]"
                     variant="outlined"
                     density="comfortable"
                     required

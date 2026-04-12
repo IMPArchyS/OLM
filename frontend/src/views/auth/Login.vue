@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
 import { useToastStore } from '@/stores/toast';
+import rules from '@/utils/validationRules';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -16,12 +17,6 @@ const password = ref('');
 const isSubmitting = ref(false);
 const showPassword = ref(false);
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const emailRules = [
-    (value: string) => !!value || `${t('auth.email')} ${t('validation.required_male')}`,
-    (value: string) => emailRegex.test(value) || t('validation.invalidFormat'),
-];
-
 onMounted(async () => {
     await authStore.fetchProviders();
 
@@ -32,11 +27,6 @@ onMounted(async () => {
 
 const handleLogin = async () => {
     if (isSubmitting.value) return;
-
-    if (!emailRegex.test(username.value)) {
-        toast.error(t('validation.invalidFormat'));
-        return;
-    }
 
     isSubmitting.value = true;
 
@@ -83,7 +73,7 @@ const handleOauthLogin = (provider: string) => {
                     prepend-inner-icon="mdi-email-outline"
                     :label="$t('auth.email')"
                     type="email"
-                    :rules="emailRules"
+                    :rules="[rules.validEmail, rules.requiredFor(t('auth.email'))]"
                     variant="outlined"
                     density="comfortable"
                     required
@@ -96,6 +86,7 @@ const handleOauthLogin = (provider: string) => {
                     :label="$t('auth.password')"
                     :type="showPassword ? 'text' : 'password'"
                     variant="outlined"
+                    :rules="[rules.requiredFor(t('auth.password'))]"
                     density="comfortable"
                     :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
                     @click:append-inner="showPassword = !showPassword"
