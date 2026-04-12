@@ -1,24 +1,22 @@
 <script setup lang="ts">
-import { useLanguageStore } from '@/stores/language';
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useLocale } from 'vuetify';
 
-const languageStore = useLanguageStore();
 const isOpen = ref(false);
 const { locale } = useI18n();
+const { current } = useLocale();
 
-const selectLanguage = (langCode: string) => {
-    languageStore.setLanguage(langCode);
-    locale.value = langCode;
-    isOpen.value = false;
+const langOptions = [
+    { label: 'SK', key: 'sk' },
+    { label: 'EN', key: 'en' },
+];
+
+const handleLangChange = (targetLangKey: string) => {
+    localStorage.setItem('locale', targetLangKey);
+    current.value = targetLangKey;
+    locale.value = targetLangKey;
 };
-
-watch(
-    () => languageStore.currentLanguage.code,
-    (newCode) => {
-        locale.value = newCode;
-    },
-);
 </script>
 
 <template>
@@ -26,7 +24,7 @@ watch(
         <template v-slot:activator="{ props }">
             <v-btn v-bind="props" variant="text">
                 <span style="font-weight: 500">
-                    {{ languageStore.currentLanguage.code.toUpperCase() }}
+                    {{ current.toUpperCase() }}
                 </span>
                 <v-icon
                     :style="{
@@ -40,13 +38,8 @@ watch(
         </template>
 
         <v-list>
-            <v-list-item
-                v-for="lang in languageStore.languages"
-                :key="lang.code"
-                @click="selectLanguage(lang.code)"
-                :active="lang.code === languageStore.currentLanguage.code"
-            >
-                <v-list-item-title>{{ lang.name }}</v-list-item-title>
+            <v-list-item v-for="lang in langOptions" :key="lang.key" @click="handleLangChange(lang.key)" :active="lang.key === current">
+                <v-list-item-title>{{ lang.label }}</v-list-item-title>
             </v-list-item>
         </v-list>
     </v-menu>

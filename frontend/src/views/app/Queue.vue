@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import ExperimentSelector from '@/components/ExperimentSelector.vue';
+import ExperimentSelector from '@/components/experiments/ExperimentSelector.vue';
 import { useI18n } from 'vue-i18n';
 import { Command } from '@/types/api';
 import type { QueueFormData } from '@/types/forms';

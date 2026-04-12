@@ -3,12 +3,20 @@ import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import '@mdi/font/css/materialdesignicons.css';
+import { en, sk } from 'vuetify/locale';
+
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
 const vuetify = createVuetify({
     components,
     directives,
+    locale: {
+        locale: localStorage.getItem('locale') ?? 'sk',
+        fallback: 'en',
+        messages: { en, sk },
+    },
     theme: {
-        defaultTheme: 'light',
+        defaultTheme: prefersDark ? 'dark' : 'light',
         themes: {
             light: {
                 dark: false,

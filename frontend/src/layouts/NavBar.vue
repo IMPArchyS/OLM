@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import LanguageSelector from '@/components/layout/LanguageSelector.vue';
-import ThemeSelector from '@/components/layout/ThemeSelector.vue';
 import UserSelector from '@/components/layout/UserSelector.vue';
 import { inject, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import type { Ref } from 'vue';
+import { useTheme } from 'vuetify';
 
 interface MainLayoutContext {
     toggleSidebarVisibility: () => void;
@@ -12,12 +11,18 @@ interface MainLayoutContext {
 
 const { toggleSidebarVisibility } = inject<MainLayoutContext>('mainLayout')!;
 const route = useRoute();
+const theme = useTheme();
 
 // Show hamburger menu only on specific routes
 const showMenuButton = computed(() => {
     // Option 3: Show on all routes except auth
     return !route.path.startsWith('/auth');
 });
+
+const handleThemeChange = () => {
+    localStorage.setItem('theme', theme.global.current.value.dark ? 'light' : 'dark');
+    theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark';
+};
 </script>
 
 <template>
@@ -31,7 +36,9 @@ const showMenuButton = computed(() => {
         <v-spacer />
 
         <div style="display: flex; align-items: center">
-            <ThemeSelector />
+            <div class="">
+                <v-btn icon="mdi-theme-light-dark" @click="handleThemeChange" />
+            </div>
             <LanguageSelector />
             <UserSelector />
         </div>

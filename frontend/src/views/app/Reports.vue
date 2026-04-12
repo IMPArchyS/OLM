@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import ExperimentOutputChart from '@/components/ExperimentOutputChart.vue';
 import { useExperimentLogs } from '@/composables/useExperimentLogs';
 import { useToast } from '@/composables/useToast';
 import { useAuthStore } from '@/stores/auth';

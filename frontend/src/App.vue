@@ -1,16 +1,13 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useThemeStore } from './stores/theme';
-import { useLanguageStore } from './stores/language';
 import { useTheme } from 'vuetify';
 
 const themeStore = useThemeStore();
-const languageStore = useLanguageStore();
 const vuetifyTheme = useTheme();
 
 onMounted(() => {
     themeStore.initTheme();
-    languageStore.initLanguage();
 
     vuetifyTheme.change(themeStore.theme);
 });
