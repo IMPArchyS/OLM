@@ -1,5 +1,6 @@
 export default {
     nav: {
+        appName: 'Online Laboratory Manager',
         dashboard: 'Dashboard',
         reservations: 'Reservations',
         queue_experiments: 'Queue',
@@ -76,7 +77,9 @@ export default {
     },
     servers: {
         title: 'Current Servers',
+        servers: 'Servers',
         addServer: 'Add Server',
+        devices: 'Devices of',
         editServer: 'Edit Server',
         deleteServer: 'Delete Server',
         viewServer: 'Server Details',

@@ -19,6 +19,12 @@ const handleServersLoaded = (servers: Server[]) => {
 </script>
 
 <template>
-    <ServerBrowser @select-server="handleSelectServer" @servers-loaded="handleServersLoaded" />
-    <DeviceBrowser :selected-server="selectedServer" />
+    <v-card>
+        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
+            <span class="text-h5">{{ $t('servers.title') }}</span>
+        </v-card-title>
+        <ServerBrowser @select-server="handleSelectServer" @servers-loaded="handleServersLoaded" />
+        <v-divider />
+        <DeviceBrowser :selected-server="selectedServer" />
+    </v-card>
 </template>

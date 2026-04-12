@@ -318,7 +318,7 @@ defineExpose({
         </div>
 
         <!-- Empty State -->
-        <v-alert v-else type="error" variant="tonal">
+        <v-alert v-else type="info" variant="tonal">
             {{ t('queues.no_experiment_found') }}
         </v-alert>
     </div>

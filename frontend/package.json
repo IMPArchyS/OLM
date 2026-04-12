@@ -22,7 +22,7 @@
         "@fullcalendar/timegrid": "^6.1.19",
         "@fullcalendar/vue3": "^6.1.19",
         "@mdi/font": "^7.4.47",
-        "@tailwindcss/vite": "^4.1.16",
+        "@tailwindcss/vite": "^4.2.2",
         "axios": "^1.13.2",
         "chart.js": "^4.5.1",
         "pinia": "^3.0.3",

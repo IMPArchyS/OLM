@@ -1,5 +1,6 @@
 export default {
     nav: {
+        appName: 'Online Laboratory Manager',
         dashboard: 'Dashboard',
         reservations: 'Rezervácie',
         queue_experiments: 'Dávkovanie experimentov',
