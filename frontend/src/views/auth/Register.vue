@@ -2,12 +2,12 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { useToast } from '@/composables/useToast';
 import { useI18n } from 'vue-i18n';
+import { useToastStore } from '@/stores/toast';
 
 const router = useRouter();
 const authStore = useAuthStore();
-const { showError } = useToast();
+const toast = useToastStore();
 const { t } = useI18n();
 
 const username = ref('');
@@ -25,7 +25,7 @@ const handleRegister = async () => {
     if (isSubmitting.value) return;
 
     if (password.value !== confirmPassword.value) {
-        showError(t('error.matchPassword'));
+        toast.error(t('error.matchPassword'));
         return;
     }
     isSubmitting.value = true;
@@ -34,7 +34,7 @@ const handleRegister = async () => {
         await authStore.register({ name: name.value, username: username.value, password: password.value });
         await router.push('/app/dashboard');
     } catch (error) {
-        showError(t('error.register'));
+        toast.error(t('error.register'));
     } finally {
         isSubmitting.value = false;
     }

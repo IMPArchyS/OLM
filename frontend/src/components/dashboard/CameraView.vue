@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useWebRtc } from '@/composables/useWebRtc';
-import { useToast } from '@/composables/useToast';
+import { useToastStore } from '@/stores/toast';
 
 const props = defineProps<{
     device_name: string;
@@ -14,7 +14,7 @@ const GRANT_REFRESH_INTERVAL_MS = 1 * 60 * 1000;
 let grantRefreshIntervalId: number | null = null;
 
 const { remoteStream, loading, error, requestGrant, refreshGrant, startVideoStream, stopVideoStream } = useWebRtc();
-const { showError } = useToast();
+const toast = useToastStore();
 
 const canStart = computed(() => {
     return !loading.value && !isStreaming.value && props.server_id > 0 && props.device_name.length > 0;
@@ -36,7 +36,7 @@ watch(remoteStream, (stream) => {
 
 watch(error, (message) => {
     if (message) {
-        showError(message);
+        toast.error(message);
     }
 });
 
@@ -51,7 +51,7 @@ watch(
 
 async function handleStart(): Promise<void> {
     if (!props.device_name || props.server_id <= 0) {
-        showError('Missing device_name or server_id for camera stream');
+        toast.error('Missing device_name or server_id for camera stream');
         return;
     }
 

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import DeviceReservationCalendar from '@/components/reservations/DeviceReservationCalendar.vue';
 import { useDevices } from '@/composables/useDevices';
-import { useToast } from '@/composables/useToast';
+import { useToastStore } from '@/stores/toast';
 import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
-const { showError } = useToast();
+const toast = useToastStore();
 
 const selectedDevice = ref<number | null>(null);
 
@@ -19,7 +19,7 @@ const selectedDeviceData = computed(() => {
 onMounted(async () => {
     const result = await fetchAvailableDevices();
     if (!result.success) {
-        showError(result.message || 'Failed');
+        toast.error(result.message || 'Failed');
     }
 });
 </script>

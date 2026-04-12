@@ -6,14 +6,14 @@ import ExperimentSelector from './ExperimentSelector.vue';
 import type { QueueFormData } from '@/types/forms';
 import { useExperiments } from '@/composables/useExperiments';
 import { useI18n } from 'vue-i18n';
-import { useToast } from '@/composables/useToast';
 import { useAuthStore } from '@/stores/auth';
+import { useToastStore } from '@/stores/toast';
 
 const props = defineProps<{ reservation: Reservation }>();
 
 const { t } = useI18n();
 const authStore = useAuthStore();
-const { showError } = useToast();
+const toast = useToastStore();
 const { experimentsByDevice, loading, error, fetchExperimentsByDevice } = useExperiments();
 
 const websocketRef = ref<WebSocket | null>(null);
@@ -59,7 +59,7 @@ function runExperiment() {
     const accessToken = authStore.accessToken || localStorage.getItem('OLMAccessToken');
     if (!accessToken) {
         websocketMessage.value = 'Authentication required before starting the experiment.';
-        showError('Authentication required before starting the experiment.');
+        toast.error('Authentication required before starting the experiment.');
         return;
     }
 
@@ -109,7 +109,7 @@ const formData = ref<QueueFormData>({
 onMounted(async () => {
     const result = await fetchExperimentsByDevice(props.reservation.device_id);
     if (!result.success) {
-        showError(result.message || 'Failed');
+        toast.error(result.message || 'Failed');
     }
 });
 

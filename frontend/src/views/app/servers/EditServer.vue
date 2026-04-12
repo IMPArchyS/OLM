@@ -1,14 +1,14 @@
 <script lang="ts" setup>
 import { useServers } from '@/composables/useServers';
-import { useToast } from '@/composables/useToast';
 import router from '@/router';
+import { useToastStore } from '@/stores/toast';
 import type { EditServerForm } from '@/types/forms';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
 const { t } = useI18n();
-const { showSuccess, showError, showInfo } = useToast();
+const toast = useToastStore();
 
 const formData = ref<EditServerForm>({});
 const { nameRules, ipRules, domainRules, portRules, getServerById, updateServer } = useServers();
@@ -25,11 +25,11 @@ onMounted(async () => {
         if (currentServer) {
             formData.value = currentServer;
         } else {
-            showInfo(t('servers.notFound'));
+            toast.info(t('servers.notFound'));
             router.back();
         }
     } catch (e) {
-        showError(t('common.errorLoadingData'));
+        toast.error(t('common.errorLoadingData'));
         router.back();
     } finally {
         loading.value = false;
@@ -43,13 +43,13 @@ const handleSave = async () => {
     if (valid.value) {
         const result = await updateServer(formData.value);
         if (result.success) {
-            showSuccess(result.message || 'Success');
+            toast.success(result.message || 'Success');
             await router.push({ name: 'servers' });
         } else {
-            showError(result.message || 'Failed');
+            toast.error(result.message || 'Failed');
         }
     } else {
-        showError(t('validation.formInvalid'));
+        toast.error(t('validation.formInvalid'));
     }
 };
 

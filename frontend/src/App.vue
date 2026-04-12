@@ -1,23 +1,25 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { useThemeStore } from './stores/theme';
-import { useTheme } from 'vuetify';
+import { useToastStore } from '@/stores/toast';
+import { storeToRefs } from 'pinia';
 
-const themeStore = useThemeStore();
-const vuetifyTheme = useTheme();
-
-onMounted(() => {
-    themeStore.initTheme();
-
-    vuetifyTheme.change(themeStore.theme);
-});
+const toast = useToastStore();
+const { message, color, show, icon } = storeToRefs(toast);
 </script>
 
 <template>
     <router-view />
+    <v-snackbar v-model="show" class="v-snackbar" :color="color" position="fixed" z-index="9999" icon="mdi-info" location="right bottom">
+        <v-icon class="mr-2">
+            {{ icon }}
+        </v-icon>
+        {{ message }}
+    </v-snackbar>
 </template>
 
 <style>
+:deep.v-snackbar {
+    z-index: 99999 !important;
+}
 /* Global Styles */
 * {
     margin: 0;

@@ -3,13 +3,13 @@ import { onMounted, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from 'vue-i18n';
-import { useToast } from '@/composables/useToast';
+import { useToastStore } from '@/stores/toast';
 
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
-const { showError } = useToast();
+const toast = useToastStore();
 
 const username = ref('');
 const password = ref('');
@@ -26,7 +26,7 @@ onMounted(async () => {
     await authStore.fetchProviders();
 
     if (route.params.error === 'auth_failed') {
-        showError(t('error.auth_failed'));
+        toast.error(t('error.auth_failed'));
     }
 });
 
@@ -34,7 +34,7 @@ const handleLogin = async () => {
     if (isSubmitting.value) return;
 
     if (!emailRegex.test(username.value)) {
-        showError(t('validation.invalidFormat'));
+        toast.error(t('validation.invalidFormat'));
         return;
     }
 
@@ -44,7 +44,7 @@ const handleLogin = async () => {
         await authStore.login({ username: username.value, password: password.value });
         await router.push('/app/dashboard');
     } catch (error) {
-        showError(t('error.login'));
+        toast.error(t('error.login'));
     } finally {
         isSubmitting.value = false;
     }

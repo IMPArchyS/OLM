@@ -4,11 +4,11 @@ import { onMounted, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { Server } from '@/types/api';
 import router from '@/router';
-import { useToast } from '@/composables/useToast';
+import { useToastStore } from '@/stores/toast';
 
 const { t } = useI18n();
 const { servers, loading, error, fetchServers, getServer, syncServer, syncAllServers, softDeleteServer } = useServers();
-const { showError, showSuccess, showWarning } = useToast();
+const toast = useToastStore();
 
 const emit = defineEmits<{
     selectServer: [server: Server];
@@ -64,16 +64,16 @@ const handleSync = async (item: Server) => {
     const result = await syncServer(item.id);
 
     if (result === null) {
-        showError('Fatal error');
+        toast.error('Fatal error');
         return;
     }
 
     syncedAvailability.value[result.id] = result.available;
 
     if (result.available) {
-        showSuccess('Server synced');
+        toast.success('Server synced');
     } else {
-        showWarning('Server unreachable');
+        toast.warning('Server unreachable');
     }
 };
 
@@ -81,7 +81,7 @@ const handleSyncAll = async () => {
     const results = await syncAllServers();
 
     if (results === null) {
-        showError('Fatal error');
+        toast.error('Fatal error');
         return;
     }
 
@@ -94,13 +94,13 @@ const handleSyncAll = async () => {
     const errorCount = results.filter((r) => r.error).length;
 
     if (errorCount > 0) {
-        showWarning(`Synced ${results.length} servers: ${availableCount} available, ${unavailableCount} unavailable, ${errorCount} errors`);
+        toast.warning(`Synced ${results.length} servers: ${availableCount} available, ${unavailableCount} unavailable, ${errorCount} errors`);
     } else if (availableCount === results.length) {
-        showSuccess(`All ${results.length} servers are available`);
+        toast.success(`All ${results.length} servers are available`);
     } else if (unavailableCount === results.length) {
-        showWarning(`All ${results.length} servers are unavailable`);
+        toast.warning(`All ${results.length} servers are unavailable`);
     } else {
-        showSuccess(`Synced ${results.length} servers: ${availableCount} available, ${unavailableCount} unavailable`);
+        toast.success(`Synced ${results.length} servers: ${availableCount} available, ${unavailableCount} unavailable`);
     }
 };
 </script>
@@ -206,7 +206,7 @@ const handleSyncAll = async () => {
                             @click="handleDevices(item)"
                         ></v-btn>
                         <v-btn icon="mdi-eye" size="small" variant="text" color="warning" @click="handleView(item)"></v-btn>
-                        <v-btn icon="mdi-sync" size="small" variant="text" color="success" @click="handleSync(item)"></v-btn>
+                        <v-btn icon="mdi-sync-circle" size="small" variant="text" color="success" @click="handleSync(item)"></v-btn>
                         <v-btn icon="mdi-pencil" size="small" variant="text" color="primary" @click="handleEdit(item)"></v-btn>
                         <v-btn icon="mdi-delete" size="small" variant="text" color="error" @click="handleDelete(item)"></v-btn>
                     </template>

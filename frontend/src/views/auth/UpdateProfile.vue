@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { useToast } from '@/composables/useToast';
 import { useAuthStore } from '@/stores/auth';
+import { useToastStore } from '@/stores/toast';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 const authStore = useAuthStore();
-const { showSuccess, showError } = useToast();
+const toast = useToastStore();
 
 const username = ref('');
 const isSubmitting = ref(false);
@@ -17,10 +17,10 @@ const handleProfileUpdate = async () => {
 
     const result = await authStore.updateProfile({ jwt_token: localStorage.getItem('OLMAccessToken'), name: username.value });
     if (!result.success) {
-        showError(result.message || 'Failed');
+        toast.error(result.message || 'Failed');
     } else {
         username.value = authStore.user?.name || username.value;
-        showSuccess(t('auth.updateNameSuccess'));
+        toast.success(t('auth.updateNameSuccess'));
     }
     isSubmitting.value = false;
 };

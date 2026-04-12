@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useToast } from '@/composables/useToast';
 import { useAuthStore } from '@/stores/auth';
+import { useToastStore } from '@/stores/toast';
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
-const { showSuccess, showError } = useToast();
+const toast = useToastStore();
 
 const oldPassword = ref('');
 const newPassword = ref('');
@@ -44,9 +44,9 @@ const handlePasswordUpdate = async () => {
     });
 
     if (!result.success) {
-        showError(result.message || t('auth.updatePasswordFailed'));
+        toast.error(result.message || t('auth.updatePasswordFailed'));
     } else {
-        showSuccess(t('auth.updatePasswordSuccess'));
+        toast.success(t('auth.updatePasswordSuccess'));
         oldPassword.value = '';
         newPassword.value = '';
         repeatPassword.value = '';

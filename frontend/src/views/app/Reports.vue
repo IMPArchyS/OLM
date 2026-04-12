@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { useExperimentLogs } from '@/composables/useExperimentLogs';
-import { useToast } from '@/composables/useToast';
 import { useAuthStore } from '@/stores/auth';
+import { useToastStore } from '@/stores/toast';
 import type { ExperimentLog, ExperimentRun, SoftwareName } from '@/types/api';
 import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
-const { showError } = useToast();
+const toast = useToastStore();
 const { userExperimentLogs, loading, error, fetchExperimentLogsByUser } = useExperimentLogs();
 
 const logs = computed<ExperimentLog[]>(() => {
@@ -96,7 +96,7 @@ const formatSoftwareName = (softwareName: SoftwareName) => {
 onMounted(async () => {
     const result = await fetchExperimentLogsByUser(authStore.user?.id);
     if (!result.success) {
-        showError(result.message || 'Failed');
+        toast.error(result.message || 'Failed');
     }
 });
 </script>

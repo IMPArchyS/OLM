@@ -4,11 +4,11 @@ import type { CreateServerForm } from '@/types/forms';
 import { useServers } from '@/composables/useServers';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useToast } from '@/composables/useToast';
+import { useToastStore } from '@/stores/toast';
 
 const { t } = useI18n();
 const { nameRules, ipRules, domainRules, portRules, createServer } = useServers();
-const { showSuccess, showError } = useToast();
+const toast = useToastStore();
 
 const formData = ref<CreateServerForm>({});
 
@@ -18,13 +18,13 @@ const handleCreate = async () => {
     if (valid.value) {
         const result = await createServer(formData.value);
         if (result.success) {
-            showSuccess(result.message || 'Success');
+            toast.success(result.message || 'Success');
             await router.push({ name: 'servers' });
         } else {
-            showError(result.message || 'Failed');
+            toast.error(result.message || 'Failed');
         }
     } else {
-        showError(t('validation.formInvalid'));
+        toast.error(t('validation.formInvalid'));
     }
 };
 

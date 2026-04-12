@@ -7,11 +7,11 @@ import type { QueueFormData } from '@/types/forms';
 import { useExperiments } from '@/composables/useExperiments';
 import { useServers } from '@/composables/useServers';
 import { useDevices } from '@/composables/useDevices';
-import { useToast } from '@/composables/useToast';
 import { useAuthStore } from '@/stores/auth';
+import { useToastStore } from '@/stores/toast';
 
 const { t } = useI18n();
-const { showError, showInfo } = useToast();
+const toast = useToastStore();
 const authStore = useAuthStore();
 const { experimentsByDevice, loading, queueSelectedExperiment, fetchExperimentsByDevice } = useExperiments();
 const { servers, fetchServers } = useServers();
@@ -69,7 +69,7 @@ watch(selectedDeviceId, async (newDeviceId) => {
 
     const result = await fetchExperimentsByDevice(newDeviceId);
     if (!result.success) {
-        showError(result.message || 'Failed');
+        toast.error(result.message || 'Failed');
     }
 });
 
@@ -87,9 +87,9 @@ const addToQueue = async () => {
     console.log(JSON.stringify(formData.value, null, 2));
     const result = await queueSelectedExperiment(formData.value);
     if (!result.success) {
-        showError(result.message || 'Failed');
+        toast.error(result.message || 'Failed');
     } else {
-        showInfo(result.message || 'Queued');
+        toast.info(result.message || 'Queued');
     }
 };
 </script>

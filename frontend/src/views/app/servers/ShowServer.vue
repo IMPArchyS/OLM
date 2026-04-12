@@ -1,15 +1,15 @@
 <script lang="ts" setup>
 import DeviceBrowser from '@/components/servers/DeviceBrowser.vue';
 import { useServers } from '@/composables/useServers';
-import { useToast } from '@/composables/useToast';
 import router from '@/router';
+import { useToastStore } from '@/stores/toast';
 import type { Server } from '@/types/api';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
 const { t } = useI18n();
-const { showSuccess, showError, showWarning, showInfo } = useToast();
+const toast = useToastStore();
 
 const currentServer = ref<Server>({
     id: 0,
@@ -36,11 +36,11 @@ onMounted(async () => {
         if (fetchedServer) {
             currentServer.value = fetchedServer;
         } else {
-            showInfo(t('servers.notFound'));
+            toast.info(t('servers.notFound'));
             router.back();
         }
     } catch (e) {
-        showError(t('common.errorLoadingData'));
+        toast.error(t('common.errorLoadingData'));
         router.back();
     } finally {
         loading.value = false;
@@ -50,10 +50,10 @@ onMounted(async () => {
 const handleRestore = async () => {
     const result = await restoreServer(currentServer.value.id);
     if (result.success) {
-        showSuccess(result.message || 'Success');
+        toast.success(result.message || 'Success');
         await router.push({ name: 'servers' });
     } else {
-        showError(result.message || 'Failed');
+        toast.error(result.message || 'Failed');
     }
 };
 
@@ -61,14 +61,14 @@ const handleSync = async (item: Server) => {
     const result = await syncServer(item.id);
 
     if (result === null) {
-        showError('Fatal error');
+        toast.error('Fatal error');
         return;
     }
 
     if (result.available) {
-        showSuccess('Server synced');
+        toast.success('Server synced');
     } else {
-        showWarning('Server unreachable');
+        toast.warning('Server unreachable');
     }
 };
 
