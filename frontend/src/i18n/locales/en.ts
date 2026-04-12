@@ -4,7 +4,7 @@ export default {
         reservations: 'Reservations',
         queue_experiments: 'Queue',
         servers: 'Servers',
-        schemas: 'Schemas',
+        experiments: 'Experiments',
         reports: 'Reports',
         settings: 'Lab Settings',
         userSettings: 'Settings',
@@ -126,86 +126,8 @@ export default {
         restore: 'Restore',
         sync: 'Sync',
     },
-    schemas: {
-        title: 'Schemas',
-        addSchema: 'Add Schema',
-        save: 'Save',
-        editSchema: 'Edit Schema',
-        deleteSchema: 'Delete Schema',
-        schemaName: 'Schema Name',
-        schemaDescription: 'Schema Description',
-        add_argument: 'Add Argument',
-        arguments: 'Arguments',
-        index: {
-            title: 'Schemas',
-        },
-        types: {
-            control: 'Control',
-        },
-        columns: {
-            add_option: 'Add Option',
-            add_argument: 'Add Argument',
-            arguments: 'Arguments',
-            options: 'Options',
-            types: {
-                control: 'Control',
-            },
-
-            id: 'ID',
-            name: 'Name',
-            device_type: 'Device Type',
-            software: 'Software',
-            schema_type: 'Schema Type',
-            note: 'Note',
-            schema: 'Schema File',
-            preview: 'Preview',
-        },
-        trashed: {
-            label: 'Show Deleted',
-
-            argument: {
-                label: 'Label',
-                default_value: 'Default Value',
-                row: 'Row',
-                order: 'Order',
-                name: 'Name',
-                option: {
-                    name: 'Name',
-                    value: 'Value',
-                    output_value: 'Output Value',
-                },
-            },
-            without: 'Without Deleted',
-            with: 'With Deleted',
-            only: 'Only Deleted',
-        },
-        preview: {
-            error: 'No preview available',
-        },
-        download: {
-            success: 'Schema downloaded successfully',
-            error: 'Failed to download schema',
-        },
-        delete: {
-            confirm: 'Are you sure you want to delete this schema?',
-            success: 'Schema deleted successfully',
-            error: 'Failed to delete schema',
-        },
-        restore: {
-            confirm: 'Are you sure you want to restore this schema?',
-            success: 'Schema restored successfully',
-            error: 'Failed to restore schema',
-        },
-        create: {
-            success: 'Schema created successfully',
-            error: 'Failed to create schema',
-        },
-        update: {
-            success: 'Schema updated successfully',
-            error: 'Failed to update schema',
-        },
-        device_type_warning: 'Select a device type to see available output values',
-        noSchemasFound: 'No schemas found',
+    experiments: {
+        title: 'Experiments',
     },
     dashboard: {
         title: 'Dashboard',

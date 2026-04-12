@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Any, Iterable
 
 from pydantic import ValidationError
 
@@ -111,7 +111,7 @@ def _mark_missing_as_deleted(db: DbSession, server_devices: list[Device], presen
 def sync_add_server_stack(db: DbSession, server: ServerPublic, payload: list[dict]) -> None:
     devices = _parse_payload(payload)
 
-    software_by_name = _get_or_create_software_map(db, (sw.name for d in devices for sw in d.software))
+    software_by_name = _get_or_create_software_map(db, (sw.name for d in devices for sw in d.softwares))
     device_type_by_name = _get_or_create_device_type_map(db, (d.device_type.name for d in devices))
 
     db.flush()
@@ -122,7 +122,7 @@ def sync_add_server_stack(db: DbSession, server: ServerPublic, payload: list[dic
     for p in devices:
         device_type = device_type_by_name[p.device_type.name]
         db_device = _upsert_device(db, server.id, p, existing_by_name, ensure(device_type.id))
-        _sync_device_softwares(db_device, [sw.name for sw in p.software], software_by_name)
+        _sync_device_softwares(db_device, [sw.name for sw in p.softwares], software_by_name)
 
     _mark_missing_as_deleted(db, server_devices, {d.name for d in devices})
 

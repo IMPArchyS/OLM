@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import DeviceBrowser from '@/views/app/servers/components/DeviceBrowser.vue';
+import DeviceBrowser from '@/components/servers/DeviceBrowser.vue';
 import { useServers } from '@/composables/useServers';
 import { useToast } from '@/composables/useToast';
 import router from '@/router';

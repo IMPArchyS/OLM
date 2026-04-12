@@ -25,9 +25,6 @@ watch(
     <v-menu v-model="isOpen" :close-on-content-click="false">
         <template v-slot:activator="{ props }">
             <v-btn v-bind="props" variant="text">
-                <span style="font-size: 20px; margin-right: 8px">
-                    {{ languageStore.currentLanguage.flag }}
-                </span>
                 <span style="font-weight: 500">
                     {{ languageStore.currentLanguage.code.toUpperCase() }}
                 </span>
@@ -49,9 +46,6 @@ watch(
                 @click="selectLanguage(lang.code)"
                 :active="lang.code === languageStore.currentLanguage.code"
             >
-                <template v-slot:prepend>
-                    <span style="font-size: 20px; margin-right: 12px">{{ lang.flag }}</span>
-                </template>
                 <v-list-item-title>{{ lang.name }}</v-list-item-title>
             </v-list-item>
         </v-list>

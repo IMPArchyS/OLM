@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import FullCalendar from '@fullcalendar/vue3';
-import { useDeviceReservationCalendar } from '../composables/DeviceReservationCalendar';
+import { useDeviceReservationCalendar } from '@/composables/DeviceReservationCalendar';
 import type { Device } from '@/types/api';
 
 const props = defineProps<{
@@ -30,10 +30,7 @@ onMounted(() => {
 <template>
     <div style="display: flex; flex-direction: column; height: 100%; overflow: hidden">
         <!-- Loading indicator -->
-        <div
-            v-if="loading"
-            style="display: flex; justify-content: center; align-items: center; padding: 32px"
-        >
+        <div v-if="loading" style="display: flex; justify-content: center; align-items: center; padding: 32px">
             <v-progress-circular indeterminate color="primary" size="64" />
         </div>
 
@@ -85,17 +82,8 @@ onMounted(() => {
                 <v-card-actions>
                     <v-btn color="grey" variant="text" @click="closeModal"> Cancel </v-btn>
                     <v-spacer />
-                    <v-btn
-                        v-if="editingReservation"
-                        color="error"
-                        variant="text"
-                        @click="deleteReservation"
-                    >
-                        Delete
-                    </v-btn>
-                    <v-btn color="primary" variant="elevated" @click="saveReservation">
-                        Save
-                    </v-btn>
+                    <v-btn v-if="editingReservation" color="error" variant="text" @click="deleteReservation"> Delete </v-btn>
+                    <v-btn color="primary" variant="elevated" @click="saveReservation"> Save </v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>

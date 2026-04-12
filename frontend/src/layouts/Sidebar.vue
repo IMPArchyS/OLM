@@ -146,19 +146,24 @@ const showLabels = computed(() => !isCollapsed.value);
                         <span class="ml-4">{{ t('nav.servers') }}</span>
                     </div>
 
-                    <!-- Schemas -->
-                    <!-- <div
+                    <!-- Experiments -->
+                    <div
                         v-if="isCollapsed"
-                        @click="navigate('/app/schemas')"
+                        @click="navigate('/app/experiments')"
                         class="nav-item-collapsed"
-                        :class="{ active: isActiveRoute('/app/schemas') }"
+                        :class="{ active: isActiveRoute('/app/experiments') }"
                     >
                         <v-icon icon="mdi-clipboard-list-outline" size="24" />
                     </div>
-                    <div v-else @click="navigate('/app/schemas')" class="nav-item-expanded" :class="{ active: isActiveRoute('/app/schemas') }">
+                    <div
+                        v-else
+                        @click="navigate('/app/experiments')"
+                        class="nav-item-expanded"
+                        :class="{ active: isActiveRoute('/app/experiments') }"
+                    >
                         <v-icon icon="mdi-clipboard-list-outline" size="24" />
-                        <span class="ml-4">{{ t('nav.schemas') }}</span>
-                    </div> -->
+                        <span class="ml-4">{{ t('nav.experiments') }}</span>
+                    </div>
                 </div>
             </div>
 

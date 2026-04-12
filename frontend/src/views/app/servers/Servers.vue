@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import DeviceBrowser from '@/views/app/servers/components/DeviceBrowser.vue';
-import ServerBrowser from '@/views/app/servers/components/ServerBrowser.vue';
+import DeviceBrowser from '@/components/servers/DeviceBrowser.vue';
+import ServerBrowser from '@/components/servers/ServerBrowser.vue';
 import type { Server } from '@/types/api';
 
 const selectedServer = ref<Server | null>(null);

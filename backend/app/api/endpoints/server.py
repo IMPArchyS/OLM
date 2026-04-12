@@ -8,7 +8,7 @@ from app.api.dependencies import DbSession
 from app.api.endpoints.sync import sync_add_server_stack
 from app.models.device import DevicePublic, DeviceWithSoftware
 from app.models.server import Server, ServerCreate, ServerPublic, ServerPubDetailed, ServerUpdate
-from app.models.utils import now
+from app.models.utils import ensure, now
 from app.core.config import settings
 
 # ServerPubDetailed.model_rebuild()
@@ -106,7 +106,7 @@ def sync_all(db: DbSession):
     
     results = []
     for db_server in servers:
-        if not try_start_server_sync(db_server.id):
+        if not try_start_server_sync(ensure(db_server.id)):
             results.append(
                 {
                     "id": db_server.id,
@@ -134,7 +134,7 @@ def sync_all(db: DbSession):
                 }
             )
         finally:
-            finish_server_sync(db_server.id)
+            finish_server_sync(ensure(db_server.id))
     
     return results
 

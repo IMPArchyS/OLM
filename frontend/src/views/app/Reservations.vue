@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import DeviceReservationCalendar from '@/components/DeviceReservationCalendar.vue';
+import DeviceReservationCalendar from '@/components/reservations/DeviceReservationCalendar.vue';
 import { useDevices } from '@/composables/useDevices';
 import { useToast } from '@/composables/useToast';
 import { ref, onMounted, computed } from 'vue';

@@ -77,7 +77,7 @@ class DeviceSyncPayload(BaseModel):
     device_type: DeviceTypeSyncPayload
     maintenance_start: time | None = None
     maintenance_end: time | None = None
-    software: list[SoftwareSyncPayload] = PydanticField(default_factory=list)
+    softwares: list[SoftwareSyncPayload] = PydanticField(default_factory=list)
 
     @model_validator(mode="after")
     def validate_maintenance_window(self):

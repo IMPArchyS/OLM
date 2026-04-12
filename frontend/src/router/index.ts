@@ -93,13 +93,9 @@ const router = createRouter({
                     component: () => import('@/views/app/servers/EditServer.vue'),
                 },
                 {
-                    path: '/app/schemas',
-                    name: 'schemas-index',
-                    component: () => import('@/views/app/schemas/Schemas.vue'),
-                    meta: {
-                        requiresAuth: true,
-                        permission: 'schema.index',
-                    },
+                    path: '/app/experiments',
+                    name: 'experiments',
+                    component: () => import('@/views/app/Experiments.vue'),
                 },
             ],
         },

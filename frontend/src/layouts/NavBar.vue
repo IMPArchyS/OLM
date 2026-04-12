@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import LanguageSelector from '@/components/LanguageSelector.vue';
-import ThemeSelector from '@/components/ThemeSelector.vue';
-import UserSelector from '@/components/UserSelector.vue';
+import LanguageSelector from '@/components/layout/LanguageSelector.vue';
+import ThemeSelector from '@/components/layout/ThemeSelector.vue';
+import UserSelector from '@/components/layout/UserSelector.vue';
 import { inject, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import type { Ref } from 'vue';
@@ -23,13 +23,7 @@ const showMenuButton = computed(() => {
 <template>
     <v-app-bar flat class="border-b mb-7 px-7">
         <template v-slot:prepend>
-            <v-btn
-                v-if="showMenuButton"
-                @click="toggleSidebarVisibility"
-                icon
-                variant="text"
-                size="large"
-            >
+            <v-btn v-if="showMenuButton" @click="toggleSidebarVisibility" icon variant="text" size="large">
                 <span style="font-size: 24px">☰</span>
             </v-btn>
         </template>
