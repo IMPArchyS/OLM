@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { apiClient } from '@/composables/useAxios';
+import { apiClient } from '@/lib/apiClient';
 import { useAuthStore } from '@/stores/auth';
 import { onMounted } from 'vue';
 import { useRouter } from 'vue-router';

@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import type { Reservation } from '@/types/api';
-import { apiClient } from '@/composables/useAxios';
+import { apiClient } from '@/lib/apiClient';
 import CameraView from '@/components/dashboard/CameraView.vue';
 import { useServers } from '@/composables/useServers';
 import { useDevices } from '@/composables/useDevices';

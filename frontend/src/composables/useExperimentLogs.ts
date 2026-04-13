@@ -1,6 +1,6 @@
 import type { ExperimentLog } from '@/types/api';
 import { ref } from 'vue';
-import { apiClient } from './useAxios';
+import { apiClient } from '../lib/apiClient';
 
 export function useExperimentLogs() {
     const experimentLogs = ref<ExperimentLog[]>([]);

@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { apiClient } from '@/composables/useAxios';
-import router from '@/router';
+import { apiClient } from '@/lib/apiClient';
 import type { User, AuthResponse, OauthCredentials, OauthProvider } from '@/types/authTypes';
 import type { LoginForm, RegisterForm } from '@/types/forms';
 
@@ -26,16 +25,13 @@ function parseJwt(token: string) {
 
 export const useAuthStore = defineStore('auth', () => {
     const accessToken = ref<string | null>('');
-    const refreshToken = ref<string | null>('');
     const user = ref<User | null>(null);
     const providers = ref<OauthProvider[]>([]);
-    let refreshIntervalId: number | null = null;
+    const initialized = ref(false);
+    let tokenRefreshInterval: ReturnType<typeof setInterval> | undefined = undefined;
 
-    const setToken = (newAccessToken: string | null, newRefreshToken?: string | null) => {
+    const setToken = (newAccessToken: string | null) => {
         accessToken.value = newAccessToken;
-        if (newRefreshToken !== undefined) {
-            refreshToken.value = newRefreshToken;
-        }
         if (newAccessToken) {
             const payload = parseJwt(newAccessToken);
             if (payload) {
@@ -54,47 +50,33 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    const setTokens = (newAccessToken: string, newRefreshToken: string | null) => {
-        localStorage.setItem('OLMAccessToken', newAccessToken);
-        setToken(newAccessToken, newRefreshToken);
+    const startTokenRefresh = () => {
+        tokenRefreshInterval = setInterval(
+            () => {
+                refreshAccessToken();
+            },
+            4 * 60 * 1000,
+        );
     };
 
-    const initAuth = async (): Promise<boolean> => {
-        try {
-            const response = await apiClient.post('auth/refresh');
-            setToken(response.data.access_token);
-            startTokenRefresh();
-            return true;
-        } catch (err) {
-            console.error('[AUTH]: INIT - Token refresh failed:', err);
-            return false;
-        }
-    };
-
-    const login = async (loginData: LoginForm): Promise<AuthResponse> => {
+    const login = async (loginData: LoginForm) => {
         try {
             const response = await apiClient.post<AuthResponse>('auth/login', loginData);
-            const { access_token, refresh_token } = response.data;
-
-            setTokens(access_token, refresh_token);
+            setToken(response.data.access_token);
+            localStorage.setItem('OLMAccessToken', response.data.access_token);
             startTokenRefresh();
-
-            return response.data;
         } catch (err: any) {
+            console.error('Login failed:', err);
             throw new Error(err.response?.data?.detail);
         }
     };
 
-    const register = async (data: RegisterForm): Promise<AuthResponse> => {
+    const register = async (data: RegisterForm) => {
         try {
             const response = await apiClient.post<AuthResponse>('auth/register', data);
-            const { access_token, refresh_token } = response.data;
-
-            setTokens(access_token, refresh_token);
-
+            setToken(response.data.access_token);
+            localStorage.setItem('OLMAccessToken', response.data.access_token);
             startTokenRefresh();
-
-            return response.data;
         } catch (err: any) {
             const errorMessage =
                 err.response?.data?.detail ||
@@ -106,6 +88,19 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
+    const logout = async () => {
+        await apiClient
+            .post('auth/logout')
+            .then(() => {
+                setToken(null);
+                clearInterval(tokenRefreshInterval);
+                localStorage.removeItem('OLMAccessToken');
+            })
+            .catch(() => {
+                setToken(null);
+            });
+    };
+
     const refreshAccessToken = async () => {
         try {
             const response = await apiClient.post('auth/refresh');
@@ -115,40 +110,6 @@ export const useAuthStore = defineStore('auth', () => {
             console.log('Token refresh failed:', err);
             logout();
         }
-    };
-
-    const startTokenRefresh = () => {
-        if (refreshIntervalId !== null) {
-            clearInterval(refreshIntervalId);
-        }
-        refreshIntervalId = setInterval(
-            () => {
-                refreshAccessToken();
-            },
-            4 * 60 * 1000,
-        );
-    };
-
-    const logout = async (): Promise<void> => {
-        await apiClient
-            .post('auth/logout')
-            .then(() => {
-                setToken(null);
-                if (refreshIntervalId !== null) {
-                    clearInterval(refreshIntervalId);
-                    refreshIntervalId = null;
-                }
-                localStorage.removeItem('OLMAccessToken');
-                router.push('/auth/login');
-            })
-            .catch(() => {
-                setToken(null);
-                if (refreshIntervalId !== null) {
-                    clearInterval(refreshIntervalId);
-                    refreshIntervalId = null;
-                }
-                router.push('/auth/login');
-            });
     };
 
     const updateProfile = async (data: any): Promise<{ success: boolean; message?: string }> => {
@@ -201,16 +162,30 @@ export const useAuthStore = defineStore('auth', () => {
     async function handleOAuthCallback() {
         try {
             const response = await apiClient.post('auth/session');
-            setTokens(response.data.access_token, response.data.refresh_token);
+            setToken(response.data.access_token);
+            localStorage.setItem('OLMAccessToken', response.data.access_token);
         } catch (err) {
             console.log('Token refresh failed:', err);
             throw new Error('OAuth callback failed');
         }
     }
 
+    const initAuth = async () => {
+        await apiClient
+            .post('auth/refresh')
+            .then(async (response) => {
+                setToken(response.data.access_token);
+                startTokenRefresh();
+            })
+            .catch((err) => {
+                console.error('Token refresh failed:', err);
+            });
+
+        initialized.value = true;
+    };
+
     return {
         accessToken,
-        refreshToken,
         user,
         providers,
         initAuth,

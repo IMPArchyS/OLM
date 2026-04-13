@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { apiClient } from './useAxios';
+import { apiClient } from '../lib/apiClient';
 import axios from 'axios';
 import type { Server } from '@/types/api';
 

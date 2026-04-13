@@ -8,7 +8,7 @@ import skLocale from '@fullcalendar/core/locales/sk';
 import { useI18n } from 'vue-i18n';
 import type { Device, Reservation } from '@/types/api';
 import type { ReservationForm } from '@/types/forms';
-import { apiClient } from './useAxios';
+import { apiClient } from '../lib/apiClient';
 
 interface Props {
     selectedDeviceId?: number | null;

@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import type { Server, ServerStatus } from '@/types/api';
-import { apiClient } from './useAxios';
+import { apiClient } from '../lib/apiClient';
 import type { CreateServerForm, EditServerForm } from '@/types/forms';
 import { useI18n } from 'vue-i18n';
 

@@ -1,10 +1,13 @@
+import App from './App.vue';
+
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
-import i18n from '@/lib/i18n';
-import vuetify from './plugins/vuetify';
+import { useAuthStore } from './stores/auth';
 
-import App from './App.vue';
+import vuetify from './plugins/vuetify';
+import i18n from '@/lib/i18n';
 import router from './router';
+
 import '../index.css';
 
 const pinia = createPinia();
@@ -12,7 +15,13 @@ const app = createApp(App);
 
 app.use(pinia).use(i18n).use(vuetify);
 
-app.use(router);
-router.isReady().then(async () => {
-    app.mount('#app');
+const authStore = useAuthStore();
+
+authStore.initAuth().finally(() => {
+    app.use(router);
+    router.isReady().then(async () => {
+        app.mount('#app');
+    });
 });
+
+export { authStore };

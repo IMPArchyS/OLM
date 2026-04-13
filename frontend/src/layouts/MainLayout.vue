@@ -16,8 +16,9 @@ const isCollapsed = ref(false);
 const isDrawerOpen = ref(false);
 
 const handleThemeChange = () => {
-    localStorage.setItem('theme', theme.global.current.value.dark ? 'light' : 'dark');
-    theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark';
+    const nextTheme = theme.global.current.value.dark ? 'light' : 'dark';
+    localStorage.setItem('theme', nextTheme);
+    theme.change(nextTheme);
 };
 
 const handleMainClick = () => {
@@ -81,7 +82,7 @@ const visibleSections = computed(
 onMounted(() => {
     isCollapsed.value = localStorage.getItem('isCollapsed') === 'true';
     isDrawerOpen.value = !display.smAndDown.value;
-    theme.global.name.value = localStorage.getItem('theme') ?? 'light';
+    theme.change(localStorage.getItem('theme') ?? 'light');
 });
 </script>
 

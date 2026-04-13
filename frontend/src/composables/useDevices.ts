@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue';
 import type { Device } from '@/types/api';
-import { apiClient } from './useAxios';
+import { apiClient } from '../lib/apiClient';
 
 export function useDevices() {
     const devices = ref<Device[]>([]);

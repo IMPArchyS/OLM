@@ -1,6 +1,6 @@
 import type { Experiment } from '@/types/api';
 import { ref } from 'vue';
-import { apiClient } from './useAxios';
+import { apiClient } from '../lib/apiClient';
 import type { QueueFormData } from '@/types/forms';
 
 export function useExperiments() {
