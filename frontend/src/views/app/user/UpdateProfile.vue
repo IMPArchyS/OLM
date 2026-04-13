@@ -30,7 +30,7 @@ onMounted(() => {
 });
 </script>
 <template>
-    <v-card class="mt-5">
+    <v-card>
         <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
             <span class="text-h5">{{ t('actions.update') }}</span>
         </v-card-title>

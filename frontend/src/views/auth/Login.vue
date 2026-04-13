@@ -49,7 +49,7 @@ const handleOauthLogin = (provider: string) => {
 </script>
 
 <template>
-    <v-card max-width="400" class="mx-auto mt-5">
+    <v-card max-width="400" class="mx-auto">
         <v-card-title class="text-h5 mb-4">{{ t('auth.login') }}</v-card-title>
         <v-card-text v-if="authStore.providers.length > 0">
             <v-btn
@@ -99,7 +99,7 @@ const handleOauthLogin = (provider: string) => {
                 </v-btn>
             </v-form>
             <v-divider class="my-4" />
-            <v-btn :to="{ name: 'register' }" variant="text" block> {{ t('auth.createAccount') }} </v-btn>
+            <v-btn :to="{ name: 'register' }" variant="elevated" block> {{ t('auth.createAccount') }} </v-btn>
         </v-card-text>
     </v-card>
 </template>

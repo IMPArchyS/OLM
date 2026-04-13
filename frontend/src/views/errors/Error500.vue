@@ -5,8 +5,8 @@ const { t } = useI18n();
 </script>
 
 <template>
-    <v-container class="fill-height">
-        <v-row justify="center">
+    <v-container fluid class="error-page pa-6">
+        <v-row class="w-100" justify="center" align="center">
             <v-col cols="12" class="d-flex flex-column flex-sm-row justify-center align-center text-center text-sm-left">
                 <h1 class="text-h1 me-sm-8">500</h1>
                 <div>
@@ -18,3 +18,11 @@ const { t } = useI18n();
         </v-row>
     </v-container>
 </template>
+
+<style scoped>
+.error-page {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+}
+</style>

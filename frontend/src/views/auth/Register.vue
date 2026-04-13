@@ -39,7 +39,7 @@ const handleRegister = async () => {
 </script>
 
 <template>
-    <v-card max-width="400" class="mx-auto mt-5">
+    <v-card max-width="400" class="mx-auto">
         <v-card-title class="text-h5 mb-4">{{ t('auth.register') }}</v-card-title>
         <v-divider></v-divider>
         <v-card-text>

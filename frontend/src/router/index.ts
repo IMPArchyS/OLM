@@ -45,12 +45,12 @@ const router = createRouter({
                 {
                     path: '/app/update-profile',
                     name: 'update-profile',
-                    component: () => import('@/views/auth/UpdateProfile.vue'),
+                    component: () => import('@/views/app/user/UpdateProfile.vue'),
                 },
                 {
                     path: '/app/update-password',
                     name: 'update-password',
-                    component: () => import('@/views/auth/UpdatePassword.vue'),
+                    component: () => import('@/views/app/user/UpdatePassword.vue'),
                 },
                 {
                     path: '/app/dashboard',
