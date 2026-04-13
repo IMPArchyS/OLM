@@ -48,6 +48,8 @@ export default {
     },
     reservations: {
         title: 'Reservations',
+        new: 'New Reservation',
+        edit: 'Edit Reservation',
         selectDevice: 'Select Device',
         chooseDevice: '-- Choose a device --',
         newReservation: 'New Reservation',

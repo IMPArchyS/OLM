@@ -1,14 +1,16 @@
-import { ref, computed, watch } from 'vue';
-import type { CalendarOptions, EventClickArg, DateSelectArg } from '@fullcalendar/core';
+import { computed, ref, watch } from 'vue';
+import type { CalendarOptions, DateSelectArg, EventClickArg } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 import skLocale from '@fullcalendar/core/locales/sk';
+import timeGridPlugin from '@fullcalendar/timegrid';
 import { useI18n } from 'vue-i18n';
 import type { Device, Reservation } from '@/types/api';
 import type { ReservationForm } from '@/types/forms';
-import { apiClient } from '../lib/apiClient';
+import { useToastStore } from '@/stores/toast';
+import { useReservations } from '@/composables/useReservations';
+import { buildMaintenanceEvents, formatDateTimeLocal, getMaintenanceConflictMessage } from '@/composables/reservationCalendarUtils';
 
 interface Props {
     selectedDeviceId?: number | null;
@@ -16,65 +18,36 @@ interface Props {
 }
 
 export function useDeviceReservationCalendar(props: Props) {
-    const reservations = ref<Reservation[]>([]);
-    const loading = ref(false);
+    const toast = useToastStore();
     const { locale, t } = useI18n();
-
+    const {
+        reservations,
+        loading,
+        fetchReservations,
+        createReservation,
+        updateReservation,
+        deleteReservation: removeReservation,
+    } = useReservations();
     const isModalOpen = ref(false);
     const editingReservation = ref<Reservation | null>(null);
     const fullCalendar = ref();
+    const reservationForm = ref<ReservationForm>({ device_id: 0, start: '', end: '' });
 
-    const reservationForm = ref<ReservationForm>({
-        deviceId: 0,
-        startDate: '',
-        endDate: '',
-    });
-
-    async function fetchReservations() {
-        if (!props.selectedDeviceId) return;
-
-        loading.value = true;
-        try {
-            const response = await apiClient.get('/reservation/', {
-                params: { device_id: props.selectedDeviceId },
-            });
-            const reservationsData = response.data;
-
-            // Fetch usernames for each reservation
-            const reservationsWithUsernames = await Promise.all(
-                reservationsData.map(async (reservation: Reservation) => {
-                    try {
-                        const userResponse = await apiClient.get(`/auth/user/${reservation.user_id}`);
-                        return {
-                            ...reservation,
-                            username: userResponse.data.name,
-                        };
-                    } catch (error) {
-                        console.error(`Error fetching user ${reservation.user_id}:`, error);
-                        return {
-                            ...reservation,
-                            username: 'Unknown User',
-                        };
-                    }
-                }),
-            );
-
-            reservations.value = reservationsWithUsernames;
-        } catch (error) {
-            console.error('Error fetching reservations:', error);
-        } finally {
-            loading.value = false;
+    async function refreshReservations() {
+        if (!props.selectedDeviceId) {
+            reservations.value = [];
+            return { success: true };
         }
+        const result = await fetchReservations(props.selectedDeviceId);
+        if (!result.success) toast.error(result.message || 'Failed to fetch reservations');
+        return result;
     }
 
     watch(
         () => props.selectedDeviceId,
-        (newDeviceId) => {
-            if (newDeviceId) {
-                fetchReservations();
-            } else {
-                reservations.value = [];
-            }
+        async (newDeviceId) => {
+            if (newDeviceId) await refreshReservations();
+            else reservations.value = [];
         },
         { immediate: true },
     );
@@ -86,252 +59,100 @@ export function useDeviceReservationCalendar(props: Props) {
             start: r.start,
             end: r.end,
             backgroundColor: undefined,
-            extendedProps: {
-                deviceId: r.device_id,
-                isMaintenance: false,
-            },
+            extendedProps: { deviceId: r.device_id, isMaintenance: false },
         }));
-
-        const maintenanceEvents = [];
-        if (props.selectedDeviceData?.maintenance_start && props.selectedDeviceData?.maintenance_end) {
-            const today = new Date();
-            for (let i = -365; i < 365; i++) {
-                const eventDate = new Date(today);
-                eventDate.setDate(today.getDate() + i);
-
-                const maintenanceStart = props.selectedDeviceData.maintenance_start;
-                const maintenanceEnd = props.selectedDeviceData.maintenance_end;
-
-                const startParts = maintenanceStart.split(':').map(Number);
-                const endParts = maintenanceEnd.split(':').map(Number);
-                const startHour = startParts[0] ?? 0;
-                const startMinute = startParts[1] ?? 0;
-                const endHour = endParts[0] ?? 0;
-                const endMinute = endParts[1] ?? 0;
-
-                const startDateTime = new Date(eventDate);
-                startDateTime.setHours(startHour, startMinute, 0, 0);
-
-                const endDateTime = new Date(eventDate);
-                endDateTime.setHours(endHour, endMinute, 0, 0);
-
-                maintenanceEvents.push({
-                    id: `maintenance-${i}`,
-                    title: 'Maintenance',
-                    start: startDateTime.toISOString(),
-                    end: endDateTime.toISOString(),
-                    backgroundColor: '#ef4444',
-                    borderColor: '#dc2626',
-                    extendedProps: {
-                        deviceId: props.selectedDeviceData.id,
-                        isMaintenance: true,
-                    },
-                });
-            }
-        }
-
-        return [...reservationEvents, ...maintenanceEvents];
+        return [...reservationEvents, ...buildMaintenanceEvents(props.selectedDeviceData)];
     });
 
-    function handleDateSelect(selectInfo: DateSelectArg) {
-        const calendarApi = selectInfo.view.calendar;
-        calendarApi.unselect();
-
-        if (!props.selectedDeviceId) return;
-
-        if (props.selectedDeviceData?.maintenance_start && props.selectedDeviceData?.maintenance_end) {
-            const startDate = selectInfo.start;
-            const endDate = selectInfo.end;
-            const maintenanceStart = props.selectedDeviceData.maintenance_start;
-            const maintenanceEnd = props.selectedDeviceData.maintenance_end;
-
-            const startParts = maintenanceStart.split(':').map(Number);
-            const endParts = maintenanceEnd.split(':').map(Number);
-            const maintenanceStartHour = startParts[0] ?? 0;
-            const maintenanceStartMinute = startParts[1] ?? 0;
-            const maintenanceEndHour = endParts[0] ?? 0;
-            const maintenanceEndMinute = endParts[1] ?? 0;
-
-            const currentDate = new Date(startDate);
-            currentDate.setHours(0, 0, 0, 0); // Reset to start of day
-
-            const endDateDay = new Date(endDate);
-            endDateDay.setHours(23, 59, 59, 999); // Set to end of day
-
-            while (currentDate <= endDateDay) {
-                const dayMaintenanceStart = new Date(currentDate);
-                dayMaintenanceStart.setHours(maintenanceStartHour, maintenanceStartMinute, 0, 0);
-
-                const dayMaintenanceEnd = new Date(currentDate);
-                dayMaintenanceEnd.setHours(maintenanceEndHour, maintenanceEndMinute, 0, 0);
-
-                // Calculate the effective reservation period for this specific day
-                const dayStart = new Date(currentDate);
-                dayStart.setHours(0, 0, 0, 0);
-
-                const dayEnd = new Date(currentDate);
-                dayEnd.setHours(23, 59, 59, 999);
-
-                // Get the overlap of reservation with this day
-                const effectiveStart = startDate > dayStart ? startDate : dayStart;
-                const effectiveEnd = endDate < dayEnd ? endDate : dayEnd;
-
-                // Check if the effective reservation period on this day overlaps with maintenance
-                if (
-                    (effectiveStart >= dayMaintenanceStart && effectiveStart < dayMaintenanceEnd) ||
-                    (effectiveEnd > dayMaintenanceStart && effectiveEnd <= dayMaintenanceEnd) ||
-                    (effectiveStart <= dayMaintenanceStart && effectiveEnd >= dayMaintenanceEnd)
-                ) {
-                    alert(`Cannot create reservation during maintenance period (${maintenanceStart} - ${maintenanceEnd})`);
-                    return;
-                }
-
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
+    function checkMaintenanceConflict(startDate: Date, endDate: Date, messagePrefix: string) {
+        const message = getMaintenanceConflictMessage(
+            startDate,
+            endDate,
+            props.selectedDeviceData?.maintenance_start,
+            props.selectedDeviceData?.maintenance_end,
+            messagePrefix,
+        );
+        if (message) {
+            toast.error(message);
+            return true;
         }
+        return false;
+    }
 
+    function handleDateSelect(selectInfo: DateSelectArg) {
+        selectInfo.view.calendar.unselect();
+        if (!props.selectedDeviceId) return;
+        if (checkMaintenanceConflict(selectInfo.start, selectInfo.end, 'Cannot create reservation during maintenance period')) return;
         reservationForm.value = {
-            deviceId: props.selectedDeviceId,
-            startDate: formatDateTimeLocal(selectInfo.start),
-            endDate: formatDateTimeLocal(selectInfo.end),
+            device_id: props.selectedDeviceId,
+            start: formatDateTimeLocal(selectInfo.start),
+            end: formatDateTimeLocal(selectInfo.end),
         };
-
         editingReservation.value = null;
         isModalOpen.value = true;
     }
 
     function handleEventClick(clickInfo: EventClickArg) {
         const event = clickInfo.event;
-
         if (event.extendedProps.isMaintenance) {
-            alert('Maintenance periods cannot be edited');
+            toast.warning('Maintenance periods cannot be edited');
             return;
         }
-
         const reservation = reservations.value.find((r) => r.id === Number(event.id));
-
         if (!reservation) return;
-
-        const eventEnd = new Date(reservation.end);
-        const now = new Date();
-        if (eventEnd < now) {
-            alert('Cannot edit past reservations');
+        if (new Date(reservation.end) < new Date()) {
+            toast.warning('Cannot edit past reservations');
             return;
         }
-
         editingReservation.value = reservation;
         reservationForm.value = {
-            deviceId: reservation.device_id,
-            startDate: formatDateTimeLocal(new Date(reservation.start)),
-            endDate: formatDateTimeLocal(new Date(reservation.end)),
+            device_id: reservation.device_id,
+            start: formatDateTimeLocal(new Date(reservation.start)),
+            end: formatDateTimeLocal(new Date(reservation.end)),
         };
-
         isModalOpen.value = true;
     }
 
     async function saveReservation() {
-        try {
-            const startDate = new Date(reservationForm.value.startDate);
-            const endDate = new Date(reservationForm.value.endDate);
-
-            const now = new Date();
-            if (startDate < now || endDate < now) {
-                alert('Cannot create reservation in the past');
-                return;
-            }
-
-            if (props.selectedDeviceData?.maintenance_start && props.selectedDeviceData?.maintenance_end) {
-                const maintenanceStart = props.selectedDeviceData.maintenance_start;
-                const maintenanceEnd = props.selectedDeviceData.maintenance_end;
-
-                const startParts = maintenanceStart.split(':').map(Number);
-                const endParts = maintenanceEnd.split(':').map(Number);
-                const maintenanceStartHour = startParts[0] ?? 0;
-                const maintenanceStartMinute = startParts[1] ?? 0;
-                const maintenanceEndHour = endParts[0] ?? 0;
-                const maintenanceEndMinute = endParts[1] ?? 0;
-
-                const currentDate = new Date(startDate);
-                currentDate.setHours(0, 0, 0, 0); // Reset to start of day
-
-                const endDateDay = new Date(endDate);
-                endDateDay.setHours(23, 59, 59, 999); // Set to end of day
-
-                while (currentDate <= endDateDay) {
-                    const dayMaintenanceStart = new Date(currentDate);
-                    dayMaintenanceStart.setHours(maintenanceStartHour, maintenanceStartMinute, 0, 0);
-
-                    const dayMaintenanceEnd = new Date(currentDate);
-                    dayMaintenanceEnd.setHours(maintenanceEndHour, maintenanceEndMinute, 0, 0);
-
-                    // Calculate the effective reservation period for this specific day
-                    const dayStart = new Date(currentDate);
-                    dayStart.setHours(0, 0, 0, 0);
-
-                    const dayEnd = new Date(currentDate);
-                    dayEnd.setHours(23, 59, 59, 999);
-
-                    // Get the overlap of reservation with this day
-                    const effectiveStart = startDate > dayStart ? startDate : dayStart;
-                    const effectiveEnd = endDate < dayEnd ? endDate : dayEnd;
-
-                    // Check if the effective reservation period on this day overlaps with maintenance
-                    if (
-                        (effectiveStart >= dayMaintenanceStart && effectiveStart < dayMaintenanceEnd) ||
-                        (effectiveEnd > dayMaintenanceStart && effectiveEnd <= dayMaintenanceEnd) ||
-                        (effectiveStart <= dayMaintenanceStart && effectiveEnd >= dayMaintenanceEnd)
-                    ) {
-                        alert(`Reservation conflicts with daily maintenance period (${maintenanceStart} - ${maintenanceEnd})`);
-                        return;
-                    }
-
-                    currentDate.setDate(currentDate.getDate() + 1);
-                }
-            }
-
-            const reservationData = {
-                device_id: reservationForm.value.deviceId,
-                start: startDate.toISOString(),
-                end: endDate.toISOString(),
-            };
-
-            if (editingReservation.value) {
-                await apiClient.patch(`/reservation/${editingReservation.value.id}/`, reservationData);
-            } else {
-                await apiClient.post('/reservation/', reservationData);
-            }
-
-            await fetchReservations();
-            updateCalendarEvents();
-            closeModal();
-        } catch (error) {
-            console.error('Error saving reservation:', error);
-            alert('Failed to save reservation');
+        const startDate = new Date(reservationForm.value.start);
+        const endDate = new Date(reservationForm.value.end);
+        if (startDate < new Date() || endDate < new Date()) {
+            toast.error('Cannot create reservation in the past');
+            return;
         }
+        if (checkMaintenanceConflict(startDate, endDate, 'Reservation conflicts with daily maintenance period')) return;
+        const reservationData = { device_id: reservationForm.value.device_id, start: startDate.toISOString(), end: endDate.toISOString() };
+        const result = editingReservation.value
+            ? await updateReservation(editingReservation.value.id, reservationData)
+            : await createReservation(reservationData);
+        if (!result.success) {
+            toast.error(result.message || 'Failed to save reservation');
+            return;
+        }
+        const refreshResult = await refreshReservations();
+        if (!refreshResult.success) return;
+        updateCalendarEvents();
+        closeModal();
     }
 
     async function deleteReservation() {
-        if (!editingReservation.value || !confirm('Are you sure you want to delete this reservation?')) {
+        if (!editingReservation.value) return;
+        const result = await removeReservation(editingReservation.value.id);
+        if (!result.success) {
+            toast.error(result.message || 'Failed to delete reservation');
             return;
         }
-
-        try {
-            await apiClient.delete(`/reservation/${editingReservation.value.id}/`);
-            await fetchReservations();
-            updateCalendarEvents();
-            closeModal();
-        } catch (error) {
-            console.error('Error deleting reservation:', error);
-            alert('Failed to delete reservation');
-        }
+        const refreshResult = await refreshReservations();
+        if (!refreshResult.success) return;
+        updateCalendarEvents();
+        closeModal();
     }
 
     function updateCalendarEvents() {
-        if (fullCalendar.value) {
-            const calendarApi = fullCalendar.value.getApi();
-            calendarApi.removeAllEvents();
-            calendarApi.addEventSource(calendarEvents.value);
-        }
+        if (!fullCalendar.value) return;
+        const calendarApi = fullCalendar.value.getApi();
+        calendarApi.removeAllEvents();
+        calendarApi.addEventSource(calendarEvents.value);
     }
 
     function closeModal() {
@@ -339,26 +160,12 @@ export function useDeviceReservationCalendar(props: Props) {
         editingReservation.value = null;
     }
 
-    function formatDateTimeLocal(date: Date): string {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    }
-
-    // FullCalendar configuration
     const calendarOptions = computed<CalendarOptions>(() => ({
         plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
         locale: locale.value === 'sk' ? skLocale : 'en',
         initialView: 'timeGridWeek',
         timeZone: 'local',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
-        },
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' },
         buttonText: {
             today: t('calendar.today'),
             month: t('calendar.month'),
@@ -377,32 +184,20 @@ export function useDeviceReservationCalendar(props: Props) {
         events: calendarEvents.value,
         select: handleDateSelect,
         eventClick: handleEventClick,
-        // Prevent clicking on past events
-        eventAllow: (dropInfo, draggedEvent) => {
-            const now = new Date();
-            const eventStart = draggedEvent?.start;
-            return eventStart ? eventStart >= now : true;
-        },
-        // Custom callback to check if event is in the past
+        eventAllow: (_dropInfo, draggedEvent) => (draggedEvent?.start ? draggedEvent.start >= new Date() : true),
         eventDidMount: (info) => {
             const eventEnd = info.event.end || info.event.start;
-            const now = new Date();
-
-            // Check if this is a maintenance event
             if (info.event.extendedProps.isMaintenance) {
                 info.el.style.cursor = 'not-allowed';
                 info.el.title = 'Maintenance period - cannot be modified';
-            } else if (eventEnd && eventEnd < now) {
-                // Add visual indication for past events
+            } else if (eventEnd && eventEnd < new Date()) {
                 info.el.style.opacity = '0.6';
                 info.el.style.cursor = 'not-allowed';
             }
         },
         height: '100%',
         themeSystem: 'standard',
-        selectConstraint: {
-            start: new Date().toISOString(),
-        },
+        selectConstraint: { start: new Date().toISOString() },
         stickyHeaderDates: true,
         stickyFooterScrollbar: true,
     }));
@@ -416,7 +211,7 @@ export function useDeviceReservationCalendar(props: Props) {
         calendarOptions,
         calendarEvents,
         loading,
-        fetchReservations,
+        fetchReservations: refreshReservations,
         handleDateSelect,
         handleEventClick,
         saveReservation,

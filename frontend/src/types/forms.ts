@@ -13,9 +13,9 @@ export interface RegisterForm {
 }
 
 export interface ReservationForm {
-    deviceId: number;
-    startDate: string;
-    endDate: string;
+    device_id: number;
+    start: string;
+    end: string;
 }
 
 export interface CreateServerForm {

@@ -31,12 +31,9 @@ onMounted(async () => {
         </v-card-title>
         <v-divider></v-divider>
         <v-card-text>
-            <!-- Loading state -->
             <div v-if="loading" style="display: flex; justify-content: center; padding: 16px">
                 <v-progress-circular indeterminate color="primary" size="48" />
             </div>
-
-            <!-- Device Dropdown -->
             <v-select
                 v-else
                 v-model="selectedDevice"
@@ -48,8 +45,6 @@ onMounted(async () => {
                 variant="outlined"
                 density="comfortable"
             />
-
-            <!-- Calendar view  -->
             <div v-if="selectedDevice && selectedDeviceData" style="height: calc(100vh - 260px)">
                 <DeviceReservationCalendar :selected-device-id="selectedDevice" :selected-device-data="selectedDeviceData" />
             </div>

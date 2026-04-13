@@ -46,6 +46,8 @@ export default {
     },
     reservations: {
         title: 'Rezervácie',
+        new: 'Nová rezervácia',
+        edit: 'Upraviť rezerváciu',
         selectDevice: 'Vyberte zariadenie',
         chooseDevice: '-- Vyberte zariadenie --',
         newReservation: 'Nová rezervácia',
