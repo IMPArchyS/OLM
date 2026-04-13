@@ -57,6 +57,7 @@ export interface Experiment {
     devices: Device[];
     software: Software;
     schema_id?: number;
+    deleted_at?: string;
 }
 
 export interface ExperimentLog {

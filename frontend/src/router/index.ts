@@ -97,6 +97,21 @@ const router = createRouter({
                     name: 'experiments',
                     component: () => import('@/views/app/experiments/Experiments.vue'),
                 },
+                {
+                    path: '/app/experiments/create',
+                    name: 'experiments-create',
+                    component: () => import('@/views/app/experiments/CreateExperiment.vue'),
+                },
+                {
+                    path: '/app/experiments/:id/show',
+                    name: 'experiments-show',
+                    component: () => import('@/views/app/experiments/ShowExperiment.vue'),
+                },
+                {
+                    path: '/app/experiments/:id/edit',
+                    name: 'experiments-edit',
+                    component: () => import('@/views/app/experiments/EditExperiment.vue'),
+                },
             ],
         },
         {

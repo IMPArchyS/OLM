@@ -35,6 +35,23 @@ export interface EditServerForm {
     enabled?: boolean;
 }
 
+export interface CreateExperimentForm {
+    commands: Command[];
+    input_arguments: Record<string, InputArgSpec>;
+    output_arguments: string[];
+    device_ids: number[];
+    software_id: number;
+}
+
+export interface EditExperimentForm {
+    id: number;
+    commands: Command[];
+    input_arguments: Record<string, InputArgSpec>;
+    output_arguments: string[];
+    device_ids: number[];
+    software_id: number;
+}
+
 export interface QueueFormData {
     user_id: number | null;
     id: number | null;

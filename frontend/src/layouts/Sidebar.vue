@@ -20,7 +20,7 @@ interface MainLayoutContext {
 const { sidebarCollapsed, sidebarVisible, windowWidth, toggleSidebar } = inject<MainLayoutContext>('mainLayout')!;
 
 const isActiveRoute = (routePath: string) => {
-    if (routePath === '/app/servers' || routePath === '/app/schemas') {
+    if (routePath === '/app/servers' || routePath === '/app/schemas' || routePath === '/app/experiments') {
         return route.path.startsWith(routePath);
     }
     return route.path === routePath;
