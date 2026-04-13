@@ -86,11 +86,13 @@ const addToQueue = async () => {
 
     console.log(JSON.stringify(formData.value, null, 2));
     const result = await queueSelectedExperiment(formData.value);
-    if (!result.success) {
-        toast.error(result.message || 'Failed');
-    } else {
-        toast.info(result.message || 'Queued');
+
+    if (result.success) {
+        toast.success(result.message ?? 'queued');
+        return;
     }
+
+    toast.error(result.message ?? 'failed');
 };
 </script>
 

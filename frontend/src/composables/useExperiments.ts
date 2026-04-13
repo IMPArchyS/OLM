@@ -75,7 +75,7 @@ export function useExperiments() {
             console.error('Error fetching experimentsByDevice:', e);
             return {
                 success: false,
-                message: e.response?.data?.message || 'Failed to fetch available experimentsByDevice',
+                message: e.response?.data?.message || 'Failed to queue experiment',
             };
         } finally {
             loading.value = false;
