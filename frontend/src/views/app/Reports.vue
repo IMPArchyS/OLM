@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ExperimentOutputChart from '@/components/ExperimentOutputChart.vue';
 import { useExperimentLogs } from '@/composables/useExperimentLogs';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
@@ -102,7 +103,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <v-card>
+    <v-card class="mt-5">
         <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
             <span class="text-h5">{{ t('reports.title') }}</span>
         </v-card-title>
