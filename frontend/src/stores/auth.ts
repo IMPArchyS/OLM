@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { apiClient } from '@/lib/apiClient';
 import type { User, AuthResponse, OauthCredentials, OauthProvider } from '@/types/authTypes';
 import type { LoginForm, RegisterForm } from '@/types/forms';
+import router from '@/router';
 
 function parseJwt(token: string) {
     try {
@@ -95,9 +96,11 @@ export const useAuthStore = defineStore('auth', () => {
                 setToken(null);
                 clearInterval(tokenRefreshInterval);
                 localStorage.removeItem('OLMAccessToken');
+                router.push('/auth/login');
             })
             .catch(() => {
                 setToken(null);
+                router.push('/auth/login');
             });
     };
 
