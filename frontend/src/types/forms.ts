@@ -3,6 +3,7 @@ import type { Command, InputArgSpec, SoftwareName, StepSequence } from './api';
 export interface LoginForm {
     username: string;
     password: string;
+    remember_me: boolean;
 }
 
 export interface RegisterForm {

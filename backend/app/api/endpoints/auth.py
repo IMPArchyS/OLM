@@ -2,11 +2,12 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timezone
 
 import httpx
 
 from app.core.config import settings
+from app.models.utils import now
 
 
 router = APIRouter()
@@ -33,6 +34,7 @@ class TokenResponse(BaseModel):
 class LoginRequest(BaseModel):
     username: str
     password: str
+    remember_me: bool
 
 class RegisterRequest(BaseModel):
     name: str  
@@ -60,6 +62,24 @@ class LogoutReponse(BaseModel):
     success: bool
 
 
+def calc_max_age(expires_at: str | datetime) -> int:
+    if isinstance(expires_at, datetime):
+        expiry = expires_at
+    else:
+        normalized = expires_at.strip()
+        if normalized.endswith("Z"):
+            normalized = f"{normalized[:-1]}+00:00"
+        expiry = datetime.fromisoformat(normalized)
+
+    if expiry.tzinfo is None:
+        expiry = expiry.replace(tzinfo=timezone.utc)
+    else:
+        expiry = expiry.astimezone(timezone.utc)
+
+    delta = expiry - datetime.now(timezone.utc)
+    return max(0, int(delta.total_seconds()))
+
+
 @router.post("/register", response_model=TokenResponse)
 def register(credentials: RegisterRequest, response: Response):
     try:
@@ -82,7 +102,7 @@ def register(credentials: RegisterRequest, response: Response):
             httponly=True,
             secure=False,
             samesite="lax",
-            max_age=60 * 60,
+            max_age=calc_max_age(token_data["refresh_token_expires_at"]),
             path="/"
         )
         
@@ -99,7 +119,7 @@ def login(credentials: LoginRequest, response: Response):
     try:
         auth_response = httpx.post(
             f"{settings.AUTH_SERVICE_URL}/login",
-            json={"username": credentials.username, "password": credentials.password},
+            json={"username": credentials.username, "password": credentials.password, "remember_me": credentials.remember_me},
             headers={"x-api-key": settings.AUTH_API_KEY},
             timeout=10.0
         )
@@ -112,7 +132,7 @@ def login(credentials: LoginRequest, response: Response):
             httponly=True,  
             secure=False,  
             samesite="lax",
-            max_age=60 * 60, 
+            max_age=calc_max_age(token_data["refresh_token_expires_at"]),
             path="/"
         )
         

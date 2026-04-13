@@ -14,6 +14,7 @@ const toast = useToastStore();
 
 const username = ref('');
 const password = ref('');
+const rememberMe = ref(false);
 const isSubmitting = ref(false);
 const showPassword = ref(false);
 
@@ -31,7 +32,7 @@ const handleLogin = async () => {
     isSubmitting.value = true;
 
     try {
-        await authStore.login({ username: username.value, password: password.value });
+        await authStore.login({ username: username.value, password: password.value, remember_me: rememberMe.value });
         await router.push('/app/dashboard');
     } catch (error) {
         toast.error(t('error.login'));
@@ -78,7 +79,6 @@ const handleOauthLogin = (provider: string) => {
                     density="comfortable"
                     required
                     :disabled="isSubmitting"
-                    class="mb-4"
                 />
                 <v-text-field
                     v-model="password"
@@ -92,8 +92,12 @@ const handleOauthLogin = (provider: string) => {
                     @click:append-inner="showPassword = !showPassword"
                     required
                     :disabled="isSubmitting"
-                    class="mb-4"
                 />
+                <v-checkbox v-model="rememberMe" density="compact" hide-details color="primary">
+                    <template #label>
+                        <span class="text-body-2">{{ t('auth.rememberMe') }}</span>
+                    </template>
+                </v-checkbox>
                 <v-btn type="submit" color="primary" variant="elevated" block class="mt-2" :loading="isSubmitting" :disabled="!username || !password">
                     {{ t('auth.login') }}
                 </v-btn>

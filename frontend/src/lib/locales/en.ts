@@ -22,6 +22,7 @@ export default {
         confirmPassword: 'Confirm Password',
         name: 'Name',
         username: 'Username',
+        rememberMe: 'Remember me',
         alreadyAccount: 'Already have an account? Login',
         createAccount: 'Create an Account',
         nameRequired: 'Name is required',

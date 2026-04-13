@@ -19,6 +19,7 @@ export default {
         name: 'Meno',
         email: 'Email',
         password: 'Heslo',
+        rememberMe: 'Zapamätať si ma',
         confirmPassword: 'Potvrdiť heslo',
         alreadyAccount: 'Už máte účet? Prihláste sa',
         createAccount: 'Vytvoriť účet',
