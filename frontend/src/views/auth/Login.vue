@@ -99,7 +99,7 @@ const handleOauthLogin = (provider: string) => {
                 </v-btn>
             </v-form>
             <v-divider class="my-4" />
-            <v-btn :to="{ name: 'register' }" variant="elevated" block> {{ t('auth.createAccount') }} </v-btn>
+            <v-btn :to="{ name: 'register' }" variant="text" block> {{ t('auth.createAccount') }} </v-btn>
         </v-card-text>
     </v-card>
 </template>
