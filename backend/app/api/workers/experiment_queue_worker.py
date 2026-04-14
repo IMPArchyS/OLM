@@ -18,7 +18,8 @@ from app.models.reservation import Reservation
 from app.models.server import Server
 from app.models.utils import now
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn.error")
+logger.setLevel(logging.INFO)
 
 
 def _queue_now() -> datetime:
@@ -129,6 +130,12 @@ def _queue_for_retry(queue_entry: ExperimentQueue) -> None:
     queue_entry.attempts += 1
     queue_entry.next_attempt_at = _calculate_next_retry(queue_entry.attempts)
     queue_entry.modified_at = _queue_now()
+    logger.info(
+        "WORKER: retry scheduled queue_id=%s attempts=%s next_attempt_at=%s",
+        queue_entry.id,
+        queue_entry.attempts,
+        queue_entry.next_attempt_at,
+    )
 
 
 def _payload_json_for_submit(queue_entry: ExperimentQueue) -> ExperimentQueuePayload:
@@ -149,6 +156,11 @@ def _submit_queue_entry(
 ) -> None:
     db_server = session.get(Server, queue_entry.server_id)
     if db_server is None or not (db_server.available and db_server.enabled and db_server.production):
+        logger.info(
+            "WORKER: submit skipped queue_id=%s reason=server_unavailable server_id=%s",
+            queue_entry.id,
+            queue_entry.server_id,
+        )
         _queue_for_retry(queue_entry)
         return
 
@@ -161,24 +173,43 @@ def _submit_queue_entry(
     try:
         payload = _payload_json_for_submit(queue_entry)
     except ValidationError:
-        logger.exception("Queue payload validation failed for queue entry %s", queue_entry.id)
+        logger.exception("WORKER: payload validation failed queue_id=%s", queue_entry.id)
         _queue_for_retry(queue_entry)
         return
 
     db_device = session.get(Device, queue_entry.device_id)
     if db_device is None:
+        logger.info(
+            "WORKER: submit skipped queue_id=%s reason=device_missing device_id=%s",
+            queue_entry.id,
+            queue_entry.device_id,
+        )
         _queue_for_retry(queue_entry)
         return
 
     run_start = now()
     simulation_time = max(0, int(payload.simulation_time))
     run_end = run_start + timedelta(seconds=simulation_time)
+    logger.info(
+        "WORKER: submit try queue_id=%s server_id=%s server_name=%s device_id=%s attempts=%s sim_time=%s",
+        queue_entry.id,
+        queue_entry.server_id,
+        db_server.name,
+        queue_entry.device_id,
+        queue_entry.attempts,
+        simulation_time,
+    )
 
     maintenance_overlap_end = _find_maintenance_overlap_end(db_device, run_start, run_end)
     if maintenance_overlap_end is not None:
         queue_entry.status = QueueStatus.NOT_STARTED
         queue_entry.next_attempt_at = maintenance_overlap_end.replace(tzinfo=None)
         queue_entry.modified_at = _queue_now()
+        logger.info(
+            "WORKER: submit deferred queue_id=%s reason=maintenance_overlap next_attempt_at=%s",
+            queue_entry.id,
+            queue_entry.next_attempt_at,
+        )
         return
 
     overlapping_reservation = _find_overlapping_reservation(
@@ -191,8 +222,18 @@ def _submit_queue_entry(
         queue_entry.status = QueueStatus.NOT_STARTED
         queue_entry.next_attempt_at = overlapping_reservation.end.replace(tzinfo=None)
         queue_entry.modified_at = _queue_now()
+        logger.info(
+            "WORKER: submit deferred queue_id=%s reason=reservation_overlap reservation_end=%s",
+            queue_entry.id,
+            overlapping_reservation.end,
+        )
         return
 
+    logger.info(
+        "WORKER: submit request queue_id=%s url=%s",
+        queue_entry.id,
+        submit_url,
+    )
     try:
         response = client.post(
             submit_url,
@@ -200,18 +241,36 @@ def _submit_queue_entry(
             headers={"x-api-key": settings.EXPERIMENTAL_API_KEY},
         )
     except httpx.RequestError:
+        logger.info(
+            "WORKER: submit request failed queue_id=%s reason=request_error",
+            queue_entry.id,
+        )
         _queue_for_retry(queue_entry)
         return
+
+    logger.info(
+        "WORKER: submit response queue_id=%s status_code=%s",
+        queue_entry.id,
+        response.status_code,
+    )
 
     if response.status_code == 202:
         try:
             body = response.json()
         except ValueError:
+            logger.info(
+                "WORKER: submit invalid json response queue_id=%s",
+                queue_entry.id,
+            )
             _queue_for_retry(queue_entry)
             return
 
         raw_job_id = body.get("job_id")
         if not raw_job_id:
+            logger.info(
+                "WORKER: submit missing job_id queue_id=%s",
+                queue_entry.id,
+            )
             _queue_for_retry(queue_entry)
             return
 
@@ -224,6 +283,11 @@ def _submit_queue_entry(
         if db_exp_log is not None and db_exp_log.started_at is None:
             db_exp_log.started_at = now()
             db_exp_log.modified_at = now()
+        logger.info(
+            "WORKER: submit accepted queue_id=%s job_id=%s",
+            queue_entry.id,
+            queue_entry.job_id,
+        )
         return
 
     if response.status_code in {400, 404, 409, 503}:
@@ -243,6 +307,10 @@ def _poll_queue_entry(
     queue_entry: ExperimentQueue,
 ) -> None:
     if not queue_entry.job_id:
+        logger.info(
+            "QUEUE: poll skipped queue_id=%s reason=missing_job_id",
+            queue_entry.id,
+        )
         _queue_for_retry(queue_entry)
         return
 
@@ -250,6 +318,12 @@ def _poll_queue_entry(
     if db_server is None or not (db_server.available and db_server.enabled and db_server.production):
         queue_entry.next_attempt_at = _queue_now() + timedelta(seconds=settings.EXPERIMENT_QUEUE_POLL_INTERVAL_SECONDS)
         queue_entry.modified_at = _queue_now()
+        logger.info(
+            "QUEUE: poll deferred queue_id=%s reason=server_unavailable server_id=%s next_attempt_at=%s",
+            queue_entry.id,
+            queue_entry.server_id,
+            queue_entry.next_attempt_at,
+        )
         return
 
     base_url = resolve_url(db_server)
@@ -260,6 +334,13 @@ def _poll_queue_entry(
 
     status_path = settings.EXPERIMENT_QUEUE_STATUS_PATH.format(job_id=queue_entry.job_id)
     status_url = f"{base_url}{status_path}"
+    logger.info(
+        "QUEUE: poll try queue_id=%s job_id=%s server_id=%s server_name=%s",
+        queue_entry.id,
+        queue_entry.job_id,
+        queue_entry.server_id,
+        db_server.name,
+    )
 
     try:
         response = client.get(
@@ -269,7 +350,19 @@ def _poll_queue_entry(
     except httpx.RequestError:
         queue_entry.next_attempt_at = _queue_now() + timedelta(seconds=settings.EXPERIMENT_QUEUE_POLL_INTERVAL_SECONDS)
         queue_entry.modified_at = _queue_now()
+        logger.info(
+            "QUEUE: poll request failed queue_id=%s job_id=%s",
+            queue_entry.id,
+            queue_entry.job_id,
+        )
         return
+
+    logger.info(
+        "QUEUE: poll response queue_id=%s job_id=%s status_code=%s",
+        queue_entry.id,
+        queue_entry.job_id,
+        response.status_code,
+    )
 
     if response.status_code != 200:
         queue_entry.next_attempt_at = _queue_now() + timedelta(seconds=settings.EXPERIMENT_QUEUE_POLL_INTERVAL_SECONDS)
@@ -298,6 +391,12 @@ def _poll_queue_entry(
     if remote_runs is None and remote_finished_at is None and remote_finish_reason == FinishReason.REASON_NONE:
         queue_entry.next_attempt_at = _queue_now() + timedelta(seconds=settings.EXPERIMENT_QUEUE_POLL_INTERVAL_SECONDS)
         queue_entry.modified_at = _queue_now()
+        logger.info(
+            "QUEUE: poll pending queue_id=%s job_id=%s next_attempt_at=%s",
+            queue_entry.id,
+            queue_entry.job_id,
+            queue_entry.next_attempt_at,
+        )
         return
 
     if db_exp_log is not None:
@@ -311,6 +410,14 @@ def _poll_queue_entry(
         queue_entry.status = QueueStatus.FAILED
     else:
         queue_entry.status = QueueStatus.FINISHED
+
+    logger.info(
+        "QUEUE: poll resolved queue_id=%s job_id=%s queue_status=%s finish_reason=%s",
+        queue_entry.id,
+        queue_entry.job_id,
+        queue_entry.status,
+        remote_finish_reason,
+    )
 
     queue_entry.next_attempt_at = None
     queue_entry.modified_at = _queue_now()
@@ -349,6 +456,13 @@ def process_experiment_queue_tick() -> None:
         to_submit = session.exec(submit_stmt).all()
         to_poll = session.exec(poll_stmt).all()
 
+        logger.info(
+            "WORKER: tick at=%s submit_count=%s poll_count=%s",
+            current_time,
+            len(to_submit),
+            len(to_poll),
+        )
+
         if not to_submit and not to_poll:
             return
 
@@ -363,13 +477,13 @@ def process_experiment_queue_tick() -> None:
 
 
 async def run_experiment_queue_worker(stop_event: asyncio.Event) -> None:
-    logger.info("Experiment queue worker started")
+    logger.info("WORKER: started")
 
     while not stop_event.is_set():
         try:
             process_experiment_queue_tick()
         except Exception:
-            logger.exception("Experiment queue worker tick failed")
+            logger.exception("WORKER: tick failed")
 
         try:
             await asyncio.wait_for(
@@ -379,4 +493,4 @@ async def run_experiment_queue_worker(stop_event: asyncio.Event) -> None:
         except asyncio.TimeoutError:
             pass
 
-    logger.info("Experiment queue worker stopped")
+    logger.info("WORKER: stopped")
