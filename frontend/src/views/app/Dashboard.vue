@@ -148,7 +148,6 @@ onUnmounted(() => {
                 <v-progress-circular indeterminate color="primary" size="64" />
             </div>
             <div v-else style="display: flex; flex-direction: column; gap: 16px">
-                <!-- Active Reservation -->
                 <div v-if="activeReservation">
                     <v-alert type="success" variant="tonal">
                         <v-alert-title>{{ t('dashboard.active_reservation') }}</v-alert-title>
@@ -163,7 +162,6 @@ onUnmounted(() => {
                             </p>
                         </div>
                     </v-alert>
-
                     <ExperimentSandbox
                         :reservation="activeReservation"
                         :camera-device-name="cameraDeviceName"
@@ -171,8 +169,6 @@ onUnmounted(() => {
                         :resolving-camera-target="resolvingCameraTarget"
                     />
                 </div>
-
-                <!-- Next Reservation -->
                 <v-alert v-else-if="nextReservation" type="info" variant="tonal">
                     <v-alert-title>{{ t('dashboard.next_reservation') }}</v-alert-title>
                     <div class="flex flex-row gap-3" style="margin-top: 8px">
@@ -186,8 +182,6 @@ onUnmounted(() => {
                         </p>
                     </div>
                 </v-alert>
-
-                <!-- No Reservations -->
                 <div v-else style="text-align: center; padding: 32px 0">
                     <p style="font-size: 18px; margin-bottom: 16px">
                         {{ t('dashboard.no_reservations') }}

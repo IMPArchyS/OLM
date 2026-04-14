@@ -8,6 +8,7 @@ interface Props {
     title?: string;
     height?: number;
     emptyText?: string;
+    fillContainer?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -15,6 +16,7 @@ const props = withDefaults(defineProps<Props>(), {
     title: 'Output history',
     height: 220,
     emptyText: 'No output data available yet.',
+    fillContainer: false,
 });
 
 const plotContainer = ref<HTMLElement | null>(null);
@@ -154,7 +156,8 @@ const layout = computed(() => {
 
 const chartStyle = computed(() => {
     return {
-        height: `${props.height}px`,
+        height: props.fillContainer ? '100%' : `${props.height}px`,
+        minHeight: `${props.height}px`,
     };
 });
 
@@ -208,10 +211,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <v-card variant="outlined" class="simple-output-chart">
+    <v-card variant="outlined" class="simple-output-chart d-flex flex-column">
         <v-card-title class="text-subtitle-1">{{ title }}</v-card-title>
-        <v-card-text>
-            <div :style="chartStyle">
+        <v-card-text class="chart-body">
+            <div :style="chartStyle" class="chart-shell">
                 <div ref="plotContainer" class="plot-container" />
             </div>
         </v-card-text>
@@ -221,6 +224,16 @@ onBeforeUnmount(() => {
 <style scoped>
 .simple-output-chart {
     height: 100%;
+}
+
+.chart-body {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.chart-shell {
+    width: 100%;
 }
 
 .plot-container {

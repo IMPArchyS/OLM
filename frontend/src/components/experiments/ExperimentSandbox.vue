@@ -205,7 +205,7 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 </script>
 
 <template>
-    <v-card class="mt-4 sandbox-card" variant="tonal">
+    <v-card class="mt-4 sandbox-card">
         <v-card-title class="text-h6">{{ t('dashboard.ongoing_experiment') }}</v-card-title>
 
         <v-card-text class="pt-2">
@@ -234,11 +234,11 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                 No section selected. Enable at least one section above.
             </v-alert>
 
-            <v-row dense>
-                <v-col v-for="panelId in visiblePanelOrder" :key="panelId" cols="12" lg="6">
-                    <v-card variant="outlined" class="sandbox-section-card">
+            <v-row dense class="align-stretch">
+                <v-col v-for="panelId in visiblePanelOrder" :key="panelId" cols="12" lg="6" class="d-flex">
+                    <v-card variant="outlined" class="sandbox-section-card d-flex flex-column w-100">
                         <v-card-title class="text-subtitle-1">{{ panelTitles[panelId] }}</v-card-title>
-                        <v-card-text>
+                        <v-card-text class="sandbox-section-body d-flex flex-column flex-grow-1">
                             <div v-if="panelId === 'control'" class="sandbox-panel-content">
                                 <ExperimentSelector
                                     fixed-command=""
@@ -254,20 +254,20 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                                 </v-btn>
                             </div>
 
-                            <div v-else-if="panelId === 'chart'">
-                                <SimpleOutputChart :output-history="outputHistory" title="Live output" :height="240" />
+                            <div v-else-if="panelId === 'chart'" class="sandbox-chart-panel">
+                                <SimpleOutputChart :output-history="outputHistory" title="Live output" :height="240" fill-container class="h-100" />
 
                                 <v-alert v-if="websocketMessage" type="info" variant="tonal" class="mt-3">
                                     <div class="text-caption">{{ websocketMessage }}</div>
                                 </v-alert>
                             </div>
 
-                            <div v-else-if="panelId === 'camera'">
+                            <div v-else-if="panelId === 'camera'" class="sandbox-camera-panel">
                                 <v-alert v-if="props.resolvingCameraTarget" type="info" variant="tonal">Resolving camera target...</v-alert>
                                 <v-alert v-else-if="!props.cameraDeviceName || !props.cameraServerId" type="warning" variant="tonal">
                                     Unable to resolve server/device for camera stream from this reservation.
                                 </v-alert>
-                                <CameraView v-else :device_name="props.cameraDeviceName" :server_id="props.cameraServerId" compact />
+                                <CameraView v-else :device_name="props.cameraDeviceName" :server_id="props.cameraServerId" compact class="h-100" />
                             </div>
 
                             <div v-else class="animation-placeholder-wrapper">
@@ -310,18 +310,29 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
     height: 100%;
 }
 
+.sandbox-section-body {
+    min-height: 0;
+}
+
 .sandbox-panel-content {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    flex: 1 1 auto;
 }
 
-.animation-placeholder-wrapper {
-    max-width: 520px;
+.sandbox-chart-panel,
+.sandbox-camera-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1 1 auto;
 }
 
 .animation-placeholder {
     min-height: 200px;
+    width: 100%;
+    flex: 1 1 auto;
     border: 1px dashed rgba(var(--v-theme-on-surface), 0.2);
     border-radius: 10px;
     display: flex;
@@ -329,5 +340,10 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
     justify-content: center;
     flex-direction: column;
     color: rgba(var(--v-theme-on-surface), 0.7);
+}
+
+.sandbox-camera-panel :deep(.camera-view),
+.sandbox-chart-panel :deep(.simple-output-chart) {
+    flex: 1 1 auto;
 }
 </style>

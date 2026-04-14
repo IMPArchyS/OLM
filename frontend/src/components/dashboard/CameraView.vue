@@ -112,14 +112,16 @@ onBeforeUnmount(() => {
 <template>
     <v-card :class="['camera-view', { 'camera-view--compact': props.compact }]">
         <v-card-title>Camera Stream</v-card-title>
-        <v-card-text>
+        <v-card-text class="camera-content">
             <div class="mb-3 text-body-2">
                 <strong>Device:</strong> {{ props.device_name || 'N/A' }}
                 <span class="mx-2">|</span>
                 <strong>Server ID:</strong> {{ props.server_id || 'N/A' }}
             </div>
 
-            <video ref="videoRef" autoplay playsinline muted class="camera-video"></video>
+            <div class="camera-stage">
+                <video ref="videoRef" autoplay playsinline muted class="camera-video"></video>
+            </div>
 
             <div class="d-flex flex-wrap gap-2 mt-3">
                 <v-btn color="primary" :size="props.compact ? 'small' : 'default'" :loading="loading" :disabled="!canStart" @click="handleStart">
@@ -139,16 +141,26 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .camera-view {
-    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
-.camera-view--compact {
-    margin-top: 0;
-    max-width: 520px;
+.camera-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.camera-stage {
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .camera-video {
     width: 100%;
+    height: 100%;
     min-height: 240px;
     border-radius: 8px;
     background: #000;
@@ -157,6 +169,5 @@ onBeforeUnmount(() => {
 
 .camera-view--compact .camera-video {
     min-height: 180px;
-    max-height: 220px;
 }
 </style>
