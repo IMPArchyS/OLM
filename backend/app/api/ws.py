@@ -124,6 +124,17 @@ def _reservation_state(reservation_id: int) -> tuple[bool, str]:
     return True, "reservation active"
 
 
+def _remaining_reservation_seconds(reservation_id: int) -> float | None:
+    with Session(engine) as session:
+        reservation_end = session.exec(select(Reservation.end).where(Reservation.id == reservation_id)).first()
+
+    if reservation_end is None:
+        return None
+
+    remaining = (reservation_end - now()).total_seconds()
+    return max(0.0, remaining)
+
+
 def _to_websocket_url(base_url: str, path: str) -> str:
     normalized_path = path if path.startswith("/") else f"/{path}"
 
@@ -443,6 +454,16 @@ class _ReservationUpstreamSession:
 
         experiment_log_id: int | None = None
         if normalized_payload.command == Command.START:
+            remaining_seconds = _remaining_reservation_seconds(self.reservation_id)
+            if remaining_seconds is None or remaining_seconds <= 0:
+                raise ValueError("reservation expired")
+
+            requested_simulation_seconds = float(normalized_payload.simulation_time)
+            if requested_simulation_seconds > remaining_seconds:
+                raise ValueError(
+                    f"simulation_time {requested_simulation_seconds:g}s exceeds remaining reservation window {remaining_seconds:.1f}s"
+                )
+
             experiment_log_id = _create_experiment_log_for_payload(
                 normalized_payload,
                 self.user_id,

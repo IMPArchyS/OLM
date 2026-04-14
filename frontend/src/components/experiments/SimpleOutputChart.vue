@@ -21,6 +21,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const plotContainer = ref<HTMLElement | null>(null);
 let resizeObserver: ResizeObserver | null = null;
+let renderAnimationFrameId: number | null = null;
 const emptyTicks = [0, 1, 2, 3, 4, 5];
 
 const colors = ['#00897B', '#F4511E', '#1E88E5', '#D81B60', '#6D4C41', '#546E7A'];
@@ -176,16 +177,27 @@ const renderPlot = async () => {
     });
 };
 
+const scheduleRender = () => {
+    if (renderAnimationFrameId !== null) {
+        return;
+    }
+
+    renderAnimationFrameId = window.requestAnimationFrame(() => {
+        renderAnimationFrameId = null;
+        void renderPlot();
+    });
+};
+
 watch(
     [() => props.outputHistory, () => props.xKey, hasSeries, numericKeys, labels],
     () => {
-        void renderPlot();
+        scheduleRender();
     },
     { deep: true },
 );
 
 onMounted(() => {
-    void renderPlot();
+    scheduleRender();
 
     if (plotContainer.value) {
         resizeObserver = new ResizeObserver(() => {
@@ -199,6 +211,11 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+    if (renderAnimationFrameId !== null) {
+        window.cancelAnimationFrame(renderAnimationFrameId);
+        renderAnimationFrameId = null;
+    }
+
     if (resizeObserver) {
         resizeObserver.disconnect();
         resizeObserver = null;

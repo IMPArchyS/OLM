@@ -22,6 +22,7 @@ const { servers, fetchServers } = useServers();
 const { devices, fetchDevicesByServer } = useDevices();
 
 let refreshInterval: number | null = null;
+let reservationRefreshInterval: number | null = null;
 
 const now = computed(() => currentTime.value);
 
@@ -119,20 +120,24 @@ onMounted(async () => {
     await fetchReservations();
     loading.value = false;
 
-    // // Update current time every second for precise real-time updates
-    // refreshInterval = window.setInterval(() => {
-    //     currentTime.value = new Date();
-    // }, 1000);
+    // Keep active/next reservation visibility in sync with wall-clock time.
+    refreshInterval = window.setInterval(() => {
+        currentTime.value = new Date();
+    }, 1000);
 
-    // // Refetch reservations every 5 minutes to get latest data
-    // window.setInterval(() => {
-    //     fetchReservations();
-    // }, 300000);
+    // Pull reservation updates periodically so dashboard transitions without manual refresh.
+    reservationRefreshInterval = window.setInterval(() => {
+        void fetchReservations();
+    }, 60000);
 });
 
 onUnmounted(() => {
     if (refreshInterval) {
         clearInterval(refreshInterval);
+    }
+
+    if (reservationRefreshInterval) {
+        clearInterval(reservationRefreshInterval);
     }
 });
 </script>
@@ -163,6 +168,7 @@ onUnmounted(() => {
                         </div>
                     </v-alert>
                     <ExperimentSandbox
+                        :key="activeReservation.id"
                         :reservation="activeReservation"
                         :camera-device-name="cameraDeviceName"
                         :camera-server-id="cameraServerId"

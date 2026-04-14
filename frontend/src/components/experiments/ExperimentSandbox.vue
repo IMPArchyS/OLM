@@ -145,7 +145,7 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
             </v-alert>
 
             <v-alert v-if="!isReservationActive" type="warning" variant="tonal" class="mt-3">
-                Reservation has ended. Refresh page to load current reservation context.
+                Reservation has ended. Dashboard updates automatically when next reservation becomes active.
             </v-alert>
 
             <template v-else>

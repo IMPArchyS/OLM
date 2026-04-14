@@ -2,6 +2,7 @@ import { computed, ref } from 'vue';
 import { apiClient } from '@/lib/apiClient';
 import type { QueueFormData } from '@/types/forms';
 import { Command } from '@/types/api';
+import { useToastStore } from '@/stores/toast';
 
 interface StreamBufferResponse {
     reservation_id: number | null;
@@ -14,7 +15,6 @@ type OutputRow = Record<string, unknown>;
 
 const POLL_INTERVAL_MS = 750;
 const RECONNECT_DELAY_MS = 1000;
-const NEXT_INDEX_STORAGE_KEY = 'OLMReservationStreamNextIndex';
 
 const isRecord = (value: unknown): value is OutputRow => {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -55,6 +55,8 @@ const extractFinalOutputHistory = (payload: OutputRow): OutputRow[] => {
 };
 
 export function useReservationStream() {
+    const toast = useToastStore();
+
     const websocketRef = ref<WebSocket | null>(null);
     const outputHistory = ref<OutputRow[]>([]);
     const nextIndex = ref(0);
@@ -67,27 +69,70 @@ export function useReservationStream() {
     const isActive = ref(false);
     const accessToken = ref<string | null>(null);
     const pendingStartPayload = ref<QueueFormData | null>(null);
+    const awaitingStartAcceptance = ref(false);
+    const baselineTimeBeforeStart = ref<number | null>(null);
 
     let pollTimer: ReturnType<typeof setInterval> | null = null;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let pullInFlight = false;
+    const lastToastSignature = ref<string>('');
+    const lastToastTime = ref(0);
 
-    const persistNextIndex = (value: number) => {
-        sessionStorage.setItem(NEXT_INDEX_STORAGE_KEY, String(value));
+    const showToastDedup = (
+        level: 'info' | 'success' | 'warning' | 'error',
+        message: string,
+        minGapMs = 1500,
+    ) => {
+        const nowTime = Date.now();
+        const signature = `${level}:${message}`;
+        if (lastToastSignature.value === signature && nowTime - lastToastTime.value < minGapMs) {
+            return;
+        }
+
+        lastToastSignature.value = signature;
+        lastToastTime.value = nowTime;
+
+        toast[level](message);
+    };
+
+    const persistNextIndex = (_value: number) => {
+        // Keep cursor only in-memory for current page lifetime.
+    };
+
+    const parseNumericTime = (payload: OutputRow): number | null => {
+        const rawTime = payload.time;
+        if (typeof rawTime === 'number' && Number.isFinite(rawTime)) {
+            return rawTime;
+        }
+
+        if (typeof rawTime === 'string') {
+            const parsed = Number(rawTime);
+            if (Number.isFinite(parsed)) {
+                return parsed;
+            }
+        }
+
+        return null;
+    };
+
+    const latestNumericTimeFromHistory = (): number | null => {
+        for (let index = outputHistory.value.length - 1; index >= 0; index -= 1) {
+            const row = outputHistory.value[index];
+            if (!row) {
+                continue;
+            }
+
+            const parsedTime = parseNumericTime(row);
+            if (parsedTime !== null) {
+                return parsedTime;
+            }
+        }
+
+        return null;
     };
 
     const restoreNextIndex = () => {
-        const rawValue = sessionStorage.getItem(NEXT_INDEX_STORAGE_KEY);
-        if (!rawValue) {
-            return 0;
-        }
-
-        const parsed = Number(rawValue);
-        if (!Number.isFinite(parsed) || parsed < 0) {
-            return 0;
-        }
-
-        return Math.floor(parsed);
+        return 0;
     };
 
     const connectionStateText = computed(() => {
@@ -110,6 +155,7 @@ export function useReservationStream() {
         clearReconnectTimer();
         warningMessage.value = reason;
         statusMessage.value = 'Reservation no longer active.';
+        showToastDedup('warning', 'Reservation expired.', 4000);
     };
 
     function buildWebSocketUrl(token: string) {
@@ -223,7 +269,7 @@ export function useReservationStream() {
             appendRows(rows);
 
             const serverNext = Number.isFinite(response.data.next_index) ? response.data.next_index : nextIndex.value + rows.length;
-            nextIndex.value = Math.max(nextIndex.value + rows.length, serverNext);
+            nextIndex.value = Math.max(0, Math.floor(serverNext));
             persistNextIndex(nextIndex.value);
         } catch (error: unknown) {
             let detail = 'Failed to pull stream buffer.';
@@ -251,28 +297,59 @@ export function useReservationStream() {
 
         websocket.send(JSON.stringify(payload));
         pendingStartPayload.value = null;
-        statusMessage.value = `Experiment ${String(payload.command ?? '').toUpperCase()} sent.`;
+        const commandLabel = String(payload.command ?? '').toUpperCase();
+        statusMessage.value = `Experiment ${commandLabel} sent.`;
+
+        if (payload.command === Command.START) {
+            showToastDedup('success', 'Experiment started.', 2500);
+        } else if (payload.command === Command.CHANGE) {
+            showToastDedup('info', 'Experiment parameters changed.', 2000);
+        } else if (payload.command === Command.STOP) {
+            showToastDedup('info', 'Experiment stop requested.', 2000);
+        }
     };
 
     const handleIncomingPayload = (payload: OutputRow) => {
         if (Object.prototype.hasOwnProperty.call(payload, 'time')) {
+            const numericTime = parseNumericTime(payload);
+            if (awaitingStartAcceptance.value) {
+                const baseline = baselineTimeBeforeStart.value;
+                const startAccepted =
+                    numericTime !== null && (baseline === null || numericTime < baseline || numericTime <= 0);
+
+                if (startAccepted) {
+                    clearGraph();
+                    awaitingStartAcceptance.value = false;
+                    baselineTimeBeforeStart.value = null;
+                }
+            }
+
             appendSingleRow(payload);
             nextIndex.value += 1;
             persistNextIndex(nextIndex.value);
         }
 
         if (Object.prototype.hasOwnProperty.call(payload, 'error')) {
-            warningMessage.value = String(payload.error ?? 'Experiment stream warning.');
+            const errorMessage = String(payload.error ?? 'Experiment stream warning.');
+            warningMessage.value = errorMessage;
+            showToastDedup('error', errorMessage, 1200);
+            statusMessage.value = 'Command rejected by experiment service.';
+            awaitingStartAcceptance.value = false;
+            baselineTimeBeforeStart.value = null;
         }
 
         if (Object.prototype.hasOwnProperty.call(payload, 'run') || Object.prototype.hasOwnProperty.call(payload, 'runs')) {
             finalPacket.value = payload;
             statusMessage.value = 'Final result packet received.';
+            showToastDedup('success', 'Experiment finished.', 2500);
 
             const finalHistory = extractFinalOutputHistory(payload);
             if (finalHistory.length > 0) {
                 outputHistory.value = finalHistory;
             }
+
+            awaitingStartAcceptance.value = false;
+            baselineTimeBeforeStart.value = null;
         }
     };
 
@@ -299,12 +376,14 @@ export function useReservationStream() {
 
         websocket.onmessage = (event) => {
             const rawMessage = String(event.data ?? '');
-            statusMessage.value = rawMessage;
 
             const payload = parseMessagePayload(rawMessage);
             if (payload) {
                 handleIncomingPayload(payload);
+                return;
             }
+
+            statusMessage.value = rawMessage;
         };
 
         websocket.onerror = () => {
@@ -342,6 +421,8 @@ export function useReservationStream() {
     const deactivate = () => {
         isActive.value = false;
         pendingStartPayload.value = null;
+        awaitingStartAcceptance.value = false;
+        baselineTimeBeforeStart.value = null;
         clearPolling();
         clearReconnectTimer();
         closeWebSocket();
@@ -370,7 +451,8 @@ export function useReservationStream() {
         }
 
         if (payload.command === Command.START) {
-            clearGraph();
+            awaitingStartAcceptance.value = true;
+            baselineTimeBeforeStart.value = latestNumericTimeFromHistory();
         }
 
         warningMessage.value = '';
