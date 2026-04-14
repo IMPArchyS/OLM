@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import ExperimentOutputChart from '@/components/ExperimentOutputChart.vue';
+import SimpleOutputChart from '@/components/experiments/SimpleOutputChart.vue';
 import { useExperimentLogs } from '@/composables/useExperimentLogs';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
-import type { ExperimentLog, ExperimentRun, SoftwareName } from '@/types/api';
+import type { ExperimentLog, SoftwareName } from '@/types/api';
 import { computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -55,32 +55,6 @@ const getRunStatus = (log: ExperimentLog) => {
         text: 'Running',
         color: 'info',
     };
-};
-
-const getOutputColumns = (run: ExperimentRun) => {
-    const columns = new Set<string>();
-
-    for (const row of run.output_history) {
-        Object.keys(row).forEach((key) => columns.add(key));
-    }
-
-    return Array.from(columns);
-};
-
-const formatValue = (value: unknown) => {
-    if (value === null || value === undefined) {
-        return 'N/A';
-    }
-
-    if (typeof value === 'number') {
-        return Number.isInteger(value) ? value : value.toFixed(4);
-    }
-
-    if (typeof value === 'object') {
-        return JSON.stringify(value);
-    }
-
-    return String(value);
 };
 
 const formatSoftwareName = (softwareName: SoftwareName) => {
@@ -172,7 +146,12 @@ onMounted(async () => {
                                         </v-table>
                                         <v-alert v-else type="info" variant="tonal" class="mb-6">No input history available.</v-alert>
 
-                                        <experiment-output-chart :output-history="log.run.output_history" title="Output history graph" class="mb-6" />
+                                        <SimpleOutputChart
+                                            :output-history="log.run.output_history"
+                                            title="Output history graph"
+                                            :height="260"
+                                            class="mb-6"
+                                        />
                                     </v-card-text>
                                 </v-card>
                             </v-col>

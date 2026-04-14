@@ -3,10 +3,15 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useWebRtc } from '@/composables/useWebRtc';
 import { useToastStore } from '@/stores/toast';
 
-const props = defineProps<{
+interface Props {
     device_name: string;
     server_id: number;
-}>();
+    compact?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    compact: false,
+});
 
 const videoRef = ref<HTMLVideoElement | null>(null);
 const isStreaming = ref(false);
@@ -105,7 +110,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <v-card class="mt-4">
+    <v-card :class="['camera-view', { 'camera-view--compact': props.compact }]">
         <v-card-title>Camera Stream</v-card-title>
         <v-card-text>
             <div class="mb-3 text-body-2">
@@ -117,8 +122,12 @@ onBeforeUnmount(() => {
             <video ref="videoRef" autoplay playsinline muted class="camera-video"></video>
 
             <div class="d-flex flex-wrap gap-2 mt-3">
-                <v-btn color="primary" :loading="loading" :disabled="!canStart" @click="handleStart">Start Stream</v-btn>
-                <v-btn color="error" :loading="loading" :disabled="!canStop" @click="handleStop">Stop Stream</v-btn>
+                <v-btn color="primary" :size="props.compact ? 'small' : 'default'" :loading="loading" :disabled="!canStart" @click="handleStart">
+                    Start Stream
+                </v-btn>
+                <v-btn color="error" :size="props.compact ? 'small' : 'default'" :loading="loading" :disabled="!canStop" @click="handleStop">
+                    Stop Stream
+                </v-btn>
             </div>
 
             <v-alert v-if="error" type="error" variant="tonal" class="mt-3">
@@ -129,11 +138,25 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.camera-view {
+    margin-top: 16px;
+}
+
+.camera-view--compact {
+    margin-top: 0;
+    max-width: 520px;
+}
+
 .camera-video {
     width: 100%;
     min-height: 240px;
     border-radius: 8px;
     background: #000;
     object-fit: contain;
+}
+
+.camera-view--compact .camera-video {
+    min-height: 180px;
+    max-height: 220px;
 }
 </style>

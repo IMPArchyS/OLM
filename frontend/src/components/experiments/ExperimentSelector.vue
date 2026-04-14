@@ -13,6 +13,7 @@ interface Props {
     fixedCommand: string;
     experiments: Experiment[];
     selectedDeviceId?: number | null;
+    compact?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -32,6 +33,10 @@ const inputArguments = ref<Record<string, InputArgSpec>>({});
 
 const selectedExperiment = computed(() => {
     return props.experiments.find((exp) => exp.id === selectedExperimentId.value) || null;
+});
+
+const inputDensity = computed(() => {
+    return props.compact ? 'compact' : 'comfortable';
 });
 
 watch(
@@ -191,7 +196,7 @@ defineExpose({
 </script>
 
 <template>
-    <div>
+    <div :class="['experiment-selector', { 'experiment-selector--compact': props.compact }]">
         <div v-if="props.loading" style="display: flex; justify-content: center; padding: 16px">
             <v-progress-circular indeterminate color="primary" size="48" />
         </div>
@@ -204,7 +209,7 @@ defineExpose({
                 item-value="id"
                 :label="t('dashboard.select_experiment')"
                 variant="outlined"
-                density="comfortable"
+                :density="inputDensity"
             />
 
             <v-select
@@ -213,7 +218,7 @@ defineExpose({
                 :label="t('dashboard.select_schema')"
                 :placeholder="t('dashboard.no_schemas_available')"
                 variant="outlined"
-                density="comfortable"
+                :density="inputDensity"
             />
 
             <v-select
@@ -225,17 +230,17 @@ defineExpose({
                 :disabled="!!fixedCommand"
                 :readonly="!!fixedCommand"
                 variant="outlined"
-                density="comfortable"
+                :density="inputDensity"
             />
 
-            <v-checkbox v-if="selectedExperiment" v-model="useSetpoints" :label="t('dashboard.enable_setpoints')" density="comfortable" />
+            <v-checkbox v-if="selectedExperiment" v-model="useSetpoints" :label="t('dashboard.enable_setpoints')" :density="inputDensity" />
 
             <v-number-input
                 v-if="selectedExperiment && useSetpoints"
                 v-model="setpointStartValue"
                 :label="t('dashboard.setpoint_start_value')"
                 variant="outlined"
-                density="comfortable"
+                :density="inputDensity"
             />
 
             <div v-if="useSetpoints && setpointSteps.length > 0" style="display: flex; flex-direction: column; gap: 12px; align-items: center">
@@ -250,7 +255,7 @@ defineExpose({
                         :label="`${t('dashboard.setpoint_step_duration')} #${index + 1}`"
                         :min="0"
                         variant="outlined"
-                        density="comfortable"
+                        :density="inputDensity"
                         style="max-width: 220px"
                     />
                     <v-number-input
@@ -258,7 +263,7 @@ defineExpose({
                         @update:model-value="(value) => (step.value = Number(value ?? 0))"
                         :label="`${t('dashboard.setpoint_step_value')} #${index + 1}`"
                         variant="outlined"
-                        density="comfortable"
+                        :density="inputDensity"
                         style="max-width: 220px"
                     />
                     <v-btn color="error" variant="text" icon="mdi-delete" :disabled="setpointSteps.length <= 1" @click="removeSetpointStep(index)" />
@@ -279,7 +284,7 @@ defineExpose({
                         :label="spec.unit ? `${t('experiment_input_arg.' + key)} (${spec.unit})` : t('experiment_input_arg.' + key)"
                         v-model="spec.value"
                         variant="outlined"
-                        density="comfortable"
+                        :density="inputDensity"
                     />
                     <v-text-field
                         v-else-if="spec.type === 'number'"
@@ -287,7 +292,7 @@ defineExpose({
                         :model-value="Number(spec.value)"
                         @update:model-value="(value) => (spec.value = Number(value ?? 0))"
                         variant="outlined"
-                        density="comfortable"
+                        :density="inputDensity"
                     />
                 </div>
             </div>
@@ -297,14 +302,14 @@ defineExpose({
                 v-model="simTime"
                 :label="t('dashboard.simulation_time')"
                 variant="outlined"
-                density="comfortable"
+                :density="inputDensity"
             />
             <v-text-field
                 v-if="selectedExperiment"
                 v-model="sampleRate"
                 :label="t('dashboard.sampling_rate')"
                 variant="outlined"
-                density="comfortable"
+                :density="inputDensity"
             />
 
             <!-- Slot for additional controls (e.g., buttons) -->
@@ -323,3 +328,9 @@ defineExpose({
         </v-alert>
     </div>
 </template>
+
+<style scoped>
+.experiment-selector--compact :deep(.v-input) {
+    max-width: 430px;
+}
+</style>

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import type { Reservation } from '@/types/api';
 import { apiClient } from '@/lib/apiClient';
-import CameraView from '@/components/dashboard/CameraView.vue';
+import ExperimentSandbox from '@/components/experiments/ExperimentSandbox.vue';
 import { useServers } from '@/composables/useServers';
 import { useDevices } from '@/composables/useDevices';
 
@@ -163,12 +163,13 @@ onUnmounted(() => {
                             </p>
                         </div>
                     </v-alert>
-                    <!-- <ExperimentSandbox :reservation="activeReservation" /> -->
-                    <v-alert v-if="resolvingCameraTarget" type="info" variant="tonal" class="mt-4">Resolving camera target...</v-alert>
-                    <v-alert v-else-if="!cameraDeviceName || !cameraServerId" type="warning" variant="tonal" class="mt-4">
-                        Unable to resolve server/device for camera stream from this reservation.
-                    </v-alert>
-                    <CameraView v-else :device_name="cameraDeviceName" :server_id="cameraServerId" />
+
+                    <ExperimentSandbox
+                        :reservation="activeReservation"
+                        :camera-device-name="cameraDeviceName"
+                        :camera-server-id="cameraServerId"
+                        :resolving-camera-target="resolvingCameraTarget"
+                    />
                 </div>
 
                 <!-- Next Reservation -->
