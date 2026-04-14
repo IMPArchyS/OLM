@@ -11,6 +11,7 @@ from app.api.dependencies import engine
 from app.api.endpoints.server import resolve_url
 from app.core.config import settings
 from app.models.experiment import ExperimentQueuePayload
+from app.models.device import Device
 from app.models.experiment_log import ExperimentLog, FinishReason
 from app.models.experiment_queue import ExperimentQueue, QueueStatus
 from app.models.reservation import Reservation
@@ -68,21 +69,59 @@ def _calculate_next_retry(attempts: int) -> datetime:
     return _queue_now() + timedelta(seconds=delay_seconds)
 
 
-def _is_device_reserved(session: Session, device_id: int) -> datetime | None:
-    current_time = now()
+def _intervals_overlap(
+    start_a: datetime,
+    end_a: datetime,
+    start_b: datetime,
+    end_b: datetime,
+) -> bool:
+    return start_a < end_b and start_b < end_a
+
+
+def _find_overlapping_reservation(
+    session: Session,
+    device_id: int,
+    run_start: datetime,
+    run_end: datetime,
+) -> Reservation | None:
     stmt = (
         select(Reservation)
         .where(
             Reservation.device_id == device_id,
-            Reservation.start <= current_time,
-            Reservation.end >= current_time,
+            Reservation.start < run_end,
+            Reservation.end > run_start,
         )
-        .order_by(col(Reservation.end))
+        .order_by(col(Reservation.start))
     )
-    active_reservation = session.exec(stmt).first()
-    if active_reservation is None:
+    return session.exec(stmt).first()
+
+
+def _find_maintenance_overlap_end(
+    db_device: Device,
+    run_start: datetime,
+    run_end: datetime,
+) -> datetime | None:
+    maintenance_start = db_device.maintenance_start
+    maintenance_end = db_device.maintenance_end
+
+    if maintenance_start is None or maintenance_end is None:
         return None
-    return active_reservation.end
+
+    # Include previous day for cross-midnight windows and future days for long simulations.
+    day_count = int(max(1, (run_end - run_start).total_seconds() // 86400 + 2))
+    for offset in range(-1, day_count + 1):
+        base_day = (run_start + timedelta(days=offset)).date()
+        window_start = datetime.combine(base_day, maintenance_start, tzinfo=run_start.tzinfo)
+
+        if maintenance_start <= maintenance_end:
+            window_end = datetime.combine(base_day, maintenance_end, tzinfo=run_start.tzinfo)
+        else:
+            window_end = datetime.combine(base_day + timedelta(days=1), maintenance_end, tzinfo=run_start.tzinfo)
+
+        if _intervals_overlap(run_start, run_end, window_start, window_end):
+            return window_end
+
+    return None
 
 
 def _queue_for_retry(queue_entry: ExperimentQueue) -> None:
@@ -92,15 +131,15 @@ def _queue_for_retry(queue_entry: ExperimentQueue) -> None:
     queue_entry.modified_at = _queue_now()
 
 
-def _payload_json_for_submit(queue_entry: ExperimentQueue) -> dict:
+def _payload_json_for_submit(queue_entry: ExperimentQueue) -> ExperimentQueuePayload:
     raw_payload = queue_entry.payload
 
     if isinstance(raw_payload, ExperimentQueuePayload):
-        return raw_payload.model_dump(mode="json")
+        return raw_payload
 
     normalized_payload = ExperimentQueuePayload.model_validate(raw_payload)
     queue_entry.payload = normalized_payload
-    return normalized_payload.model_dump(mode="json")
+    return normalized_payload
 
 
 def _submit_queue_entry(
@@ -113,13 +152,6 @@ def _submit_queue_entry(
         _queue_for_retry(queue_entry)
         return
 
-    reservation_end = _is_device_reserved(session, queue_entry.device_id)
-    if reservation_end is not None:
-        queue_entry.status = QueueStatus.NOT_STARTED
-        queue_entry.next_attempt_at = reservation_end.replace(tzinfo=None)
-        queue_entry.modified_at = _queue_now()
-        return
-
     base_url = resolve_url(db_server)
     if not base_url:
         _queue_for_retry(queue_entry)
@@ -127,16 +159,44 @@ def _submit_queue_entry(
 
     submit_url = f"{base_url}{settings.EXPERIMENT_QUEUE_SUBMIT_PATH}"
     try:
-        payload_json = _payload_json_for_submit(queue_entry)
+        payload = _payload_json_for_submit(queue_entry)
     except ValidationError:
         logger.exception("Queue payload validation failed for queue entry %s", queue_entry.id)
         _queue_for_retry(queue_entry)
         return
 
+    db_device = session.get(Device, queue_entry.device_id)
+    if db_device is None:
+        _queue_for_retry(queue_entry)
+        return
+
+    run_start = now()
+    simulation_time = max(0, int(payload.simulation_time))
+    run_end = run_start + timedelta(seconds=simulation_time)
+
+    maintenance_overlap_end = _find_maintenance_overlap_end(db_device, run_start, run_end)
+    if maintenance_overlap_end is not None:
+        queue_entry.status = QueueStatus.NOT_STARTED
+        queue_entry.next_attempt_at = maintenance_overlap_end.replace(tzinfo=None)
+        queue_entry.modified_at = _queue_now()
+        return
+
+    overlapping_reservation = _find_overlapping_reservation(
+        session,
+        queue_entry.device_id,
+        run_start,
+        run_end,
+    )
+    if overlapping_reservation is not None:
+        queue_entry.status = QueueStatus.NOT_STARTED
+        queue_entry.next_attempt_at = overlapping_reservation.end.replace(tzinfo=None)
+        queue_entry.modified_at = _queue_now()
+        return
+
     try:
         response = client.post(
             submit_url,
-            json=payload_json,
+            json=payload.model_dump(mode="json"),
             headers={"x-api-key": settings.EXPERIMENTAL_API_KEY},
         )
     except httpx.RequestError:
@@ -187,7 +247,7 @@ def _poll_queue_entry(
         return
 
     db_server = session.get(Server, queue_entry.server_id)
-    if db_server is None:
+    if db_server is None or not (db_server.available and db_server.enabled and db_server.production):
         queue_entry.next_attempt_at = _queue_now() + timedelta(seconds=settings.EXPERIMENT_QUEUE_POLL_INTERVAL_SECONDS)
         queue_entry.modified_at = _queue_now()
         return
