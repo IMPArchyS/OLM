@@ -64,18 +64,20 @@ export interface ExperimentLog {
     id: number;
     server_id: number;
     device_id: number;
-    software_name: SoftwareName;
-    run: ExperimentRun;
-    started_at: string;
-    finished_at?: string;
-    stopped_at?: string;
-    timedout_at?: string;
+    run: ExperimentRun | null;
+    started_at: string | null;
+    finished_at: string | null;
+    finish_reason: FinishReason;
+    modified_at?: string;
+    deleted_at?: string | null;
 }
 
 export interface ExperimentRun {
     input_history: ExperimentHistoryItem[];
     output_history: Record<string, any>[];
 }
+
+export type FinishReason = 'n/a' | 'user_stop' | 'simulation_time_reached' | 'device_timeout' | 'exception_error';
 
 export interface ExperimentHistoryItem {
     command: Command;

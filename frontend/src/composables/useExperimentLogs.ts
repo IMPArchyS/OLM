@@ -10,6 +10,7 @@ export function useExperimentLogs() {
 
     async function fetchExperimentLogs(): Promise<{ success: boolean; message?: string }> {
         loading.value = true;
+        error.value = null;
 
         try {
             const response = await apiClient.get('/experiment_log/');
@@ -18,9 +19,10 @@ export function useExperimentLogs() {
         } catch (e: any) {
             console.error('Error fetching experimentLogs:', e);
             experimentLogs.value = [];
+            error.value = e.response?.data?.message || 'Failed to fetch available experimentLogs';
             return {
                 success: false,
-                message: e.response?.data?.message || 'Failed to fetch available experimentLogs',
+                message: error.value || 'Failed to fetch available experimentLogs',
             };
         } finally {
             loading.value = false;
@@ -29,10 +31,12 @@ export function useExperimentLogs() {
 
     async function fetchExperimentLogsByUser(userId?: number): Promise<{ success: boolean; message?: string }> {
         loading.value = true;
+        error.value = null;
         if (!userId) {
+            error.value = 'Error fetching User id is Null';
             return {
                 success: false,
-                message: 'Error fetching User id is Null',
+                message: error.value || 'Error fetching User id is Null',
             };
         }
         try {
@@ -42,9 +46,10 @@ export function useExperimentLogs() {
         } catch (e: any) {
             console.error('Error fetching userExperimentLogs:', e);
             userExperimentLogs.value = [];
+            error.value = e.response?.data?.message || 'Failed to fetch available userExperimentLogs';
             return {
                 success: false,
-                message: e.response?.data?.message || 'Failed to fetch available userExperimentLogs',
+                message: error.value || 'Failed to fetch available userExperimentLogs',
             };
         } finally {
             loading.value = false;
