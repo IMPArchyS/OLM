@@ -96,7 +96,6 @@ class ExperimentFormQueue(SQLModel):
     sample_rate: int 
     software_name: SoftwareName
     device_id: int
-    schema_id: int | None
     
     @model_validator(mode="before")
     @classmethod
@@ -117,7 +116,6 @@ class ExperimentQueuePayload(SQLModel):
     sample_rate: int 
     software_name: SoftwareName
     device_name: str
-    schema_id: int | None
     
     @model_validator(mode="before")
     @classmethod

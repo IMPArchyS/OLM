@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     EXPERIMENT_QUEUE_POLL_INTERVAL_SECONDS: int = 5
     EXPERIMENT_QUEUE_SUBMIT_PATH: str = "/api/server/experiments/queue"
     EXPERIMENT_QUEUE_STATUS_PATH: str = "/api/server/experiments/{job_id}"
+    EXPERIMENT_WS_PATH: str = "/ws/server/experiments"
+    EXPERIMENT_WS_BUFFER_MAX_SAMPLES: int = 20000
 
     @computed_field
     @property
