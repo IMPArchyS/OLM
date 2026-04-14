@@ -5,6 +5,7 @@ import { Command, type Reservation } from '@/types/api';
 import ExperimentSelector from './ExperimentSelector.vue';
 import type { QueueFormData } from '@/types/forms';
 import { useExperiments } from '@/composables/useExperiments';
+import { useReservationStream } from '@/composables/useReservationStream';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
@@ -28,10 +29,7 @@ const { t } = useI18n();
 const authStore = useAuthStore();
 const toast = useToastStore();
 const { experimentsByDevice, loading, fetchExperimentsByDevice } = useExperiments();
-
-const websocketRef = ref<WebSocket | null>(null);
-const websocketMessage = ref('');
-const outputHistory = ref<Record<string, unknown>[]>([]);
+const { outputHistory, statusMessage, warningMessage, activate, deactivate, sendCommand, isSocketOnline, isReservationActive } = useReservationStream();
 
 type SandboxPanelId = 'control' | 'chart' | 'camera' | 'animation';
 
@@ -70,59 +68,12 @@ const canRunExperiment = computed(() => {
     return experimentsByDevice.value.length > 0 && formData.value.id !== null;
 });
 
-const isOutputRow = (value: unknown): value is Record<string, unknown> => {
-    return typeof value === 'object' && value !== null && !Array.isArray(value);
-};
-
-const isOutputRowArray = (value: unknown): value is Record<string, unknown>[] => {
-    return Array.isArray(value) && value.every((item) => isOutputRow(item));
-};
-
-const parseOutputHistory = (rawMessage: string): Record<string, unknown>[] | null => {
-    try {
-        const payload: unknown = JSON.parse(rawMessage);
-
-        if (isOutputRowArray(payload)) {
-            return payload;
-        }
-
-        if (isOutputRow(payload) && isOutputRowArray(payload.output_history)) {
-            return payload.output_history;
-        }
-
-        // TODO: Confirm websocket payload contract for incremental output updates, then support append mode.
-        return null;
-    } catch {
-        return null;
-    }
-};
-
-function buildWebSocketUrl(accessToken: string) {
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
-    const resolvedApiUrl = new URL(apiBaseUrl, window.location.origin);
-    const wsProtocol = resolvedApiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-    const websocketUrl = new URL('/ws/reservation/current', `${wsProtocol}//${resolvedApiUrl.host}`);
-    websocketUrl.searchParams.set('access_token', accessToken);
-    return websocketUrl.toString();
-}
-
-function closeWebSocket() {
-    const websocket = websocketRef.value;
-    if (!websocket) return;
-
-    if (websocket.readyState === WebSocket.OPEN || websocket.readyState === WebSocket.CONNECTING) {
-        websocket.close(1000, 'Navigation away from page');
-    }
-
-    websocketRef.value = null;
-}
-
-onBeforeUnmount(() => {
-    closeWebSocket();
+onBeforeRouteLeave(() => {
+    deactivate();
 });
 
-onBeforeRouteLeave(() => {
-    closeWebSocket();
+onBeforeUnmount(() => {
+    deactivate();
 });
 
 function runExperiment() {
@@ -131,51 +82,16 @@ function runExperiment() {
 
     console.log(JSON.stringify(formData.value, null, 2));
 
-    websocketMessage.value = '';
-    outputHistory.value = [];
-    closeWebSocket();
-
     const accessToken = authStore.accessToken || localStorage.getItem('OLMAccessToken');
     if (!accessToken) {
-        websocketMessage.value = 'Authentication required before starting the experiment.';
         toast.error('Authentication required before starting the experiment.');
         return;
     }
 
-    const websocket = new WebSocket(buildWebSocketUrl(accessToken));
-    websocketRef.value = websocket;
-
-    websocket.onopen = () => {
-        console.log('WebSocket Created');
-        websocket.send(JSON.stringify(formData.value));
-    };
-
-    websocket.onmessage = (event) => {
-        const rawMessage = String(event.data);
-        websocketMessage.value = rawMessage;
-
-        const parsedOutputHistory = parseOutputHistory(rawMessage);
-        if (parsedOutputHistory) {
-            outputHistory.value = parsedOutputHistory;
-        }
-
-        console.log('WebSocket response:', event.data);
-    };
-
-    websocket.onerror = (error) => {
-        websocketMessage.value = 'WebSocket error. Please try running the experiment again.';
-        console.error('WebSocket error:', error);
-    };
-
-    websocket.onclose = () => {
-        websocketRef.value = null;
-        if (!websocketMessage.value) {
-            websocketMessage.value = 'WebSocket closed.';
-        } else {
-            websocketMessage.value = `${websocketMessage.value} (connection closed)`;
-        }
-        console.log('WebSocket closed');
-    };
+    const sendResult = sendCommand(formData.value);
+    if (!sendResult.success) {
+        toast.error(sendResult.message ?? 'Failed to send command.');
+    }
 }
 
 const formData = ref<QueueFormData>({
@@ -197,6 +113,13 @@ onMounted(async () => {
     if (!result.success) {
         toast.error(result.message || 'Failed');
     }
+
+    const accessToken = authStore.accessToken || localStorage.getItem('OLMAccessToken');
+    if (!accessToken) {
+        return;
+    }
+
+    activate(accessToken);
 });
 
 const handleFormDataUpdate = (data: typeof formData.value) => {
@@ -209,78 +132,92 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
         <v-card-title class="text-h6">{{ t('dashboard.ongoing_experiment') }}</v-card-title>
 
         <v-card-text class="pt-2">
-            <v-card variant="outlined" class="sandbox-filter-card">
-                <v-card-title class="text-subtitle-2">Visible sections</v-card-title>
-                <v-card-text class="pb-2">
-                    <div class="sandbox-filter-grid">
-                        <v-checkbox
-                            v-for="panelId in defaultPanelOrder"
-                            :key="`toggle-${panelId}`"
-                            :model-value="isPanelVisible(panelId)"
-                            :label="panelTitles[panelId]"
-                            hide-details
-                            density="compact"
-                            @update:model-value="(value) => togglePanelVisibility(panelId, Boolean(value))"
-                        />
-                    </div>
-
-                    <div class="sandbox-filter-actions">
-                        <v-btn size="small" variant="tonal" prepend-icon="mdi-backup-restore" @click="resetPanelOrder">Reset order</v-btn>
-                    </div>
-                </v-card-text>
-            </v-card>
-
-            <v-alert v-if="visiblePanelOrder.length === 0" type="info" variant="tonal" class="mt-3">
-                No section selected. Enable at least one section above.
+            <v-alert type="info" variant="tonal" class="sandbox-debug-alert">
+                <div class="text-caption">{{ isSocketOnline ? 'WebSocket online.' : 'WebSocket offline. Pulling stream buffer.' }}</div>
             </v-alert>
 
-            <v-row dense class="align-stretch">
-                <v-col v-for="panelId in visiblePanelOrder" :key="panelId" cols="12" lg="6" class="d-flex">
-                    <v-card variant="outlined" class="sandbox-section-card d-flex flex-column w-100">
-                        <v-card-title class="text-subtitle-1">{{ panelTitles[panelId] }}</v-card-title>
-                        <v-card-text class="sandbox-section-body d-flex flex-column flex-grow-1">
-                            <div v-if="panelId === 'control'" class="sandbox-panel-content">
-                                <ExperimentSelector
-                                    fixed-command=""
-                                    :loading="loading"
-                                    :experiments="experimentsByDevice"
-                                    :selected-device-id="props.reservation.device_id"
-                                    compact
-                                    @update:formData="handleFormDataUpdate"
-                                />
+            <v-alert v-if="statusMessage" type="info" variant="tonal" class="sandbox-debug-alert mt-2">
+                <div class="text-caption">{{ statusMessage }}</div>
+            </v-alert>
 
-                                <v-btn color="info" prepend-icon="mdi-play" @click="runExperiment" :disabled="!canRunExperiment">
-                                    {{ t('dashboard.run_experiment') }}
-                                </v-btn>
-                            </div>
+            <v-alert v-if="warningMessage" type="warning" variant="tonal" class="sandbox-debug-alert mt-2">
+                <div class="text-caption">{{ warningMessage }}</div>
+            </v-alert>
 
-                            <div v-else-if="panelId === 'chart'" class="sandbox-chart-panel">
-                                <SimpleOutputChart :output-history="outputHistory" title="Live output" :height="240" fill-container class="h-100" />
+            <v-alert v-if="!isReservationActive" type="warning" variant="tonal" class="mt-3">
+                Reservation has ended. Refresh page to load current reservation context.
+            </v-alert>
 
-                                <v-alert v-if="websocketMessage" type="info" variant="tonal" class="mt-3">
-                                    <div class="text-caption">{{ websocketMessage }}</div>
-                                </v-alert>
-                            </div>
+            <template v-else>
+                <v-card variant="outlined" class="sandbox-filter-card">
+                    <v-card-title class="text-subtitle-2">Visible sections</v-card-title>
+                    <v-card-text class="pb-2">
+                        <div class="sandbox-filter-grid">
+                            <v-checkbox
+                                v-for="panelId in defaultPanelOrder"
+                                :key="`toggle-${panelId}`"
+                                :model-value="isPanelVisible(panelId)"
+                                :label="panelTitles[panelId]"
+                                hide-details
+                                density="compact"
+                                @update:model-value="(value) => togglePanelVisibility(panelId, Boolean(value))"
+                            />
+                        </div>
 
-                            <div v-else-if="panelId === 'camera'" class="sandbox-camera-panel">
-                                <v-alert v-if="props.resolvingCameraTarget" type="info" variant="tonal">Resolving camera target...</v-alert>
-                                <v-alert v-else-if="!props.cameraDeviceName || !props.cameraServerId" type="warning" variant="tonal">
-                                    Unable to resolve server/device for camera stream from this reservation.
-                                </v-alert>
-                                <CameraView v-else :device_name="props.cameraDeviceName" :server_id="props.cameraServerId" compact class="h-100" />
-                            </div>
+                        <div class="sandbox-filter-actions">
+                            <v-btn size="small" variant="tonal" prepend-icon="mdi-backup-restore" @click="resetPanelOrder">Reset order</v-btn>
+                        </div>
+                    </v-card-text>
+                </v-card>
 
-                            <div v-else class="animation-placeholder-wrapper">
-                                <!-- TODO: Replace placeholder with animation component once API and asset contract are finalized. -->
-                                <div class="animation-placeholder">
-                                    <v-icon icon="mdi-chart-timeline-variant" size="42" class="mb-2" />
-                                    <div class="text-body-2">Animation placeholder</div>
+                <v-alert v-if="visiblePanelOrder.length === 0" type="info" variant="tonal" class="mt-3">
+                    No section selected. Enable at least one section above.
+                </v-alert>
+
+                <v-row dense class="align-stretch">
+                    <v-col v-for="panelId in visiblePanelOrder" :key="panelId" cols="12" lg="6" class="d-flex">
+                        <v-card variant="outlined" class="sandbox-section-card d-flex flex-column w-100">
+                            <v-card-title class="text-subtitle-1">{{ panelTitles[panelId] }}</v-card-title>
+                            <v-card-text class="sandbox-section-body d-flex flex-column flex-grow-1">
+                                <div v-if="panelId === 'control'" class="sandbox-panel-content">
+                                    <ExperimentSelector
+                                        fixed-command=""
+                                        :loading="loading"
+                                        :experiments="experimentsByDevice"
+                                        :selected-device-id="props.reservation.device_id"
+                                        compact
+                                        @update:formData="handleFormDataUpdate"
+                                    />
+
+                                    <v-btn color="info" prepend-icon="mdi-play" @click="runExperiment" :disabled="!canRunExperiment">
+                                        {{ t('dashboard.run_experiment') }}
+                                    </v-btn>
                                 </div>
-                            </div>
-                        </v-card-text>
-                    </v-card>
-                </v-col>
-            </v-row>
+
+                                <div v-else-if="panelId === 'chart'" class="sandbox-chart-panel">
+                                    <SimpleOutputChart :output-history="outputHistory" title="Live output" :height="240" fill-container class="h-100" />
+                                </div>
+
+                                <div v-else-if="panelId === 'camera'" class="sandbox-camera-panel">
+                                    <v-alert v-if="props.resolvingCameraTarget" type="info" variant="tonal">Resolving camera target...</v-alert>
+                                    <v-alert v-else-if="!props.cameraDeviceName || !props.cameraServerId" type="warning" variant="tonal">
+                                        Unable to resolve server/device for camera stream from this reservation.
+                                    </v-alert>
+                                    <CameraView v-else :device_name="props.cameraDeviceName" :server_id="props.cameraServerId" compact class="h-100" />
+                                </div>
+
+                                <div v-else class="animation-placeholder-wrapper">
+                                    <!-- TODO: Replace placeholder with animation component once API and asset contract are finalized. -->
+                                    <div class="animation-placeholder">
+                                        <v-icon icon="mdi-chart-timeline-variant" size="42" class="mb-2" />
+                                        <div class="text-body-2">Animation placeholder</div>
+                                    </div>
+                                </div>
+                            </v-card-text>
+                        </v-card>
+                    </v-col>
+                </v-row>
+            </template>
         </v-card-text>
     </v-card>
 </template>
@@ -292,6 +229,11 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 
 .sandbox-filter-card {
     margin-bottom: 12px;
+}
+
+.sandbox-debug-alert {
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .sandbox-filter-grid {

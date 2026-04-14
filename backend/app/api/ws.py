@@ -1,23 +1,22 @@
 import asyncio
 import json
 import logging
-from threading import Lock
 from collections import deque
+from contextlib import suppress
 from datetime import datetime
 from json import JSONDecodeError
-from contextlib import suppress
+from threading import Lock
 from typing import Any
 
+from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, status
 from pydantic import ValidationError
-from sqlmodel import Session, select, asc
+from sqlmodel import Session, asc, select
+from websockets import connect
+from websockets.exceptions import ConnectionClosed
 
 from app.api.dependencies import CurrentUserId, CurrentUserIdWs, DbSession, engine
 from app.api.endpoints.server import resolve_url
 from app.core.config import settings
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, status
-from websockets import connect
-from websockets.exceptions import ConnectionClosed
-
 from app.models.device import Device
 from app.models.experiment import Command, Experiment, ExperimentQueuePayload
 from app.models.experiment_log import ExperimentLog, FinishReason
@@ -31,6 +30,9 @@ logger = logging.getLogger(__name__)
 _stream_buffer_lock = Lock()
 _stream_buffers: dict[int, list[dict[str, Any]]] = {}
 
+_reservation_sessions_lock = Lock()
+_reservation_sessions: dict[int, "_ReservationUpstreamSession"] = {}
+
 
 class _PendingExperimentLogIds:
     def __init__(self) -> None:
@@ -43,6 +45,11 @@ class _PendingExperimentLogIds:
         if not self._ids:
             return None
         return self._ids.popleft()
+
+    def drain(self) -> list[int]:
+        ids = list(self._ids)
+        self._ids.clear()
+        return ids
 
 
 def _clear_stream_buffer(reservation_id: int) -> None:
@@ -92,12 +99,29 @@ def _extract_partial_stream_sample(payload: dict[str, Any]) -> dict[str, Any] | 
 
 
 def _get_current_reservation(db: DbSession, user_id: int) -> Reservation | None:
-    stmt = select(Reservation).where(
-        Reservation.user_id == user_id,
-        Reservation.start <= now(),
-        Reservation.end >= now(),
-    ).order_by(asc(Reservation.start))
+    stmt = (
+        select(Reservation)
+        .where(
+            Reservation.user_id == user_id,
+            Reservation.start <= now(),
+            Reservation.end >= now(),
+        )
+        .order_by(asc(Reservation.start))
+    )
     return db.exec(stmt).first()
+
+
+def _reservation_state(reservation_id: int) -> tuple[bool, str]:
+    with Session(engine) as session:
+        reservation_end = session.exec(select(Reservation.end).where(Reservation.id == reservation_id)).first()
+
+    if reservation_end is None:
+        return False, "reservation deleted"
+
+    if reservation_end <= now():
+        return False, "reservation expired"
+
+    return True, "reservation active"
 
 
 def _to_websocket_url(base_url: str, path: str) -> str:
@@ -134,9 +158,7 @@ def _resolve_device_name_from_payload(
         return device_name_cache[device_id]
 
     with Session(engine) as session:
-        db_device_name = session.exec(
-            select(Device.name).where(Device.id == device_id)
-        ).first()
+        db_device_name = session.exec(select(Device.name).where(Device.id == device_id)).first()
 
     if not db_device_name:
         raise ValueError(f"device with id {device_id} not found")
@@ -153,10 +175,7 @@ def _to_experiment_queue_payload(payload: object, resolved_device_name: str) -> 
     candidate.pop("device_id", None)
     candidate["device_name"] = resolved_device_name
 
-    normalized = ExperimentQueuePayload.model_validate(candidate)
-    if normalized.command != Command.START:
-        raise ValueError("command must be start")
-    return normalized
+    return ExperimentQueuePayload.model_validate(candidate)
 
 
 def _parse_datetime(raw: object) -> datetime | None:
@@ -212,9 +231,7 @@ def _create_experiment_log_for_payload(
             raise ValueError(f"experiment with id {experiment_id} not found")
 
         if not any(device.id == reservation_device_id for device in db_experiment.devices):
-            raise ValueError(
-                f"device {reservation_device_id} is not assigned to experiment {experiment_id}"
-            )
+            raise ValueError(f"device {reservation_device_id} is not assigned to experiment {experiment_id}")
 
         db_experiment_log = ExperimentLog(
             user_id=user_id,
@@ -271,11 +288,7 @@ def _sync_next_log_with_terminal_payload(
     remote_finished_at = _parse_datetime(payload.get("finished_at"))
     remote_finish_reason = _normalize_finish_reason(payload.get("finish_reason"))
 
-    has_terminal_payload = (
-        remote_runs is not None
-        or remote_finished_at is not None
-        or remote_finish_reason != FinishReason.REASON_NONE
-    )
+    has_terminal_payload = remote_runs is not None or remote_finished_at is not None or remote_finish_reason != FinishReason.REASON_NONE
     if not has_terminal_payload:
         return
 
@@ -315,16 +328,308 @@ def _sync_log_from_upstream_message(
     if not isinstance(payload, dict):
         return
 
-    # Upstream sends {"error": "..."} for rejected START requests.
-    # Those requests already created pending ExperimentLog entries locally,
-    # so close one pending log as failed to avoid orphan open rows.
-    if "error" in payload:
-        rejected_log_id = pending_log_ids.pop()
-        if rejected_log_id is not None:
-            _delete_experiment_log(rejected_log_id)
-        return
-
     _sync_next_log_with_terminal_payload(pending_log_ids, payload)
+
+
+class _ReservationUpstreamSession:
+    def __init__(
+        self,
+        reservation_id: int,
+        user_id: int,
+        reservation_device_id: int,
+        reservation_device_name: str,
+        server_id: int,
+        api_url: str,
+    ) -> None:
+        self.reservation_id = reservation_id
+        self.user_id = user_id
+        self.reservation_device_id = reservation_device_id
+        self.reservation_device_name = reservation_device_name
+        self.server_id = server_id
+        self.api_url = api_url
+
+        self.device_name_cache: dict[int, str] = {reservation_device_id: reservation_device_name}
+        self.pending_log_ids = _PendingExperimentLogIds()
+        self.pending_start_attempt_ids = _PendingExperimentLogIds()
+        self.last_sent_command: Command | None = None
+
+        self.command_queue: asyncio.Queue[tuple[str, Command, int | None]] = asyncio.Queue()
+        self.clients: set[WebSocket] = set()
+        self.clients_lock = asyncio.Lock()
+        self.stop_event = asyncio.Event()
+        self.runner_task: asyncio.Task[None] | None = None
+        self.closed = False
+
+    def start(self) -> None:
+        if self.runner_task is not None and not self.runner_task.done():
+            return
+
+        self.runner_task = asyncio.create_task(self._run())
+
+    async def add_client(self, client_ws: WebSocket) -> None:
+        async with self.clients_lock:
+            self.clients.add(client_ws)
+
+        with suppress(Exception):
+            await client_ws.send_text("Connected, reservation is ok")
+
+    async def remove_client(self, client_ws: WebSocket) -> None:
+        async with self.clients_lock:
+            self.clients.discard(client_ws)
+
+    async def _broadcast_text(self, message: str) -> None:
+        async with self.clients_lock:
+            clients = list(self.clients)
+
+        if not clients:
+            return
+
+        stale: list[WebSocket] = []
+        for client in clients:
+            try:
+                await client.send_text(message)
+            except Exception:
+                stale.append(client)
+
+        if stale:
+            async with self.clients_lock:
+                for client in stale:
+                    self.clients.discard(client)
+
+    async def _broadcast_bytes(self, payload: bytes) -> None:
+        async with self.clients_lock:
+            clients = list(self.clients)
+
+        if not clients:
+            return
+
+        stale: list[WebSocket] = []
+        for client in clients:
+            try:
+                await client.send_bytes(payload)
+            except Exception:
+                stale.append(client)
+
+        if stale:
+            async with self.clients_lock:
+                for client in stale:
+                    self.clients.discard(client)
+
+    async def _close_all_clients(self, close_code: int, close_reason: str) -> None:
+        async with self.clients_lock:
+            clients = list(self.clients)
+            self.clients.clear()
+
+        for client in clients:
+            with suppress(Exception):
+                await client.close(code=close_code, reason=close_reason)
+
+    async def enqueue_client_payload(self, raw_payload: str) -> None:
+        try:
+            payload = json.loads(raw_payload)
+        except JSONDecodeError:
+            raise ValueError("payload must be valid json")
+
+        if not isinstance(payload, dict):
+            raise ValueError("payload must be a JSON object")
+
+        resolved_device_name = _resolve_device_name_from_payload(
+            payload,
+            self.device_name_cache,
+            self.reservation_device_id,
+        )
+
+        normalized_payload = _to_experiment_queue_payload(payload, resolved_device_name)
+
+        experiment_log_id: int | None = None
+        if normalized_payload.command == Command.START:
+            experiment_log_id = _create_experiment_log_for_payload(
+                normalized_payload,
+                self.user_id,
+                self.reservation_device_id,
+                self.server_id,
+            )
+            _clear_stream_buffer(self.reservation_id)
+
+        await self.command_queue.put((normalized_payload.model_dump_json(), normalized_payload.command, experiment_log_id))
+
+    async def _run_sender(self, upstream_ws) -> None:
+        while not self.stop_event.is_set():
+            payload_json, command, experiment_log_id = await self.command_queue.get()
+
+            try:
+                await upstream_ws.send(payload_json)
+                self.last_sent_command = command
+            except Exception:
+                if experiment_log_id is not None:
+                    _mark_experiment_log_as_error(experiment_log_id)
+                raise
+
+            if command == Command.START and experiment_log_id is not None:
+                self.pending_start_attempt_ids.push(experiment_log_id)
+
+    async def _run_receiver(self, upstream_ws) -> None:
+        async for message in upstream_ws:
+            if isinstance(message, bytes):
+                await self._broadcast_bytes(message)
+                continue
+
+            try:
+                payload = json.loads(message)
+            except JSONDecodeError:
+                payload = None
+
+            if isinstance(payload, dict):
+                if "error" in payload:
+                    if self.last_sent_command == Command.START:
+                        rejected_log_id = self.pending_start_attempt_ids.pop()
+                        if rejected_log_id is not None:
+                            _delete_experiment_log(rejected_log_id)
+
+                    await self._broadcast_text(message)
+                    continue
+
+                has_run_signal = (
+                    "time" in payload
+                    or "run" in payload
+                    or "runs" in payload
+                    or "finished_at" in payload
+                    or "finish_reason" in payload
+                )
+                if has_run_signal:
+                    accepted_log_id = self.pending_start_attempt_ids.pop()
+                    if accepted_log_id is not None:
+                        self.pending_log_ids.push(accepted_log_id)
+
+                partial_sample = _extract_partial_stream_sample(payload)
+                if partial_sample is not None:
+                    _append_stream_sample(self.reservation_id, partial_sample)
+
+            _sync_log_from_upstream_message(self.pending_log_ids, message)
+            await self._broadcast_text(message)
+
+    async def _run_reservation_watch(self, upstream_ws) -> None:
+        while not self.stop_event.is_set():
+            reservation_active, reservation_reason = _reservation_state(self.reservation_id)
+            if not reservation_active:
+                self.stop_event.set()
+
+                with suppress(Exception):
+                    await upstream_ws.close(code=status.WS_1000_NORMAL_CLOSURE, reason=reservation_reason)
+
+                await self._broadcast_text(reservation_reason)
+                await self._close_all_clients(
+                    close_code=status.WS_1008_POLICY_VIOLATION,
+                    close_reason=reservation_reason,
+                )
+                return
+
+            await asyncio.sleep(1)
+
+    async def _run(self) -> None:
+        try:
+            while not self.stop_event.is_set():
+                reservation_active, reservation_reason = _reservation_state(self.reservation_id)
+                if not reservation_active:
+                    await self._broadcast_text(reservation_reason)
+                    await self._close_all_clients(
+                        close_code=status.WS_1008_POLICY_VIOLATION,
+                        close_reason=reservation_reason,
+                    )
+                    break
+
+                try:
+                    async with connect(
+                        self.api_url,
+                        additional_headers={"x-api-key": settings.EXPERIMENTAL_API_KEY},
+                    ) as upstream_ws:
+                        sender_task = asyncio.create_task(self._run_sender(upstream_ws))
+                        receiver_task = asyncio.create_task(self._run_receiver(upstream_ws))
+                        reservation_watch_task = asyncio.create_task(self._run_reservation_watch(upstream_ws))
+
+                        done, pending = await asyncio.wait(
+                            {sender_task, receiver_task, reservation_watch_task},
+                            return_when=asyncio.FIRST_COMPLETED,
+                        )
+
+                        for pending_task in pending:
+                            pending_task.cancel()
+                        await asyncio.gather(*pending, return_exceptions=True)
+
+                        for completed_task in done:
+                            completed_task.result()
+                except WebSocketDisconnect:
+                    pass
+                except ConnectionClosed as e:
+                    if self.stop_event.is_set():
+                        break
+                    await self._broadcast_text(f"Upstream websocket closed: {e}")
+                except Exception as e:
+                    if self.stop_event.is_set():
+                        break
+                    logger.exception("Upstream websocket connection failed: %s", self.api_url)
+                    await self._broadcast_text(f"Upstream websocket unavailable: {e}")
+
+                if not self.stop_event.is_set():
+                    await asyncio.sleep(1)
+        finally:
+            for pending_log_id in self.pending_start_attempt_ids.drain():
+                _mark_experiment_log_as_error(pending_log_id)
+
+            for pending_log_id in self.pending_log_ids.drain():
+                _mark_experiment_log_as_error(pending_log_id)
+
+            self.closed = True
+            _clear_stream_buffer(self.reservation_id)
+            _remove_reservation_session(self.reservation_id, expected=self)
+
+
+def _remove_reservation_session(
+    reservation_id: int,
+    expected: _ReservationUpstreamSession | None = None,
+) -> None:
+    with _reservation_sessions_lock:
+        current = _reservation_sessions.get(reservation_id)
+        if current is None:
+            return
+
+        if expected is not None and current is not expected:
+            return
+
+        _reservation_sessions.pop(reservation_id, None)
+
+
+def _get_or_create_reservation_session(
+    reservation_id: int,
+    user_id: int,
+    reservation_device_id: int,
+    reservation_device_name: str,
+    server_id: int,
+    api_url: str,
+) -> _ReservationUpstreamSession:
+    with _reservation_sessions_lock:
+        existing = _reservation_sessions.get(reservation_id)
+        if existing is not None and not existing.closed:
+            return existing
+
+    new_session = _ReservationUpstreamSession(
+        reservation_id=reservation_id,
+        user_id=user_id,
+        reservation_device_id=reservation_device_id,
+        reservation_device_name=reservation_device_name,
+        server_id=server_id,
+        api_url=api_url,
+    )
+
+    with _reservation_sessions_lock:
+        existing = _reservation_sessions.get(reservation_id)
+        if existing is not None and not existing.closed:
+            return existing
+
+        _reservation_sessions[reservation_id] = new_session
+
+    new_session.start()
+    return new_session
 
 
 @ws_router.get("/reservation/current/stream-buffer")
@@ -351,154 +656,12 @@ def get_current_stream_buffer(
     }
 
 
-async def _client_to_upstream(
-    client_ws: WebSocket,
-    upstream_ws,
-    user_id: int,
-    reservation_id: int,
-    reservation_device_id: int,
-    reservation_device_name: str,
-    server_id: int,
-    pending_log_ids: _PendingExperimentLogIds,
-):
-    device_name_cache: dict[int, str] = {reservation_device_id: reservation_device_name}
-
-    while True:
-        msg = await client_ws.receive()
-
-        msg_type = msg.get("type")
-        if msg_type == "websocket.disconnect":
-            break
-
-        text = msg.get("text")
-        data = msg.get("bytes")
-
-        raw_payload = text
-        if raw_payload is None and data is not None:
-            try:
-                raw_payload = data.decode("utf-8")
-            except UnicodeDecodeError:
-                with suppress(Exception):
-                    await upstream_ws.close(code=status.WS_1000_NORMAL_CLOSURE, reason="invalid json payload")
-                with suppress(Exception):
-                    await client_ws.close(code=status.WS_1003_UNSUPPORTED_DATA, reason="payload must be utf-8 json")
-                break
-
-        if raw_payload is None:
-            continue
-
-        try:
-            payload = json.loads(raw_payload)
-        except JSONDecodeError:
-            with suppress(Exception):
-                await upstream_ws.close(code=status.WS_1000_NORMAL_CLOSURE, reason="invalid json payload")
-            with suppress(Exception):
-                await client_ws.close(code=status.WS_1003_UNSUPPORTED_DATA, reason="payload must be valid json")
-            break
-
-        try:
-            if not isinstance(payload, dict):
-                raise ValueError("payload must be a JSON object")
-
-            resolved_device_name = _resolve_device_name_from_payload(
-                payload,
-                device_name_cache,
-                reservation_device_id,
-            )
-            normalized_payload = _to_experiment_queue_payload(payload, resolved_device_name)
-            experiment_log_id = _create_experiment_log_for_payload(
-                normalized_payload,
-                user_id,
-                reservation_device_id,
-                server_id,
-            )
-        except (ValidationError, ValueError) as e:
-            with suppress(Exception):
-                await upstream_ws.close(code=status.WS_1000_NORMAL_CLOSURE, reason="invalid experiment payload")
-            with suppress(Exception):
-                await client_ws.close(code=status.WS_1003_UNSUPPORTED_DATA, reason=f"invalid experiment payload: {e}")
-            break
-
-        try:
-            await upstream_ws.send(normalized_payload.model_dump_json())
-            _clear_stream_buffer(reservation_id)
-            pending_log_ids.push(experiment_log_id)
-        except Exception:
-            _mark_experiment_log_as_error(experiment_log_id)
-            raise
-
-
-async def _upstream_to_client(
-    upstream_ws,
-    client_ws: WebSocket,
-    reservation_id: int,
-    pending_log_ids: _PendingExperimentLogIds,
-):
-    async for msg in upstream_ws:
-        if isinstance(msg, bytes):
-            await client_ws.send_bytes(msg)
-        else:
-            try:
-                payload = json.loads(msg)
-            except JSONDecodeError:
-                payload = None
-
-            if isinstance(payload, dict):
-                partial_sample = _extract_partial_stream_sample(payload)
-                if partial_sample is not None:
-                    _append_stream_sample(reservation_id, partial_sample)
-
-            _sync_log_from_upstream_message(pending_log_ids, msg)
-            await client_ws.send_text(msg)
-
-
-async def _close_on_reservation_end_or_delete(
-    reservation_id: int,
-    client_ws: WebSocket,
-    upstream_ws,
-):
-    while True:
-        with Session(engine) as session:
-            reservation_end = session.exec(
-                select(Reservation.end).where(Reservation.id == reservation_id)
-            ).first()
-
-        if reservation_end is None:
-            with suppress(Exception):
-                await upstream_ws.close(
-                    code=status.WS_1000_NORMAL_CLOSURE,
-                    reason="reservation deleted",
-                )
-            with suppress(Exception):
-                await client_ws.close(
-                    code=status.WS_1008_POLICY_VIOLATION,
-                    reason="reservation deleted",
-                )
-            return
-
-        if reservation_end <= now():
-            with suppress(Exception):
-                await upstream_ws.close(
-                    code=status.WS_1000_NORMAL_CLOSURE,
-                    reason="reservation expired",
-                )
-            with suppress(Exception):
-                await client_ws.close(
-                    code=status.WS_1008_POLICY_VIOLATION,
-                    reason="reservation expired",
-                )
-            return
-
-        await asyncio.sleep(1)
-
-
 @ws_router.websocket("/reservation/current")
 async def reservation_proxy(db: DbSession, websocket: WebSocket, user_id: CurrentUserIdWs):
     await websocket.accept()
 
     db_reservation = _get_current_reservation(db, user_id)
-    
-    if not db_reservation:
+    if db_reservation is None:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="no reservation for user")
         return
 
@@ -521,57 +684,50 @@ async def reservation_proxy(db: DbSession, websocket: WebSocket, user_id: Curren
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="server unavailable")
         return
 
-    await websocket.send_text("Connected, reservation is ok")
-    
     base_url = resolve_url(db_server)
     if not base_url:
         await websocket.close(code=status.WS_1003_UNSUPPORTED_DATA, reason="no server api domain found")
         return
-    
+
     api_url = _to_websocket_url(base_url, settings.EXPERIMENT_WS_PATH)
-    pending_log_ids = _PendingExperimentLogIds()
-    
+    session = _get_or_create_reservation_session(
+        reservation_id=reservation_id,
+        user_id=user_id,
+        reservation_device_id=db_device.id,
+        reservation_device_name=db_device.name,
+        server_id=db_server.id,
+        api_url=api_url,
+    )
+
+    await session.add_client(websocket)
+
     try:
-        async with connect(
-            api_url,
-            additional_headers={"x-api-key": settings.EXPERIMENTAL_API_KEY},
-        ) as exp_ws:
-            to_upstream = asyncio.create_task(
-                _client_to_upstream(
-                    websocket,
-                    exp_ws,
-                    user_id,
-                    reservation_id,
-                    db_device.id,
-                    db_device.name,
-                    db_server.id,
-                    pending_log_ids,
-                )
-            )
-            to_client = asyncio.create_task(_upstream_to_client(exp_ws, websocket, reservation_id, pending_log_ids))
-            reservation_watch = asyncio.create_task(
-                _close_on_reservation_end_or_delete(reservation_id, websocket, exp_ws)
-            )
+        while True:
+            message = await websocket.receive()
+            message_type = message.get("type")
+            if message_type == "websocket.disconnect":
+                break
 
-            done, pending = await asyncio.wait(
-                {to_upstream, to_client, reservation_watch},
-                return_when=asyncio.FIRST_COMPLETED,
-            )
+            raw_payload = message.get("text")
+            data_payload = message.get("bytes")
 
-            for task in pending:
-                task.cancel()
-            await asyncio.gather(*pending, return_exceptions=True)
+            if raw_payload is None and data_payload is not None:
+                try:
+                    raw_payload = data_payload.decode("utf-8")
+                except UnicodeDecodeError:
+                    await websocket.send_text(json.dumps({"error": "payload must be utf-8 json"}))
+                    continue
 
-            for task in done:
-                task.result()
+            if raw_payload is None:
+                continue
+
+            try:
+                await session.enqueue_client_payload(raw_payload)
+            except (ValidationError, ValueError) as e:
+                await websocket.send_text(json.dumps({"error": f"invalid experiment payload: {e}"}))
     except WebSocketDisconnect:
         pass
-    except ConnectionClosed:
-        pass
-    except Exception as e:
-        logger.exception("Upstream websocket connection failed: %s", api_url)
-        with suppress(Exception):
-            await websocket.send_text(f"Upstream websocket unavailable: {e}")
     finally:
+        await session.remove_client(websocket)
         with suppress(Exception):
             await websocket.close()
