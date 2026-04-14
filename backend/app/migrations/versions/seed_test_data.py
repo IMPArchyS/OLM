@@ -1,7 +1,7 @@
 """seed_test_data
 
 Revision ID: 013_seed_test_data
-Revises: 012_create_experiment_device_tbl
+Revises: 013_create_exp_queue_tbl
 Create Date: 2026-03-01 20:27:35.260488
 
 """
@@ -17,7 +17,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '013_seed_test_data'
-down_revision: Union[str, Sequence[str], None] = '012_create_experiment_device_tbl'
+down_revision: Union[str, Sequence[str], None] = '013_create_exp_queue_tbl'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

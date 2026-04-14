@@ -1,7 +1,8 @@
 from datetime import datetime
+from enum import Enum
 from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel
-from sqlalchemy import Column
+from sqlalchemy import Column, Enum as SAEnum
 from sqlmodel import Field, Relationship, SQLModel
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import TypeDecorator
@@ -43,6 +44,14 @@ class ExperimentRun(BaseModel):
     output_history: list[dict[str, Any]]
 
 
+class FinishReason(str, Enum):
+    REASON_NONE = "n/a"
+    USER_STOP = "user_stop"
+    SIM_TIME_REACHED = "simulation_time_reached"
+    DEVICE_TIMEOUT = "device_timeout"
+    EXCEPTION_ERROR = "exception_error"
+
+
 class ExperimentLogBase(SQLModel):
     run: ExperimentRun | None = Field(default=None, sa_column=Column(PydanticJSONB)) 
     note: str | None = Field(default=None, index=True)
@@ -58,10 +67,20 @@ class ExperimentLog(ExperimentLogBase, table=True):
     modified_at: datetime = Field(default_factory=now)
     deleted_at: datetime | None = Field(default=None)
     
-    started_at: datetime = Field(default=None)
+    started_at: datetime | None = Field(default=None)
     finished_at: datetime | None = Field(default=None)
-    stopped_at: datetime | None = Field(default=None)
-    timedout_at: datetime | None = Field(default=None)
+    finish_reason: FinishReason = Field(
+        default=FinishReason.REASON_NONE,
+        sa_column=Column(
+            SAEnum(
+                FinishReason,
+                values_callable=lambda enum_cls: [member.value for member in enum_cls],
+                native_enum=False,
+            ),
+            nullable=False,
+            server_default=FinishReason.REASON_NONE.value,
+        ),
+    )
     
     # Relationships
     experiment_id: int = Field(foreign_key="experiment.id")
@@ -79,10 +98,9 @@ class ExperimentLogCreate(ExperimentLogBase):
     experiment_id: int
     device_id: int
     server_id: int
-    started_at: datetime
+    started_at: datetime | None
     finished_at: datetime | None
-    stopped_at: datetime | None
-    timedout_at: datetime | None
+    finish_reason: FinishReason = FinishReason.REASON_NONE
 
 
 class ExperimentLogPublic(ExperimentLogBase):
@@ -90,10 +108,9 @@ class ExperimentLogPublic(ExperimentLogBase):
     user_id: int
     device_id: int
     server_id: int
-    started_at: datetime
+    started_at: datetime | None
     finished_at: datetime | None
-    stopped_at: datetime | None
-    timedout_at: datetime | None
+    finish_reason: FinishReason
     modified_at: datetime
     deleted_at: datetime | None
 

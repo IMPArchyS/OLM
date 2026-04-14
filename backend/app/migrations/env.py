@@ -18,6 +18,7 @@ from app.models.device_software import DeviceSoftware
 from app.models.experiment_device import ExperimentDevice
 from app.models.schema import Schema, SchemaType
 from app.models.experiment_log import ExperimentLog
+from app.models.experiment_queue import ExperimentQueue
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

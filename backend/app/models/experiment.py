@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.models.software import Software
     from app.models.device import Device
     from app.models.experiment_log import ExperimentLog
+    from app.models.experiment_queue import ExperimentQueue
 
 
 class Command(str, Enum):
@@ -66,6 +67,7 @@ class Experiment(ExperimentBase, table=True):
     software: "Software" = Relationship(back_populates="experiments")
     
     experiment_logs: list["ExperimentLog"] = Relationship(back_populates="experiment", cascade_delete=True)
+    experiment_queues: list["ExperimentQueue"] = Relationship(back_populates="experiment", cascade_delete=True)
 
 
 class ExperimentCreate(ExperimentBase):
@@ -104,7 +106,7 @@ class ExperimentFormQueue(SQLModel):
         return values
 
 
-class ExperimentQueue(SQLModel):
+class ExperimentQueuePayload(SQLModel):
     id: int
     user_id: int
     command: Command

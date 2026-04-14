@@ -15,7 +15,7 @@ from websockets import connect
 from websockets.exceptions import ConnectionClosed
 
 from app.models.device import Device
-from app.models.experiment import ExperimentQueue
+from app.models.experiment import ExperimentQueuePayload
 from app.models.reservation import Reservation
 from app.models.utils import now
 
@@ -73,7 +73,7 @@ def _to_experiment_queue_payload(payload: object, resolved_device_name: str) -> 
     candidate.pop("device_id", None)
     candidate["device_name"] = resolved_device_name
 
-    normalized = ExperimentQueue.model_validate(candidate)
+    normalized = ExperimentQueuePayload.model_validate(candidate)
     return normalized.model_dump_json()
 
 

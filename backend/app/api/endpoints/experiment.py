@@ -1,21 +1,15 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, status
-import asyncio
-import logging
-import httpx
-from datetime import datetime, timedelta, time, date
-from sqlmodel import Session, col, select
-from app.api.dependencies import DbSession, engine
+from sqlmodel import col, select
+from app.api.dependencies import DbSession
 from app.api.endpoints.server import resolve_url
-from app.api.endpoints.experiment_log import create as create_experiment_log
 
 from app.models.device import Device, DevicePublic
-from app.models.experiment import Experiment, ExperimentCreate, ExperimentPublic, ExperimentFormQueue, ExperimentQueue, ExperimentUpdate
+from app.models.experiment import Experiment, ExperimentCreate, ExperimentPublic, ExperimentFormQueue, ExperimentQueuePayload, ExperimentUpdate
 from app.models.experiment_device import ExperimentDevice
-from app.models.experiment_log import ExperimentLogCreate
-from app.models.reservation import Reservation
+from app.models.experiment_log import ExperimentLog
+from app.models.experiment_queue import ExperimentQueue, QueueStatus
 from app.models.server import Server
-from app.core.config import settings
 from app.models.utils import ensure, now
 
 
@@ -112,7 +106,50 @@ async def queue(db: DbSession, experiment: ExperimentFormQueue):
     if not base_url:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Server missing domain!")
 
-    request_time = now()
+    payload = ExperimentQueuePayload.model_validate(
+        {
+            **experiment.model_dump(),
+            "device_name": db_device.name,
+        }
+    )
+
+    db_experiment_log = ExperimentLog(
+        user_id=experiment.user_id,
+        experiment_id=ensure(db_experiment.id),
+        device_id=ensure(db_device.id),
+        server_id=ensure(db_server.id),
+        started_at=None,
+        finished_at=None,
+        run=None,
+        note=None,
+    )
+    db.add(db_experiment_log)
+    db.flush()
+
+    queue_entry = ExperimentQueue(
+        user_id=experiment.user_id,
+        experiment_id=ensure(db_experiment.id),
+        device_id=ensure(db_device.id),
+        server_id=ensure(db_server.id),
+        experiment_log_id=ensure(db_experiment_log.id),
+        status=QueueStatus.NOT_STARTED,
+        payload=payload,
+        attempts=0,
+        job_id=None,
+        next_attempt_at=now(),
+        created_at=now(),
+        modified_at=now(),
+    )
+    db.add(queue_entry)
+    db.commit()
+    db.refresh(queue_entry)
+
+    return {
+        "queue_id": queue_entry.id,
+        "experiment_log_id": db_experiment_log.id,
+        "status": queue_entry.status,
+        "attempts": queue_entry.attempts,
+    }
 
 
 
