@@ -97,12 +97,13 @@ const addToQueue = async () => {
 </script>
 
 <template>
-    <v-card>
+    <v-card class="queue-card">
         <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
             <span class="text-h5">{{ t('queues.title') }}</span>
         </v-card-title>
-        <v-card-text class="mt-5">
-            <div style="display: flex; flex-direction: column; gap: 16px">
+        <v-card-text class="queue-card__body">
+            <div class="queue-layout">
+                <div class="queue-top-row">
                 <v-select
                     v-model="selectedServerId"
                     :items="selectableServers"
@@ -111,6 +112,7 @@ const addToQueue = async () => {
                     label="Select server"
                     variant="outlined"
                     density="comfortable"
+                    class="queue-field"
                 />
 
                 <v-select
@@ -122,27 +124,73 @@ const addToQueue = async () => {
                     label="Select device"
                     variant="outlined"
                     density="comfortable"
+                    class="queue-field"
                 />
+                </div>
 
                 <ExperimentSelector
                     fixed-command="start"
                     :loading="loading"
                     :experiments="selectableExperiments"
                     :selected-device-id="selectedDeviceId"
+                    compact
+                    class="queue-field"
                     @update:formData="handleFormDataUpdate"
                 />
             </div>
 
-            <v-btn
-                v-if="selectableExperiments.length > 0"
-                color="info"
-                prepend-icon="mdi-plus"
-                @click="addToQueue"
-                class="mt-4"
-                :disabled="formData.id === null || selectedServerId === null || selectedDeviceId === null"
-            >
-                {{ t('queues.add_to_queue') }}
-            </v-btn>
+            <div class="queue-action">
+                <v-btn
+                    v-if="selectableExperiments.length > 0"
+                    color="info"
+                    prepend-icon="mdi-plus"
+                    @click="addToQueue"
+                    :disabled="formData.id === null || selectedServerId === null || selectedDeviceId === null"
+                >
+                    {{ t('queues.add_to_queue') }}
+                </v-btn>
+            </div>
         </v-card-text>
     </v-card>
 </template>
+
+<style scoped>
+.queue-card {
+    width: 100%;
+    margin: 0 auto;
+}
+
+.queue-card__body {
+    padding-top: 20px;
+}
+
+.queue-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.queue-top-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.queue-field {
+    min-width: 0;
+}
+
+.queue-action {
+    margin-top: 16px;
+}
+
+@media (max-width: 960px) {
+    .queue-top-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .queue-action :deep(.v-btn) {
+        width: 100%;
+    }
+}
+</style>

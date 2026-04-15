@@ -166,6 +166,26 @@ const experimentTitle = (e: Experiment) => {
     return `Experiment Id: ${e.id} - ${deviceName} | ${e.software.name}`;
 };
 
+const inputLabel = (key: string, spec: InputArgSpec) => {
+    const label = t('experiment_input_arg.' + key);
+    return spec.unit ? `${label} (${spec.unit})` : label;
+};
+
+const inputGridMinWidthCh = computed(() => {
+    const baseLabels = [t('dashboard.simulation_time'), t('dashboard.sampling_rate')];
+    const dynamicLabels = Object.entries(inputArguments.value).map(([key, spec]) => inputLabel(key, spec));
+    const allLabels = [...baseLabels, ...dynamicLabels];
+    const longestLabelLength = allLabels.reduce((max, label) => Math.max(max, label.length), 0);
+
+    return Math.max(20, longestLabelLength + 4);
+});
+
+const inputGridStyle = computed(() => {
+    return {
+        '--experiment-grid-min-ch': String(inputGridMinWidthCh.value),
+    };
+});
+
 const formData = computed<QueueFormData>(() => {
     return {
         user_id: authStore.user?.id ?? null,
@@ -197,20 +217,34 @@ defineExpose({
 
 <template>
     <div :class="['experiment-selector', { 'experiment-selector--compact': props.compact }]">
-        <div v-if="props.loading" style="display: flex; justify-content: center; padding: 16px">
+        <div v-if="props.loading" class="experiment-selector__loading">
             <v-progress-circular indeterminate color="primary" size="48" />
         </div>
 
-        <div v-else-if="props.experiments.length > 0" style="display: flex; flex-direction: column; gap: 16px">
-            <v-select
-                v-model="selectedExperimentId"
-                :items="experiments"
-                :item-title="experimentTitle"
-                item-value="id"
-                :label="t('dashboard.select_experiment')"
-                variant="outlined"
-                :density="inputDensity"
-            />
+        <div v-else-if="props.experiments.length > 0" class="experiment-selector__stack">
+            <div class="experiment-selector__experiment-row">
+                <v-select
+                    v-model="selectedExperimentId"
+                    :items="experiments"
+                    :item-title="experimentTitle"
+                    item-value="id"
+                    :label="t('dashboard.select_experiment')"
+                    variant="outlined"
+                    :density="inputDensity"
+                />
+
+                <v-select
+                    v-if="selectedExperiment?.commands"
+                    v-model="selectedCommand"
+                    :items="selectedExperiment?.commands"
+                    :label="t('dashboard.select_command')"
+                    :placeholder="t('dashboard.no_commands_available')"
+                    :disabled="!!fixedCommand"
+                    :readonly="!!fixedCommand"
+                    variant="outlined"
+                    :density="inputDensity"
+                />
+            </div>
 
             <v-select
                 v-if="selectedExperiment?.schema_id"
@@ -221,19 +255,13 @@ defineExpose({
                 :density="inputDensity"
             />
 
-            <v-select
-                v-if="selectedExperiment?.commands"
-                v-model="selectedCommand"
-                :items="selectedExperiment?.commands"
-                :label="t('dashboard.select_command')"
-                :placeholder="t('dashboard.no_commands_available')"
-                :disabled="!!fixedCommand"
-                :readonly="!!fixedCommand"
-                variant="outlined"
+            <v-checkbox
+                v-if="selectedExperiment"
+                v-model="useSetpoints"
+                :label="t('dashboard.enable_setpoints')"
                 :density="inputDensity"
+                class="experiment-selector__checkbox"
             />
-
-            <v-checkbox v-if="selectedExperiment" v-model="useSetpoints" :label="t('dashboard.enable_setpoints')" :density="inputDensity" />
 
             <v-number-input
                 v-if="selectedExperiment && useSetpoints"
@@ -243,11 +271,11 @@ defineExpose({
                 :density="inputDensity"
             />
 
-            <div v-if="useSetpoints && setpointSteps.length > 0" style="display: flex; flex-direction: column; gap: 12px; align-items: center">
+            <div v-if="useSetpoints && setpointSteps.length > 0" class="experiment-selector__steps">
                 <div
                     v-for="(step, index) in setpointSteps"
                     :key="`setpoint-step-${index}`"
-                    style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 100%"
+                    class="experiment-selector__step"
                 >
                     <v-number-input
                         :model-value="step.duration"
@@ -256,7 +284,6 @@ defineExpose({
                         :min="0"
                         variant="outlined"
                         :density="inputDensity"
-                        style="max-width: 220px"
                     />
                     <v-number-input
                         :model-value="step.value"
@@ -264,53 +291,55 @@ defineExpose({
                         :label="`${t('dashboard.setpoint_step_value')} #${index + 1}`"
                         variant="outlined"
                         :density="inputDensity"
-                        style="max-width: 220px"
                     />
                     <v-btn color="error" variant="text" icon="mdi-delete" :disabled="setpointSteps.length <= 1" @click="removeSetpointStep(index)" />
                 </div>
             </div>
 
-            <div v-if="selectedExperiment && useSetpoints" style="display: flex; flex-direction: column; gap: 8px; align-items: center">
+            <div v-if="selectedExperiment && useSetpoints" class="experiment-selector__setpoint-action">
                 <v-btn :disabled="!canAddSetpointStep" color="info" variant="tonal" prepend-icon="mdi-plus" @click="addSetpointStep">
                     {{ t('dashboard.add_setpoint_step') }}
                 </v-btn>
             </div>
 
             <!-- Experiment Command Parameters  " -->
-            <div v-if="Object.keys(inputArguments).length > 0">
-                <div v-for="(spec, key) in inputArguments" :key="key" style="margin-bottom: 12px">
+            <div v-if="selectedExperiment" class="experiment-selector__args-grid" :style="inputGridStyle">
+                <div v-for="(spec, key) in inputArguments" :key="key" class="experiment-selector__grid-cell">
                     <v-text-field
                         v-if="spec.type === 'string'"
-                        :label="spec.unit ? `${t('experiment_input_arg.' + key)} (${spec.unit})` : t('experiment_input_arg.' + key)"
+                        :label="inputLabel(key, spec)"
                         v-model="spec.value"
                         variant="outlined"
                         :density="inputDensity"
                     />
                     <v-text-field
                         v-else-if="spec.type === 'number'"
-                        :label="spec.unit ? `${t('experiment_input_arg.' + key)} (${spec.unit})` : t('experiment_input_arg.' + key)"
+                        :label="inputLabel(key, spec)"
                         :model-value="Number(spec.value)"
                         @update:model-value="(value) => (spec.value = Number(value ?? 0))"
                         variant="outlined"
                         :density="inputDensity"
                     />
                 </div>
-            </div>
 
-            <v-text-field
-                v-if="selectedExperiment"
-                v-model="simTime"
-                :label="t('dashboard.simulation_time')"
-                variant="outlined"
-                :density="inputDensity"
-            />
-            <v-text-field
-                v-if="selectedExperiment"
-                v-model="sampleRate"
-                :label="t('dashboard.sampling_rate')"
-                variant="outlined"
-                :density="inputDensity"
-            />
+                <div class="experiment-selector__grid-cell">
+                    <v-text-field
+                        v-model="simTime"
+                        :label="t('dashboard.simulation_time')"
+                        variant="outlined"
+                        :density="inputDensity"
+                    />
+                </div>
+
+                <div class="experiment-selector__grid-cell">
+                    <v-text-field
+                        v-model="sampleRate"
+                        :label="t('dashboard.sampling_rate')"
+                        variant="outlined"
+                        :density="inputDensity"
+                    />
+                </div>
+            </div>
 
             <!-- Slot for additional controls (e.g., buttons) -->
             <slot
@@ -330,7 +359,71 @@ defineExpose({
 </template>
 
 <style scoped>
+.experiment-selector {
+    width: 100%;
+}
+
+.experiment-selector__loading {
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+}
+
+.experiment-selector__stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.experiment-selector__experiment-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.experiment-selector__checkbox {
+    margin-top: -4px;
+}
+
+.experiment-selector__steps {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.experiment-selector__step {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    gap: 12px;
+    align-items: start;
+}
+
+.experiment-selector__setpoint-action {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.experiment-selector__args-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--experiment-grid-min-ch, 24) * 1ch)), 1fr));
+    gap: 12px;
+}
+
+.experiment-selector__grid-cell {
+    min-width: 0;
+}
+
 .experiment-selector--compact :deep(.v-input) {
-    max-width: 430px;
+    max-width: 100%;
+}
+
+@media (max-width: 760px) {
+    .experiment-selector__step {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .experiment-selector__experiment-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }
 </style>
