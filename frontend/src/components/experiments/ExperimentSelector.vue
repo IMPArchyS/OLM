@@ -171,19 +171,8 @@ const inputLabel = (key: string, spec: InputArgSpec) => {
     return spec.unit ? `${label} (${spec.unit})` : label;
 };
 
-const inputGridMinWidthCh = computed(() => {
-    const baseLabels = [t('dashboard.simulation_time'), t('dashboard.sampling_rate')];
-    const dynamicLabels = Object.entries(inputArguments.value).map(([key, spec]) => inputLabel(key, spec));
-    const allLabels = [...baseLabels, ...dynamicLabels];
-    const longestLabelLength = allLabels.reduce((max, label) => Math.max(max, label.length), 0);
-
-    return Math.max(20, longestLabelLength + 4);
-});
-
-const inputGridStyle = computed(() => {
-    return {
-        '--experiment-grid-min-ch': String(inputGridMinWidthCh.value),
-    };
+const hasOddGridCell = computed(() => {
+    return (Object.keys(inputArguments.value).length + 2) % 2 !== 0;
 });
 
 const formData = computed<QueueFormData>(() => {
@@ -263,47 +252,59 @@ defineExpose({
                 class="experiment-selector__checkbox"
             />
 
-            <v-number-input
-                v-if="selectedExperiment && useSetpoints"
-                v-model="setpointStartValue"
-                :label="t('dashboard.setpoint_start_value')"
-                variant="outlined"
-                :density="inputDensity"
-            />
+            <div v-if="selectedExperiment && useSetpoints" class="experiment-selector__setpoint-box">
+                <div class="experiment-selector__setpoint-list">
+                    <div class="experiment-selector__setpoint-item experiment-selector__setpoint-item--start">
+                        <v-number-input
+                            :model-value="0"
+                            :label="`${t('dashboard.setpoint_step_duration')} #0`"
+                            variant="outlined"
+                            :density="inputDensity"
+                            disabled
+                        />
+                        <v-number-input
+                            v-model="setpointStartValue"
+                            :label="t('dashboard.setpoint_start_value')"
+                            variant="outlined"
+                            :density="inputDensity"
+                        />
+                    </div>
 
-            <div v-if="useSetpoints && setpointSteps.length > 0" class="experiment-selector__steps">
-                <div
-                    v-for="(step, index) in setpointSteps"
-                    :key="`setpoint-step-${index}`"
-                    class="experiment-selector__step"
-                >
-                    <v-number-input
-                        :model-value="step.duration"
-                        @update:model-value="(value) => (step.duration = Number(value ?? 0))"
-                        :label="`${t('dashboard.setpoint_step_duration')} #${index + 1}`"
-                        :min="0"
-                        variant="outlined"
-                        :density="inputDensity"
-                    />
-                    <v-number-input
-                        :model-value="step.value"
-                        @update:model-value="(value) => (step.value = Number(value ?? 0))"
-                        :label="`${t('dashboard.setpoint_step_value')} #${index + 1}`"
-                        variant="outlined"
-                        :density="inputDensity"
-                    />
-                    <v-btn color="error" variant="text" icon="mdi-delete" :disabled="setpointSteps.length <= 1" @click="removeSetpointStep(index)" />
+                    <div
+                        v-for="(step, index) in setpointSteps"
+                        :key="`setpoint-step-${index}`"
+                        class="experiment-selector__setpoint-item"
+                    >
+                        <v-number-input
+                            :model-value="step.duration"
+                            @update:model-value="(value) => (step.duration = Number(value ?? 0))"
+                            :label="`${t('dashboard.setpoint_step_duration')} #${index + 1}`"
+                            :min="0"
+                            variant="outlined"
+                            :density="inputDensity"
+                        />
+                        <v-number-input
+                            :model-value="step.value"
+                            @update:model-value="(value) => (step.value = Number(value ?? 0))"
+                            :label="`${t('dashboard.setpoint_step_value')} #${index + 1}`"
+                            variant="outlined"
+                            :density="inputDensity"
+                        />
+                        <div class="experiment-selector__setpoint-item-action">
+                            <v-btn color="error" variant="text" icon="mdi-delete" :disabled="setpointSteps.length <= 1" @click="removeSetpointStep(index)" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="experiment-selector__setpoint-action">
+                    <v-btn :disabled="!canAddSetpointStep" color="info" prepend-icon="mdi-plus" @click="addSetpointStep">
+                        {{ t('dashboard.add_setpoint_step') }}
+                    </v-btn>
                 </div>
             </div>
 
-            <div v-if="selectedExperiment && useSetpoints" class="experiment-selector__setpoint-action">
-                <v-btn :disabled="!canAddSetpointStep" color="info" variant="tonal" prepend-icon="mdi-plus" @click="addSetpointStep">
-                    {{ t('dashboard.add_setpoint_step') }}
-                </v-btn>
-            </div>
-
             <!-- Experiment Command Parameters  " -->
-            <div v-if="selectedExperiment" class="experiment-selector__args-grid" :style="inputGridStyle">
+            <div v-if="selectedExperiment" class="experiment-selector__args-grid">
                 <div v-for="(spec, key) in inputArguments" :key="key" class="experiment-selector__grid-cell">
                     <v-text-field
                         v-if="spec.type === 'string'"
@@ -331,7 +332,7 @@ defineExpose({
                     />
                 </div>
 
-                <div class="experiment-selector__grid-cell">
+                <div :class="['experiment-selector__grid-cell', { 'experiment-selector__grid-cell--orphan': hasOddGridCell }]">
                     <v-text-field
                         v-model="sampleRate"
                         :label="t('dashboard.sampling_rate')"
@@ -385,17 +386,38 @@ defineExpose({
     margin-top: -4px;
 }
 
-.experiment-selector__steps {
+.experiment-selector__setpoint-box {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    border-radius: 10px;
+    padding: 12px;
 }
 
-.experiment-selector__step {
+.experiment-selector__setpoint-list {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.experiment-selector__setpoint-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 12px;
     align-items: start;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.experiment-selector__setpoint-item--start {
+    border-style: dashed;
+}
+
+.experiment-selector__setpoint-item-action {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .experiment-selector__setpoint-action {
@@ -405,7 +427,7 @@ defineExpose({
 
 .experiment-selector__args-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, calc(var(--experiment-grid-min-ch, 24) * 1ch)), 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
 }
 
@@ -413,12 +435,16 @@ defineExpose({
     min-width: 0;
 }
 
+.experiment-selector__grid-cell--orphan {
+    grid-column: 1 / -1;
+}
+
 .experiment-selector--compact :deep(.v-input) {
     max-width: 100%;
 }
 
 @media (max-width: 760px) {
-    .experiment-selector__step {
+    .experiment-selector__args-grid {
         grid-template-columns: minmax(0, 1fr);
     }
 
