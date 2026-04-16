@@ -61,19 +61,16 @@ const goToReservations = () => {
 const fetchReservations = async () => {
     try {
         const response = await apiClient.get('/reservation/me');
-        console.log(response);
         reservations.value = response.data;
     } catch (e) {
         console.error('Failed to fetch reservations:', e);
-        reservations.value = [];
     }
 };
 
 const resolveCameraTarget = async (deviceId: number): Promise<void> => {
-    cameraDeviceName.value = '';
-    cameraServerId.value = 0;
-
     if (!Number.isFinite(deviceId) || deviceId <= 0) {
+        cameraDeviceName.value = '';
+        cameraServerId.value = 0;
         return;
     }
 
@@ -94,6 +91,9 @@ const resolveCameraTarget = async (deviceId: number): Promise<void> => {
                 return;
             }
         }
+
+        cameraDeviceName.value = '';
+        cameraServerId.value = 0;
     } catch (e) {
         console.error('Failed to resolve camera target from reservation device_id:', e);
     } finally {
@@ -102,15 +102,15 @@ const resolveCameraTarget = async (deviceId: number): Promise<void> => {
 };
 
 watch(
-    activeReservation,
-    (reservation) => {
-        if (!reservation) {
+    () => activeReservation.value?.device_id ?? null,
+    (deviceId) => {
+        if (!deviceId) {
             cameraDeviceName.value = '';
             cameraServerId.value = 0;
             return;
         }
 
-        void resolveCameraTarget(reservation.device_id);
+        void resolveCameraTarget(deviceId);
     },
     { immediate: true },
 );
