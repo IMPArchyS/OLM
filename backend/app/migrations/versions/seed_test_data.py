@@ -1,7 +1,7 @@
 """seed_test_data
 
-Revision ID: 013_seed_test_data
-Revises: 013_create_exp_queue_tbl
+Revision ID: 11_seed_test_data
+Revises: 10_create_exp_queue_tbl
 Create Date: 2026-03-01 20:27:35.260488
 
 """
@@ -16,8 +16,8 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision: str = '013_seed_test_data'
-down_revision: Union[str, Sequence[str], None] = '013_create_exp_queue_tbl'
+revision: str = '11_seed_test_data'
+down_revision: Union[str, Sequence[str], None] = '10_create_exp_queue_tbl'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -26,61 +26,12 @@ DEFAULT_SOFTWARE = [
         "id": 1,
         "name": "openloop",
     },
-    # {
-    #     "id": 2,
-    #     "name": "matlab"
-    # }
 ]
 DEFAULT_DEVICETYPE = [
     {
         "id": 1,
         "name": "sinusoid"
     }
-]
-DEFAULT_SCHEMA = [
-    # {
-    #     "id": 1,
-    #     "name": "IoT Schema",
-    #     "note": "Main IoT device schema",
-    #     "software_id": 2,
-    #     "device_type_id": 1,
-    # }
-]
-DEFAULT_ARGUMENTS = [
-    # {
-    #     "id": 1,
-    #     "name": "fan_voltage",
-    #     "label": "Fan Voltage",
-    #     "default_value": "5.0",
-    #     "row": 1,
-    #     "order": 1,
-    #     "schema_id": 1
-    # },
-    # {
-    #     "id": 2,
-    #     "name": "sampling_mode",
-    #     "label": "Sampling Mode",
-    #     "default_value": "continuous",
-    #     "row": 2,
-    #     "order": 2,
-    #     "schema_id": 1
-    # }
-]
-DEFAULT_OPTIONS = [
-    # {
-    #     "id": 1,
-    #     "name": "voltage_low",
-    #     "value": "3.3V",
-    #     "output_value": "3.3",
-    #     "argument_id": 1
-    # },
-    # {
-    #     "id": 2,
-    #     "name": "voltage_medium",
-    #     "value": "5.0V",
-    #     "output_value": "5.0",
-    #     "argument_id": 1
-    # }
 ]
 DEFAULT_SERVER = [
     {
@@ -141,7 +92,7 @@ DEFAULT_EXPERIMENTDEVICE = [
 def upgrade() -> None:
     now = datetime.now()
     
-    for provider in DEFAULT_SOFTWARE:
+    for item in DEFAULT_SOFTWARE:
         op.execute(
             sa.text(
                 """
@@ -149,13 +100,13 @@ def upgrade() -> None:
                 VALUES (:id, :name, :created_at, :modified_at)
                 """
             ).bindparams(
-                sa.bindparam("id", value=provider["id"]),
-                sa.bindparam("name", value=provider["name"]),
+                sa.bindparam("id", value=item["id"]),
+                sa.bindparam("name", value=item["name"]),
                 sa.bindparam("created_at", value=now),
                 sa.bindparam("modified_at", value=now),
             )
         )
-    for provider in DEFAULT_DEVICETYPE:
+    for item in DEFAULT_DEVICETYPE:
         op.execute(
             sa.text(
                 """
@@ -163,67 +114,13 @@ def upgrade() -> None:
                 VALUES (:id, :name, :created_at, :modified_at)
                 """
             ).bindparams(
-                sa.bindparam("id", value=provider["id"]),
-                sa.bindparam("name", value=provider["name"]),
+                sa.bindparam("id", value=item["id"]),
+                sa.bindparam("name", value=item["name"]),
                 sa.bindparam("created_at", value=now),
                 sa.bindparam("modified_at", value=now),
             )
         )
-    for provider in DEFAULT_SCHEMA:
-        op.execute(
-            sa.text(
-                """
-                INSERT INTO schema (id, name, note, schema_type, software_id, device_type_id, created_at, modified_at)
-                VALUES (:id, :name, :note, :schema_type, :software_id, :device_type_id, :created_at, :modified_at)
-                """
-            ).bindparams(
-                sa.bindparam("id", value=provider["id"]),
-                sa.bindparam("name", value=provider["name"]),
-                sa.bindparam("note", value=provider["note"]),
-                sa.bindparam("schema_type", value=provider.get("schema_type", "control")),
-                sa.bindparam("software_id", value=provider["software_id"]),
-                sa.bindparam("device_type_id", value=provider["device_type_id"]),
-                sa.bindparam("created_at", value=now),
-                sa.bindparam("modified_at", value=now),
-            )
-        )
-    for provider in DEFAULT_ARGUMENTS:
-        op.execute(
-            sa.text(
-                """
-                INSERT INTO argument (id, name, label, default_value, row, "order", schema_id, created_at, modified_at)
-                VALUES (:id, :name, :label, :default_value, :row, :order, :schema_id, :created_at, :modified_at)
-                """
-            ).bindparams(
-                sa.bindparam("id", value=provider["id"]),
-                sa.bindparam("name", value=provider["name"]),
-                sa.bindparam("label", value=provider["label"]),
-                sa.bindparam("default_value", value=provider["default_value"]),
-                sa.bindparam("row", value=provider["row"]),
-                sa.bindparam("order", value=provider["order"]),
-                sa.bindparam("schema_id", value=provider["schema_id"]),
-                sa.bindparam("created_at", value=now),
-                sa.bindparam("modified_at", value=now),
-            )
-        )
-    for provider in DEFAULT_OPTIONS:
-        op.execute(
-            sa.text(
-                """
-                INSERT INTO option (id, name, value, output_value, argument_id, created_at, modified_at)
-                VALUES (:id, :name, :value, :output_value, :argument_id, :created_at, :modified_at)
-                """
-            ).bindparams(
-                sa.bindparam("id", value=provider["id"]),
-                sa.bindparam("name", value=provider["name"]),
-                sa.bindparam("value", value=provider["value"]),
-                sa.bindparam("output_value", value=provider["output_value"]),
-                sa.bindparam("argument_id", value=provider["argument_id"]),
-                sa.bindparam("created_at", value=now),
-                sa.bindparam("modified_at", value=now),
-            )
-        )
-    for provider in DEFAULT_SERVER:
+    for item in DEFAULT_SERVER:
         op.execute(
             sa.text(
                 """
@@ -231,19 +128,19 @@ def upgrade() -> None:
                 VALUES (:id, :name, :ip_address, :api_domain, :port, :available, :production, :enabled, :created_at, :modified_at)
                 """
             ).bindparams(
-                sa.bindparam("id", value=provider["id"]),
-                sa.bindparam("name", value=provider["name"]),
-                sa.bindparam("ip_address", value=provider["ip_address"]),
-                sa.bindparam("api_domain", value=provider["api_domain"]),
-                sa.bindparam("port", value=provider["port"]),
-                sa.bindparam("available", value=provider["available"]),
-                sa.bindparam("production", value=provider["production"]),
-                sa.bindparam("enabled", value=provider["enabled"]),
+                sa.bindparam("id", value=item["id"]),
+                sa.bindparam("name", value=item["name"]),
+                sa.bindparam("ip_address", value=item["ip_address"]),
+                sa.bindparam("api_domain", value=item["api_domain"]),
+                sa.bindparam("port", value=item["port"]),
+                sa.bindparam("available", value=item["available"]),
+                sa.bindparam("production", value=item["production"]),
+                sa.bindparam("enabled", value=item["enabled"]),
                 sa.bindparam("created_at", value=now),
                 sa.bindparam("modified_at", value=now),
             )
         )
-    for provider in DEFAULT_DEVICE:
+    for item in DEFAULT_DEVICE:
         op.execute(
             sa.text(
                 """
@@ -251,15 +148,15 @@ def upgrade() -> None:
                 VALUES (:id, :name, :device_type_id, :server_id, :created_at, :modified_at)
                 """
             ).bindparams(
-                sa.bindparam("id", value=provider["id"]),
-                sa.bindparam("name", value=provider["name"]),
-                sa.bindparam("device_type_id", value=provider["device_type_id"]),
-                sa.bindparam("server_id", value=provider["server_id"]),
+                sa.bindparam("id", value=item["id"]),
+                sa.bindparam("name", value=item["name"]),
+                sa.bindparam("device_type_id", value=item["device_type_id"]),
+                sa.bindparam("server_id", value=item["server_id"]),
                 sa.bindparam("created_at", value=now),
                 sa.bindparam("modified_at", value=now),
             )
         )
-    for provider in DEFAULT_DEVICESOFTWARE:
+    for item in DEFAULT_DEVICESOFTWARE:
         op.execute(
             sa.text(
                 """
@@ -267,11 +164,11 @@ def upgrade() -> None:
                 VALUES (:device_id, :software_id)
                 """
             ).bindparams(
-                sa.bindparam("device_id", value=provider["device_id"]),
-                sa.bindparam("software_id", value=provider["software_id"]),
+                sa.bindparam("device_id", value=item["device_id"]),
+                sa.bindparam("software_id", value=item["software_id"]),
             )
         )
-    for provider in DEFAULT_EXPERIMENT:
+    for item in DEFAULT_EXPERIMENT:
         op.execute(
             sa.text(
                 """
@@ -279,16 +176,16 @@ def upgrade() -> None:
                 VALUES (:id, :commands, :input_arguments, :output_arguments, :software_id, :created_at, :modified_at)
                 """
             ).bindparams(
-                sa.bindparam("id", value=provider["id"]),
-                sa.bindparam("commands", value=provider["commands"], type_=postgresql.JSONB),
-                sa.bindparam("input_arguments", value=provider["input_arguments"], type_=postgresql.JSONB),
-                sa.bindparam("output_arguments", value=provider["output_arguments"], type_=postgresql.JSONB),
-                sa.bindparam("software_id", value=provider["software_id"]),
+                sa.bindparam("id", value=item["id"]),
+                sa.bindparam("commands", value=item["commands"], type_=postgresql.JSONB),
+                sa.bindparam("input_arguments", value=item["input_arguments"], type_=postgresql.JSONB),
+                sa.bindparam("output_arguments", value=item["output_arguments"], type_=postgresql.JSONB),
+                sa.bindparam("software_id", value=item["software_id"]),
                 sa.bindparam("created_at", value=now),
                 sa.bindparam("modified_at", value=now),
             )
         )
-    for provider in DEFAULT_EXPERIMENTDEVICE:
+    for item in DEFAULT_EXPERIMENTDEVICE:
         op.execute(
             sa.text(
                 """
@@ -296,8 +193,8 @@ def upgrade() -> None:
                 VALUES (:experiment_id, :device_id)
                 """
             ).bindparams(
-                sa.bindparam("experiment_id", value=provider["experiment_id"]),
-                sa.bindparam("device_id", value=provider["device_id"]),
+                sa.bindparam("experiment_id", value=item["experiment_id"]),
+                sa.bindparam("device_id", value=item["device_id"]),
             )
         )
 
@@ -313,9 +210,6 @@ def upgrade() -> None:
                 FOREACH target_table IN ARRAY ARRAY[
                     'software',
                     'device_type',
-                    'schema',
-                    'argument',
-                    'option',
                     'server',
                     'device',
                     'experiment'
@@ -341,84 +235,60 @@ def upgrade() -> None:
     )
 
 def downgrade() -> None:
-    for provider in DEFAULT_EXPERIMENTDEVICE:
+    for item in DEFAULT_EXPERIMENTDEVICE:
         op.execute(
             sa.text(
                 """
                 DELETE FROM experiment_device
                 WHERE experiment_id = :experiment_id AND device_id = :device_id
                 """
-            ).bindparams(experiment_id=provider["experiment_id"], device_id=provider["device_id"])
+            ).bindparams(experiment_id=item["experiment_id"], device_id=item["device_id"])
         )
-    for provider in DEFAULT_EXPERIMENT:
+    for item in DEFAULT_EXPERIMENT:
         op.execute(
             sa.text(
                 """
                 DELETE FROM experiment WHERE id = :id
                 """
-            ).bindparams(id=provider["id"])
+            ).bindparams(id=item["id"])
         )
-    for provider in DEFAULT_DEVICESOFTWARE:
+    for item in DEFAULT_DEVICESOFTWARE:
         op.execute(
             sa.text(
                 """
                 DELETE FROM device_software WHERE device_id = :device_id AND software_id = :software_id
                 """
-            ).bindparams(device_id=provider["device_id"], software_id=provider["software_id"])
+            ).bindparams(device_id=item["device_id"], software_id=item["software_id"])
         )
-    for provider in DEFAULT_DEVICE:
+    for item in DEFAULT_DEVICE:
         op.execute(
             sa.text(
                 """
                 DELETE FROM device WHERE id = :id
                 """
-            ).bindparams(id=provider["id"])
+            ).bindparams(id=item["id"])
         )
-    for provider in DEFAULT_SERVER:
+    for item in DEFAULT_SERVER:
         op.execute(
             sa.text(
                 """
                 DELETE FROM server WHERE id = :id
                 """
-            ).bindparams(id=provider["id"])
+            ).bindparams(id=item["id"])
         )
-    for provider in DEFAULT_OPTIONS:
-        op.execute(
-            sa.text(
-                """
-                DELETE FROM option WHERE id = :id
-                """
-            ).bindparams(id=provider["id"])
-        )
-    for provider in DEFAULT_ARGUMENTS:
-        op.execute(
-            sa.text(
-                """
-                DELETE FROM argument WHERE id = :id
-                """
-            ).bindparams(id=provider["id"])
-        )
-    for provider in DEFAULT_SCHEMA:
-        op.execute(
-            sa.text(
-                """
-                DELETE FROM schema WHERE id = :id
-                """
-            ).bindparams(id=provider["id"])
-        )
-    for provider in DEFAULT_DEVICETYPE:
+    for item in DEFAULT_DEVICETYPE:
         op.execute(
             sa.text(
                 """
                 DELETE FROM device_type WHERE name = :name
                 """
-            ).bindparams(name=provider["name"])
+            ).bindparams(name=item["name"])
         )
-    for provider in DEFAULT_SOFTWARE:
+    for item in DEFAULT_SOFTWARE:
         op.execute(
             sa.text(
                 """
                 DELETE FROM software WHERE name = :name
                 """
-            ).bindparams(name=provider["name"])
+            ).bindparams(name=item["name"])
         )

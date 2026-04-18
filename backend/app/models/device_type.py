@@ -1,9 +1,8 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, List
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from sqlmodel import Field, Relationship, SQLModel
 from app.models.utils import now
-from app.models.schema import Schema
 
 if TYPE_CHECKING:
     from app.models.device import Device
@@ -21,7 +20,6 @@ class DeviceType(DeviceTypeBase, table=True):
     modified_at: datetime = Field(default_factory=now)
     # Relationships
     devices: List["Device"] = Relationship(back_populates="device_type", cascade_delete=True)
-    schemas: List["Schema"] = Relationship(back_populates="device_type", cascade_delete=True)
 
 
 class DeviceTypeCreate(DeviceTypeBase):

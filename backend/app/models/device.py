@@ -1,6 +1,6 @@
 from datetime import datetime, time
 from typing import TYPE_CHECKING, List
-from pydantic import BaseModel, ConfigDict, Field as PydanticField, model_validator
+from pydantic import BaseModel, Field as PydanticField, model_validator
 from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 from app.models.device_type import DeviceTypePublic, DeviceTypeSyncPayload
 from app.models.software import SoftwarePublic, SoftwareSyncPayload

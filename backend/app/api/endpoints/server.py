@@ -6,8 +6,8 @@ from sqlmodel import select
 from app.api.dependencies import DbSession
 
 from app.api.endpoints.sync import sync_add_server_stack
-from app.models.device import DevicePublic, DeviceWithSoftware
-from app.models.server import Server, ServerCreate, ServerPublic, ServerPubDetailed, ServerUpdate
+from app.models.device import DeviceWithSoftware
+from app.models.server import Server, ServerCreate, ServerPublic, ServerUpdate
 from app.models.utils import ensure, now
 from app.core.config import settings
 

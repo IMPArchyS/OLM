@@ -1,15 +1,8 @@
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.api.dependencies import CurrentUserId, DbSession
 
-from app.models.device import Device
-from app.models.device_type import DeviceType, DeviceTypeCreate
-from app.models.device_software import DeviceSoftware
-from app.models.software import Software
-from app.models.experiment import Experiment
-from app.models.experiment_log import ExperimentLog, ExperimentLogCreate, ExperimentLogPublic, ExperimentLogUpdate
-from app.models.schema import Schema
-from app.models.server import Server
+from app.models.experiment_log import ExperimentLog, ExperimentLogCreate, ExperimentLogPublic
 from app.models.utils import now
 
 

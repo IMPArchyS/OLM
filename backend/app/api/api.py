@@ -2,14 +2,11 @@ from fastapi import APIRouter
 from app.api.ws import ws_router
 
 from app.api.endpoints import (
-    argument,
     device_type,
     device,
     experiment_log,
     server,
     experiment,
-    schema,
-    option,
     software,
     reservation,
     auth,
@@ -73,24 +70,6 @@ api_router.include_router(
     prefix="/api/experiment_log",
     tags=["Experiment Logs"],
 )
-
-# api_router.include_router(
-#     schema.router,
-#     prefix="/api/schema",
-#     tags=["Schemas"],
-# )
-
-# api_router.include_router(
-#     argument.router,
-#     prefix="/api/argument",
-#     tags=["Argument"],
-# )
-
-# api_router.include_router(
-#     option.router,
-#     prefix="/api/option",
-#     tags=["Option"],
-# )
 
 api_router.include_router(
     ws_router,

@@ -1,7 +1,7 @@
 """create_experiment_table
 
-Revision ID: 008_create_experiment_table
-Revises: 007_create_device_software_table
+Revision ID: 06_create_experiment_table
+Revises: 05_create_device_software_table
 Create Date: 2026-03-30 12:16:00.000000
 
 """
@@ -13,8 +13,8 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision: str = '008_create_experiment_table'
-down_revision: Union[str, Sequence[str], None] = '007_create_device_software_table'
+revision: str = '06_create_experiment_table'
+down_revision: Union[str, Sequence[str], None] = '05_create_device_software_table'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

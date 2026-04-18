@@ -1,7 +1,7 @@
 """create_server_table
 
-Revision ID: 002_create_server_table
-Revises: 001_create_device_type
+Revision ID: 02_create_server_table
+Revises: 01_create_device_type
 Create Date: 2026-03-30 12:10:00.000000
 
 """
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '002_create_server_table'
-down_revision: Union[str, Sequence[str], None] = '001_create_device_type'
+revision: str = '02_create_server_table'
+down_revision: Union[str, Sequence[str], None] = '01_create_device_type'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

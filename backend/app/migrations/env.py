@@ -7,8 +7,6 @@ from sqlmodel import SQLModel
 
 from app.core.config import settings
 from app.models.device import Device
-from app.models.argument import Argument
-from app.models.option import Option
 from app.models.device_type import DeviceType
 from app.models.experiment import Experiment
 from app.models.software import Software
@@ -16,7 +14,6 @@ from app.models.server import Server
 from app.models.reservation import Reservation
 from app.models.device_software import DeviceSoftware
 from app.models.experiment_device import ExperimentDevice
-from app.models.schema import Schema, SchemaType
 from app.models.experiment_log import ExperimentLog
 from app.models.experiment_queue import ExperimentQueue
 
