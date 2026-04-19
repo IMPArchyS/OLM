@@ -1,12 +1,19 @@
 from typing import Annotated
 from fastapi import APIRouter, Cookie, HTTPException, Response, status
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 from datetime import datetime, timezone
-
 import httpx
 
 from app.core.config import settings
+from app.models.auth import (
+    ChangeNameRequest, 
+    ChangePasswordRequest, 
+    LoginRequest, 
+    PermissionRequest,
+    ProviderResponse,
+    RegisterRequest,
+    TokenResponse
+)
 from app.models.utils import now
 
 
@@ -26,42 +33,6 @@ def _auth_error_payload(response: httpx.Response) -> dict:
     return {"detail": payload}
 
 
-class TokenResponse(BaseModel):
-    access_token: str
-    refresh_token: str
-    refresh_token_expires_at: datetime
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-    remember_me: bool
-
-class RegisterRequest(BaseModel):
-    name: str  
-    username: str
-    password: str
-
-class ChangeNameRequest(BaseModel):
-    jwt_token: str
-    name: str
-
-class ChangePasswordRequest(BaseModel):
-    jwt_token: str
-    password_old: str  
-    password_new: str
-    password_new_repeat: str
-
-class ProviderResponse(BaseModel):
-    id: int
-    name: str
-    display_name: str
-    logo_url: str
-
-
-class LogoutReponse(BaseModel):
-    success: bool
-
-
 def calc_max_age(expires_at: str | datetime) -> int:
     if isinstance(expires_at, datetime):
         expiry = expires_at
@@ -76,23 +47,24 @@ def calc_max_age(expires_at: str | datetime) -> int:
     else:
         expiry = expiry.astimezone(timezone.utc)
 
-    delta = expiry - datetime.now(timezone.utc)
+    delta = expiry - now()
     return max(0, int(delta.total_seconds()))
 
 
 @router.post("/register", response_model=TokenResponse)
-def register(credentials: RegisterRequest, response: Response):
+async def register(credentials: RegisterRequest, response: Response):
     try:
-        auth_response = httpx.post(
-            f"{settings.AUTH_SERVICE_URL}/register",
-            json={
-                "name": credentials.name,
-                "username": credentials.username,
-                "password": credentials.password
-            },
-            headers={"x-api-key": settings.AUTH_API_KEY},
-            timeout=10.0
-        )
+        async with httpx.AsyncClient() as client:
+            auth_response = await client.post(
+                f"{settings.AUTH_SERVICE_URL}/register",
+                json={
+                    "name": credentials.name,
+                    "username": credentials.username,
+                    "password": credentials.password
+                },
+                headers={"x-api-key": settings.AUTH_API_KEY},
+                timeout=10.0
+            )
         auth_response.raise_for_status()
         token_data = auth_response.json()
         
@@ -115,14 +87,15 @@ def register(credentials: RegisterRequest, response: Response):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(credentials: LoginRequest, response: Response):
+async def login(credentials: LoginRequest, response: Response):
     try:
-        auth_response = httpx.post(
-            f"{settings.AUTH_SERVICE_URL}/login",
-            json={"username": credentials.username, "password": credentials.password, "remember_me": credentials.remember_me},
-            headers={"x-api-key": settings.AUTH_API_KEY},
-            timeout=10.0
-        )
+        async with httpx.AsyncClient() as client:
+            auth_response = await client.post(
+                f"{settings.AUTH_SERVICE_URL}/login",
+                json={"username": credentials.username, "password": credentials.password, "remember_me": credentials.remember_me},
+                headers={"x-api-key": settings.AUTH_API_KEY},
+                timeout=10.0
+            )
         auth_response.raise_for_status()
         token_data = auth_response.json()
         
@@ -145,19 +118,20 @@ def login(credentials: LoginRequest, response: Response):
 
 
 @router.post("/refresh", response_model=TokenResponse)
-def refresh(refresh_token: str | None = Cookie(default=None)):
+async def refresh(refresh_token: str | None = Cookie(default=None)):
     if not refresh_token:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Refresh token not found"
         )
     try:
-        response = httpx.post(
-            f"{settings.AUTH_SERVICE_URL}/refresh",  
-            json={"refresh_token": refresh_token},
-            headers={"x-api-key": settings.AUTH_API_KEY},
-            timeout=10.0
-        )
+        async with httpx.AsyncClient() as client: 
+            response = await client.post(
+                f"{settings.AUTH_SERVICE_URL}/refresh",  
+                json={"refresh_token": refresh_token},
+                headers={"x-api-key": settings.AUTH_API_KEY},
+                timeout=10.0
+            )
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:
@@ -189,20 +163,22 @@ async def get_session(refresh_token: str | None = Cookie(default=None)):
     
     return response.json()
 
+
 @router.post("/logout")
-def logout(refresh_token: str | None = Cookie(default=None)):
+async def logout(refresh_token: str | None = Cookie(default=None)):
     if not refresh_token:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Refresh token not found"
         )
     try:
-        response = httpx.post(
-            f"{settings.AUTH_SERVICE_URL}/logout",  
-            json={"refresh_token": refresh_token},
-            headers={"x-api-key": settings.AUTH_API_KEY},
-            timeout=10.0
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.AUTH_SERVICE_URL}/logout",  
+                json={"refresh_token": refresh_token},
+                headers={"x-api-key": settings.AUTH_API_KEY},
+                timeout=10.0
+            )
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:
@@ -235,6 +211,21 @@ async def validate_token(jwt_token: Annotated[str, Cookie(alias="refresh_token")
     return response.json()
 
 
+@router.post("/check-permission")
+async def check_permission(perm_request: PermissionRequest) -> bool:
+    if not perm_request.jwt_token:
+        raise HTTPException(status_code=401, detail="No jwt token")
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{settings.AUTH_SERVICE_URL}/check-permission",
+            headers={"X-Api-Key": settings.AUTH_API_KEY},
+            json={"jwt_token": perm_request.jwt_token, "permission": perm_request.permission}
+        )
+    
+    data = response.json()
+    return data["valid"]
+
+
 @router.post("/check-permissions")
 async def check_permissions(jwt_token: Annotated[str, Cookie(alias="refresh_token")], perms: list[str]):
     if not jwt_token:
@@ -254,13 +245,14 @@ async def check_permissions(jwt_token: Annotated[str, Cookie(alias="refresh_toke
 
 
 @router.get("/providers", response_model=list[ProviderResponse])
-def get_oath_providers():
+async def get_oath_providers():
     try:
-        response = httpx.get(
-            f"{settings.AUTH_SERVICE_URL}/providers",
-            headers={"x-api-key": settings.AUTH_API_KEY},
-            timeout=10.0
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.AUTH_SERVICE_URL}/providers",
+                headers={"x-api-key": settings.AUTH_API_KEY},
+                timeout=10.0
+            )
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:
@@ -276,57 +268,14 @@ def get_oath_providers():
 
 
 @router.get("/user/{id}")
-def get_user_by_id(id: int):
+async def get_user_by_id(id: int):
     try:
-        response = httpx.get(
-            f"{settings.AUTH_SERVICE_URL}/users/{id}",
-            headers={"x-api-key": settings.AUTH_API_KEY},
-            timeout=10.0
-        )
-        response.raise_for_status()
-        return response.json()
-    except httpx.HTTPStatusError as e:
-        return JSONResponse(
-            status_code=e.response.status_code,
-            content=_auth_error_payload(e.response)
-        )
-    except httpx.RequestError as e:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"USERS/ID Failed to connect to auth service: {str(e)}"
-        )
-
-
-@router.get("/user/{id}/with-role")
-def get_user_with_role(id: int):
-    try:
-        response = httpx.get(
-            f"{settings.AUTH_SERVICE_URL}/users/{id}/with-role",
-            headers={"x-api-key": settings.AUTH_API_KEY},
-            timeout=10.0
-        )
-        response.raise_for_status()
-        return response.json()
-    except httpx.HTTPStatusError as e:
-        return JSONResponse(
-            status_code=e.response.status_code,
-            content=_auth_error_payload(e.response)
-        )
-    except httpx.RequestError as e:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"USERS/ID Failed to connect to auth service: {str(e)}"
-        )
-
-
-@router.get("/user/{id}/permissions")
-def get_user_permissions(id: int):
-    try:
-        response = httpx.get(
-            f"{settings.AUTH_SERVICE_URL}/users/{id}/permissions",
-            headers={"x-api-key": settings.AUTH_API_KEY},
-            timeout=10.0
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.AUTH_SERVICE_URL}/users/{id}",
+                headers={"x-api-key": settings.AUTH_API_KEY},
+                timeout=10.0
+            )
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:
@@ -342,14 +291,15 @@ def get_user_permissions(id: int):
 
 
 @router.patch("/update-user")
-def update_username(credentials: ChangeNameRequest):
+async def update_username(credentials: ChangeNameRequest):
     try:
-        response = httpx.patch(
-            f"{settings.AUTH_SERVICE_URL}/update-user",
-            json={"jwt_token": credentials.jwt_token, "name": credentials.name},
-            headers={"x-api-key": settings.AUTH_API_KEY},
-            timeout=10.0
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.patch(
+                f"{settings.AUTH_SERVICE_URL}/update-user",
+                json={"jwt_token": credentials.jwt_token, "name": credentials.name},
+                headers={"x-api-key": settings.AUTH_API_KEY},
+                timeout=10.0
+            )
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:
@@ -365,15 +315,16 @@ def update_username(credentials: ChangeNameRequest):
 
 
 @router.patch("/change-password")
-def change_password(credentials: ChangePasswordRequest):
+async def change_password(credentials: ChangePasswordRequest):
     try:
-        response = httpx.patch(
-            f"{settings.AUTH_SERVICE_URL}/change-password",
-            json={"jwt_token": credentials.jwt_token, "password_old": credentials.password_old, 
-                "password_new": credentials.password_new, "password_new_repeat": credentials.password_new_repeat},
-            headers={"x-api-key": settings.AUTH_API_KEY},
-            timeout=10.0
-        )
+        async with httpx.AsyncClient() as client:
+            response = await client.patch(
+                f"{settings.AUTH_SERVICE_URL}/change-password",
+                json={"jwt_token": credentials.jwt_token, "password_old": credentials.password_old, 
+                    "password_new": credentials.password_new, "password_new_repeat": credentials.password_new_repeat},
+                headers={"x-api-key": settings.AUTH_API_KEY},
+                timeout=10.0
+            )
         response.raise_for_status()
         return response.json()
     except httpx.HTTPStatusError as e:

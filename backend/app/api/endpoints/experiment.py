@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import col, select
-from app.api.dependencies import DbSession
+from app.api.dependencies import AuthUser, DbSession, Permission
 from app.api.endpoints.server import resolve_url
 
 from app.models.device import Device, DevicePublic
@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[ExperimentPublic])
-def get_all(db: DbSession): 
+def get_all(db: DbSession, _: AuthUser = Permission("olm.experiment.read")): 
     stmt = select(Experiment)
     return db.exec(stmt).all()
 
@@ -51,7 +51,7 @@ def get_experiment_devices(db: DbSession, id: int):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create(db: DbSession, experiment: ExperimentCreate):
+def create(db: DbSession, experiment: ExperimentCreate, _: AuthUser = Permission("olm.experiment.create")):
     requested_device_ids = []
     if experiment.device_ids:
         requested_device_ids.extend(experiment.device_ids)
@@ -74,7 +74,7 @@ def create(db: DbSession, experiment: ExperimentCreate):
 
 
 @router.post("/queue", status_code=status.HTTP_201_CREATED)
-async def queue(db: DbSession, experiment: ExperimentFormQueue):
+async def queue(db: DbSession, experiment: ExperimentFormQueue,  _: AuthUser = Permission("olm.queue.run")):
     if experiment.simulation_time < 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="simulation_time must be >= 0")
 
@@ -154,7 +154,7 @@ async def queue(db: DbSession, experiment: ExperimentFormQueue):
 
 
 @router.patch("/{id}", response_model=ExperimentPublic)
-def update(db: DbSession, id: int, experiment: ExperimentUpdate):
+def update(db: DbSession, id: int, experiment: ExperimentUpdate,  _: AuthUser = Permission("olm.experiment.update")):
     db_experiment = db.get(Experiment, id)
     if not db_experiment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {id} not found!")
@@ -177,7 +177,7 @@ def update(db: DbSession, id: int, experiment: ExperimentUpdate):
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete(db: DbSession, id: int):
+def delete(db: DbSession, id: int,  _: AuthUser = Permission("olm.experiment.delete")):
     db_experiment = db.get(Experiment, id)
     if not db_experiment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {id} not found!")

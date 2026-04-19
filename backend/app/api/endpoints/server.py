@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status
 import httpx
 import threading
 from sqlmodel import select
-from app.api.dependencies import DbSession
+from app.api.dependencies import AuthUser, DbSession, Permission
 
 from app.api.endpoints.sync import sync_add_server_stack
 from app.models.device import DeviceWithSoftware
@@ -69,7 +69,7 @@ def ping_remote_server(db: DbSession, server: ServerPublic, health_url: str):
 
 
 @router.post("/{id}/sync", status_code=status.HTTP_200_OK)
-def sync(db: DbSession, id: int):
+def sync(db: DbSession, id: int,  _: AuthUser = Permission("olm.server.sync")):
     db_server = db.get(Server, id)
     if not db_server:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
@@ -101,7 +101,7 @@ def sync(db: DbSession, id: int):
 
 
 @router.post("/sync_all", status_code=status.HTTP_200_OK)
-def sync_all(db: DbSession):
+def sync_all(db: DbSession, _: AuthUser = Permission("olm.server.sync")):
     servers = db.exec(select(Server)).all()
     
     results = []
@@ -162,7 +162,7 @@ def get_server_devices(db: DbSession, id: int):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create(db: DbSession, server: ServerCreate):
+def create(db: DbSession, server: ServerCreate, _: AuthUser = Permission("olm.server.create")):
     db_server = Server.model_validate(server)
     db.add(db_server)
     db.commit()
@@ -171,7 +171,7 @@ def create(db: DbSession, server: ServerCreate):
 
 
 @router.post("/{id}/restore", status_code=status.HTTP_200_OK)
-def restore(db: DbSession, id: int):
+def restore(db: DbSession, id: int, _: AuthUser = Permission("olm.server.update")):
     db_server = db.get(Server, id)
     if not db_server:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
@@ -183,7 +183,7 @@ def restore(db: DbSession, id: int):
 
 
 @router.patch("/{id}", response_model=ServerUpdate)
-def update(db: DbSession, id: int, server: ServerUpdate):
+def update(db: DbSession, id: int, server: ServerUpdate, _: AuthUser = Permission("olm.server.update")):
     db_server = db.get(Server, id)
     if not db_server:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
@@ -197,7 +197,7 @@ def update(db: DbSession, id: int, server: ServerUpdate):
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete(db: DbSession, id: int):
+def delete(db: DbSession, id: int, _: AuthUser = Permission("olm.server.delete")):
     db_server = db.get(Server, id)
     if not db_server:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")

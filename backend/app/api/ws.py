@@ -14,7 +14,7 @@ from sqlmodel import Session, asc, select
 from websockets import connect
 from websockets.exceptions import ConnectionClosed
 
-from app.api.dependencies import CurrentUserId, CurrentUserIdWs, DbSession, engine
+from app.api.dependencies import AuthUser, CurrentUser, CurrentUserWs, DbSession, PermissionWs, engine
 from app.api.endpoints.server import resolve_url
 from app.core.config import settings
 from app.models.device import Device
@@ -654,12 +654,9 @@ def _get_or_create_reservation_session(
 
 
 @ws_router.get("/reservation/current/stream-buffer")
-def get_current_stream_buffer(
-    db: DbSession,
-    user_id: CurrentUserId,
-    after_index: int = Query(default=0, ge=0),
+def get_current_stream_buffer(db: DbSession, user: CurrentUser, after_index: int = Query(default=0, ge=0),
 ):
-    db_reservation = _get_current_reservation(db, user_id)
+    db_reservation = _get_current_reservation(db, user.id)
     if db_reservation is None or db_reservation.id is None:
         return {
             "reservation_id": None,
@@ -678,10 +675,10 @@ def get_current_stream_buffer(
 
 
 @ws_router.websocket("/reservation/current")
-async def reservation_proxy(db: DbSession, websocket: WebSocket, user_id: CurrentUserIdWs):
+async def reservation_proxy(db: DbSession, websocket: WebSocket, user: CurrentUserWs, _: AuthUser = PermissionWs("olm.sandbox.run")):
     await websocket.accept()
 
-    db_reservation = _get_current_reservation(db, user_id)
+    db_reservation = _get_current_reservation(db, user.id)
     if db_reservation is None:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="no reservation for user")
         return
@@ -713,7 +710,7 @@ async def reservation_proxy(db: DbSession, websocket: WebSocket, user_id: Curren
     api_url = _to_websocket_url(base_url, settings.EXPERIMENT_WS_PATH)
     session = _get_or_create_reservation_session(
         reservation_id=reservation_id,
-        user_id=user_id,
+        user_id=user.id,
         reservation_device_id=db_device.id,
         reservation_device_name=db_device.name,
         server_id=db_server.id,

@@ -72,6 +72,7 @@ class Experiment(ExperimentBase, table=True):
 
 class ExperimentCreate(ExperimentBase):
     device_ids: list[int] | None = None
+    software_id: int
 
 
 class ExperimentPublic(ExperimentBase):

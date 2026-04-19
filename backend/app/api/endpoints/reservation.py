@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select, asc
-from app.api.dependencies import DbSession, CurrentUserId
+from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission
 
 from app.models.device import Device
 from app.models.reservation import Reservation, ReservationCreate, ReservationPublic, ReservationUpdate
@@ -17,16 +17,16 @@ def get_all(db: DbSession):
 
 
 @router.get("/me")
-def get_user_all(db: DbSession, user_id: CurrentUserId):
-    stmt = select(Reservation).where(Reservation.user_id == user_id).order_by(asc(Reservation.start))
+def get_user_all(db: DbSession, user: CurrentUser):
+    stmt = select(Reservation).where(Reservation.user_id == user.id).order_by(asc(Reservation.start))
     db_reservation = db.exec(stmt).all()
     return db_reservation
 
 
 @router.get("/current", response_model=ReservationPublic)
-def get_current(db: DbSession, user_id: CurrentUserId):
+def get_current(db: DbSession, user: CurrentUser):
     stmt = select(Reservation).where(
-        Reservation.user_id == user_id,
+        Reservation.user_id == user.id,
         Reservation.start <= now(), 
         Reservation.end >= now()
     ).order_by(asc(Reservation.start))
@@ -45,9 +45,9 @@ def get_by_id(db: DbSession, id: int):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create(db: DbSession, reservation: ReservationCreate, user_id: CurrentUserId):
+def create(db: DbSession, reservation: ReservationCreate, user: CurrentUser, _: AuthUser = Permission("olm.server.create")):
     db_reservation = Reservation.model_validate(reservation)
-    db_reservation.user_id = user_id
+    db_reservation.user_id = user.id
     
     if not db.get(Device, reservation.device_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {reservation.device_id} not found!")
@@ -71,7 +71,7 @@ def create(db: DbSession, reservation: ReservationCreate, user_id: CurrentUserId
 
 
 @router.patch("/{id}", response_model=ReservationPublic)
-def update(db: DbSession, id: int, reservation: ReservationUpdate):
+def update(db: DbSession, id: int, reservation: ReservationUpdate, _: AuthUser = Permission("olm.reservation.update")):
     db_reservation = db.get(Reservation, id)
     if not db_reservation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Reservation with {id} not found!")
@@ -107,7 +107,7 @@ def update(db: DbSession, id: int, reservation: ReservationUpdate):
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete(db: DbSession, id: int):
+def delete(db: DbSession, id: int, _: AuthUser = Permission("olm.reservation.delete")):
     db_reservation = db.get(Reservation, id)
     if not db_reservation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Reservation with {id} not found!")

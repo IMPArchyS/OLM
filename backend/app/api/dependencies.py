@@ -1,12 +1,22 @@
+from datetime import datetime
 from typing import Annotated, NoReturn
 from fastapi import Depends, HTTPException, WebSocket, WebSocketException, status, Header, Query
+from pydantic import BaseModel
 from sqlmodel import Session
 from sqlalchemy import create_engine
 from app.core.config import settings
 import httpx
-import logging
 
-logger = logging.getLogger(__name__)
+
+class AuthUser(BaseModel):
+    id: int
+    username: str
+    name: str
+    admin: bool
+    role_id: int
+    deleted_at: datetime | None = None
+    access_token: str = ""  
+
 
 CONNECT_ARGS = {"check_same_thread": False} if settings.DB_DRIVER == "sqlite" else {}
 engine = create_engine(settings.SQLALCHEMY_DATABASE_URI, connect_args=CONNECT_ARGS)
@@ -15,15 +25,8 @@ def get_session():
     with Session(engine) as session:
         yield session
 
-DbSession = Annotated[Session, Depends(get_session)]
 
-
-def _raise_auth_exception(
-    *,
-    detail: str,
-    status_code: int,
-    websocket: WebSocket | None,
-) -> NoReturn:
+def raise_auth_exception(status_code: int, detail: str, websocket: WebSocket | None) -> NoReturn:
     if websocket is not None:
         if status_code in (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN):
             raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason=detail)
@@ -34,105 +37,115 @@ def _raise_auth_exception(
     raise HTTPException(status_code=status_code, detail=detail)
 
 
-def _get_token_from_authorization(
-    authorization: str | None,
-    websocket: WebSocket | None,
-) -> str:
+def get_token_from_authorization(authorization: str | None, websocket: WebSocket | None) -> str:
     if not authorization:
-        logger.warning("Authorization attempt failed: Authorization header missing")
-        _raise_auth_exception(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authorization header missing",
-            websocket=websocket,
-        )
-
-    assert authorization is not None
-
+        raise_auth_exception(status.HTTP_401_UNAUTHORIZED, "Authorization header missing", websocket)
     try:
         scheme, token = authorization.split(maxsplit=1)
         if scheme.lower() != "bearer":
-            logger.warning(f"Authorization attempt failed: Invalid authentication scheme '{scheme}'")
-            _raise_auth_exception(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication scheme",
-                websocket=websocket,
-            )
+            raise_auth_exception(status.HTTP_401_UNAUTHORIZED, "Invalid authentication scheme", websocket)
     except ValueError:
-        logger.warning(f"Authorization attempt failed: Invalid authorization header format: {authorization[:50]}")
-        _raise_auth_exception(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authorization header format",
-            websocket=websocket,
-        )
-
+        raise_auth_exception(status.HTTP_401_UNAUTHORIZED, "Invalid authorization header format", websocket)
     return token
 
 
-def _validate_token_and_get_user_id(token: str, websocket: WebSocket | None = None) -> int:
-    try:
-        response = httpx.post(
+async def validate_token(token: str) -> dict:
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
             f"{settings.AUTH_SERVICE_URL}/validate-token",
             json={"jwt_token": token},
             headers={"x-api-key": settings.AUTH_API_KEY},
             timeout=5.0
         )
         response.raise_for_status()
+        return response.json()
+
+
+async def check_permission(jwt_token: str, permission: str) -> bool:
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{settings.AUTH_SERVICE_URL}/check-permission",
+            json={"jwt_token": jwt_token, "permission": permission},
+            headers={"x-api-key": settings.AUTH_API_KEY},
+        )
         data = response.json()
-        
+        return data["valid"]
+
+
+async def check_permissions(jwt_token: str, permissions: list[str]) -> dict:
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"{settings.AUTH_SERVICE_URL}/check-permissions",
+            json={"jwt_token": jwt_token, "permissions": permissions},
+            headers={"x-api-key": settings.AUTH_API_KEY},
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+
+async def get_user(token: str, websocket: WebSocket | None = None) -> AuthUser:
+    try:
+        data = await validate_token(token)
         if not data.get("valid"):
-            logger.warning(f"Authorization attempt failed: Invalid or expired token")
-            _raise_auth_exception(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token",
-                websocket=websocket,
-            )
-        
-        return data["user"]["id"]
-    except httpx.HTTPStatusError as e:
-        logger.error(f"Authorization attempt failed: HTTP error from auth service: {e}, Response: {e.response.text if hasattr(e, 'response') else 'N/A'}")
-        _raise_auth_exception(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-            websocket=websocket,
-        )
-    except httpx.RequestError as e:
-        logger.error(f"Authorization attempt failed: Auth service unavailable: {e}")
-        _raise_auth_exception(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Auth service unavailable",
-            websocket=websocket,
-        )
-    except KeyError as e:
-        logger.error(f"Authorization attempt failed: Invalid response from auth service, missing key: {e}")
-        _raise_auth_exception(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Invalid response from auth service",
-            websocket=websocket,
-        )
+            raise_auth_exception(status.HTTP_401_UNAUTHORIZED, "Invalid or expired token", websocket)
+        data["user"]["access_token"] = token
+        return AuthUser.model_validate(data["user"])
+    except httpx.HTTPStatusError:
+        raise_auth_exception(status.HTTP_401_UNAUTHORIZED, "Invalid or expired token", websocket)
+    except httpx.RequestError:
+        raise_auth_exception(status.HTTP_503_SERVICE_UNAVAILABLE, "Auth service unavailable", websocket)
+    except KeyError:
+        raise_auth_exception(status.HTTP_500_INTERNAL_SERVER_ERROR, "Invalid response from auth service", websocket)
 
 
-def get_current_user_id(authorization: Annotated[str | None, Header()] = None) -> int:
-    token = _get_token_from_authorization(authorization, websocket=None)
-    return _validate_token_and_get_user_id(token, websocket=None)
+async def get_current_user(authorization: Annotated[str | None, Header()] = None) -> AuthUser:
+    token = get_token_from_authorization(authorization, None)
+    return await get_user(token, None)
 
 
-def get_current_user_id_ws(
-    websocket: WebSocket,
-    access_token: Annotated[str | None, Query()] = None,
-) -> int:
-    # Browsers cannot set custom Authorization headers in new WebSocket(...).
-    token = access_token or websocket.query_params.get("access_token") or ""
-
-    if not token:
-        logger.warning("Authorization attempt failed: access_token query parameter missing")
-        _raise_auth_exception(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Access token missing",
-            websocket=websocket,
-        )
-
-    return _validate_token_and_get_user_id(token, websocket=websocket)
+async def get_current_user_ws(websocket: WebSocket, access_token: Annotated[str | None, Query()] = None)  -> AuthUser:
+    if not access_token:
+        raise_auth_exception(status.HTTP_401_UNAUTHORIZED, "Access token missing", websocket)
+    return await get_user(access_token, websocket)
 
 
-CurrentUserId = Annotated[int, Depends(get_current_user_id)]
-CurrentUserIdWs = Annotated[int, Depends(get_current_user_id_ws)]
+
+def require_permission(permission: str):
+    async def checker(user: AuthUser = Depends(get_current_user)):
+        allowed = await check_permission(user.access_token, permission)
+        if not allowed:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        return user
+    return checker
+
+
+def require_permission_ws(permission: str):
+    async def checker(
+        websocket: WebSocket,
+        user: AuthUser = Depends(get_current_user_ws),
+    ) -> AuthUser:
+        try:
+            allowed = await check_permission(user.access_token, permission)
+        except httpx.RequestError:
+            raise_auth_exception(status.HTTP_503_SERVICE_UNAVAILABLE, "Auth service unavailable", websocket)
+        except KeyError:
+            raise_auth_exception(status.HTTP_500_INTERNAL_SERVER_ERROR, "Invalid response from auth service", websocket)
+
+        if not allowed:
+            raise_auth_exception(status.HTTP_403_FORBIDDEN, "Forbidden", websocket)
+
+        return user
+
+    return checker
+
+
+def PermissionWs(permission: str) -> AuthUser:
+    return Depends(require_permission_ws(permission))
+
+
+def Permission(permission: str) -> AuthUser:
+    return Depends(require_permission(permission))
+
+DbSession = Annotated[Session, Depends(get_session)]
+CurrentUser = Annotated[AuthUser, Depends(get_current_user)]
+CurrentUserWs = Annotated[AuthUser, Depends(get_current_user_ws)]
