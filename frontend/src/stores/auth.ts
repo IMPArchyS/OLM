@@ -27,7 +27,7 @@ function parseJwt(token: string) {
 export const useAuthStore = defineStore('auth', () => {
     const accessToken = ref<string | null>('');
     const user = ref<User | null>(null);
-    const permissions = ref<Permision[]>([]);
+    const permissions = ref<string[]>([]);
     const providers = ref<OauthProvider[]>([]);
     const initialized = ref(false);
     let tokenRefreshInterval: ReturnType<typeof setInterval> | undefined = undefined;
@@ -62,7 +62,8 @@ export const useAuthStore = defineStore('auth', () => {
     };
 
     const can = (permission: string) => {
-        return !!permissions.value.find((p) => p.name === permission);
+        console.log(permissions.value);
+        return permissions.value.some((p) => p === permission);
     };
 
     const loadPermissions = async () => {
@@ -70,8 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
             const response = await apiClient.get('/auth/permissions');
             permissions.value = response.data.permissions;
         } catch (err: any) {
-            console.error('Login failed:', err);
-            throw new Error(err.response?.data?.detail);
+            console.error('perm fetch failed:');
         }
     };
 
