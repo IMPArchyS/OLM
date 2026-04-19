@@ -56,21 +56,25 @@ const router = createRouter({
                     path: '/app/dashboard',
                     name: 'dashboard',
                     component: () => import('@/views/app/Dashboard.vue'),
+                    meta: { permission: 'olm.dashboard.read' },
                 },
                 {
                     path: '/app/queue',
                     name: 'queue',
                     component: () => import('@/views/app/Queue.vue'),
+                    meta: { permission: 'olm.queue.read' },
                 },
                 {
                     path: '/app/reservations',
                     name: 'reservations',
                     component: () => import('@/views/app/Reservations.vue'),
+                    meta: { permission: 'olm.reservation.read' },
                 },
                 {
                     path: '/app/reports',
                     name: 'reports',
                     component: () => import('@/views/app/Reports.vue'),
+                    meta: { permission: 'olm.reports.read' },
                 },
                 {
                     path: '/app/servers',
@@ -127,7 +131,10 @@ const router = createRouter({
             name: 'notFound',
             component: () => import('@/views/errors/Error404.vue'),
         },
-        { path: '/403', component: () => import('@/views/errors/Error403.vue') },
+        {
+            path: '/403',
+            component: () => import('@/views/errors/Error403.vue'),
+        },
         {
             path: '/500',
             name: 'serverError',

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select, asc
-from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission
+from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission, check_permission
 
 from app.models.device import Device
 from app.models.reservation import Reservation, ReservationCreate, ReservationPublic, ReservationUpdate
@@ -45,7 +45,7 @@ def get_by_id(db: DbSession, id: int):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create(db: DbSession, reservation: ReservationCreate, user: CurrentUser, _: AuthUser = Permission("olm.server.create")):
+def create(db: DbSession, reservation: ReservationCreate, user: CurrentUser, _: AuthUser = Permission("olm.reservation.create")):
     db_reservation = Reservation.model_validate(reservation)
     db_reservation.user_id = user.id
     
@@ -71,10 +71,16 @@ def create(db: DbSession, reservation: ReservationCreate, user: CurrentUser, _: 
 
 
 @router.patch("/{id}", response_model=ReservationPublic)
-def update(db: DbSession, id: int, reservation: ReservationUpdate, _: AuthUser = Permission("olm.reservation.update")):
+async def update(db: DbSession, id: int, reservation: ReservationUpdate, user: CurrentUser):
     db_reservation = db.get(Reservation, id)
     if not db_reservation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Reservation with {id} not found!")
+
+    if db_reservation.user_id != user.id:
+        can_update_all = await check_permission(user.access_token, "olm.reservation.update_all")
+        if not can_update_all:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
     reservation_data = reservation.model_dump(exclude_unset=True)
     db_reservation.sqlmodel_update(reservation_data)
 
@@ -107,10 +113,16 @@ def update(db: DbSession, id: int, reservation: ReservationUpdate, _: AuthUser =
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete(db: DbSession, id: int, _: AuthUser = Permission("olm.reservation.delete")):
+async def delete(db: DbSession, id: int, user: CurrentUser):
     db_reservation = db.get(Reservation, id)
     if not db_reservation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Reservation with {id} not found!")
+
+    if db_reservation.user_id != user.id:
+        can_delete_all = await check_permission(user.access_token, "olm.reservation.delete_all")
+        if not can_delete_all:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
     db.delete(db_reservation)
     db.commit()
     return db_reservation

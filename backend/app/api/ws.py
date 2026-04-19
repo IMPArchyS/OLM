@@ -675,7 +675,7 @@ def get_current_stream_buffer(db: DbSession, user: CurrentUser, after_index: int
 
 
 @ws_router.websocket("/reservation/current")
-async def reservation_proxy(db: DbSession, websocket: WebSocket, user: CurrentUserWs, _: AuthUser = PermissionWs("olm.sandbox.run")):
+async def reservation_proxy(db: DbSession, websocket: WebSocket, user: CurrentUserWs, _: AuthUser = PermissionWs("olm.experiment.run")):
     await websocket.accept()
 
     db_reservation = _get_current_reservation(db, user.id)

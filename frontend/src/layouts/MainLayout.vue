@@ -2,7 +2,6 @@
 import LanguageSelector from '@/components/layout/LanguageSelector.vue';
 import UserSelector from '@/components/layout/UserSelector.vue';
 import { useAuthStore } from '@/stores/auth';
-import type { Role } from '@/types/authTypes';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDisplay, useTheme } from 'vuetify';
@@ -37,13 +36,12 @@ type NavItem = {
     i18nLabel: string;
     path: string;
     icon: string;
-    roles?: Role[];
+    perms?: string[];
 };
 
 type NavSection = {
     key: string;
     i18nLabel: string;
-    roles?: Role[];
     items: NavItem[];
 };
 
@@ -62,22 +60,22 @@ const navSections: NavSection[] = [
         key: 'lab',
         i18nLabel: 'nav.settings',
         items: [
-            { i18nLabel: 'nav.servers', path: '/app/servers', icon: 'mdi-server' },
-            { i18nLabel: 'nav.experiments', path: '/app/experiments', icon: 'mdi-flask' },
+            { i18nLabel: 'nav.servers', path: '/app/servers', icon: 'mdi-server', perms: ["olm.server.read"], },
+            { i18nLabel: 'nav.experiments', path: '/app/experiments', icon: 'mdi-flask', perms: ["olm.experiment.read"], },
         ],
     },
 ];
-// const userRoles = computed<Role[]>(() => authStore.user?.roles ?? []);
 
-//const canAccess = (required?: Role[]) => !required || required.length === 0 || required.some((r) => userRoles.value.includes(r));
+const visibleSections = computed(() => {
+    const userPermissions = authStore.permissions ?? [];
 
-const visibleSections = computed(
-    () => navSections,
-    //   navSections
-    //     .filter((s) => canAccess(s.roles))
-    //     .map((s) => ({ ...s, items: s.items.filter((i) => canAccess(i.roles)) }))
-    //     .filter((s) => s.items.length > 0),
-);
+    return navSections
+        .map((section) => ({
+            ...section,
+            items: section.items.filter((item) => !item.perms?.length || item.perms.every((perm) => userPermissions.includes(perm))),
+        }))
+        .filter((section) => section.items.length > 0);
+});
 
 onMounted(() => {
     isCollapsed.value = localStorage.getItem('isCollapsed') === 'true';
@@ -119,8 +117,6 @@ onMounted(() => {
         >
             <v-list class="py-0">
                 <template v-for="(section, sIndex) in visibleSections" :key="section.key">
-                    <!-- <v-divider v-if="sIndex > 0" class="my-0" /> -->
-
                     <v-list-subheader v-show="!isCollapsed || display.smAndDown.value" class="text-uppercase text-caption">
                         {{ $t(section.i18nLabel) }}
                     </v-list-subheader>

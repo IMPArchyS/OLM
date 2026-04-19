@@ -235,6 +235,24 @@ def upgrade() -> None:
     )
 
 def downgrade() -> None:
+    for item in DEFAULT_EXPERIMENT:
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM experiment_queue
+                WHERE experiment_id = :id
+                """
+            ).bindparams(id=item["id"])
+        )
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM experiment_log
+                WHERE experiment_id = :id
+                """
+            ).bindparams(id=item["id"])
+        )
+
     for item in DEFAULT_EXPERIMENTDEVICE:
         op.execute(
             sa.text(
@@ -264,11 +282,119 @@ def downgrade() -> None:
         op.execute(
             sa.text(
                 """
+                DELETE FROM reservation
+                WHERE device_id = :id
+                """
+            ).bindparams(id=item["id"])
+        )
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM experiment_queue
+                WHERE device_id = :id
+                """
+            ).bindparams(id=item["id"])
+        )
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM experiment_log
+                WHERE device_id = :id
+                """
+            ).bindparams(id=item["id"])
+        )
+        op.execute(
+            sa.text(
+                """
                 DELETE FROM device WHERE id = :id
                 """
             ).bindparams(id=item["id"])
         )
     for item in DEFAULT_SERVER:
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM experiment_device
+                WHERE device_id IN (
+                    SELECT id
+                    FROM device
+                    WHERE server_id = :id
+                )
+                """
+            ).bindparams(id=item["id"])
+        )
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM device_software
+                WHERE device_id IN (
+                    SELECT id
+                    FROM device
+                    WHERE server_id = :id
+                )
+                """
+            ).bindparams(id=item["id"])
+        )
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM reservation
+                WHERE device_id IN (
+                    SELECT id
+                    FROM device
+                    WHERE server_id = :id
+                )
+                """
+            ).bindparams(id=item["id"])
+        )
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM experiment_queue
+                WHERE device_id IN (
+                    SELECT id
+                    FROM device
+                    WHERE server_id = :id
+                )
+                """
+            ).bindparams(id=item["id"])
+        )
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM experiment_log
+                WHERE device_id IN (
+                    SELECT id
+                    FROM device
+                    WHERE server_id = :id
+                )
+                """
+            ).bindparams(id=item["id"])
+        )
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM device
+                WHERE server_id = :id
+                """
+            ).bindparams(id=item["id"])
+        )
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM experiment_queue
+                WHERE server_id = :id
+                """
+            ).bindparams(id=item["id"])
+        )
+        op.execute(
+            sa.text(
+                """
+                DELETE FROM experiment_log
+                WHERE server_id = :id
+                """
+            ).bindparams(id=item["id"])
+        )
         op.execute(
             sa.text(
                 """

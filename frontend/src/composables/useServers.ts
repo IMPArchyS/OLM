@@ -112,8 +112,8 @@ export function useServers() {
         try {
             const response = await apiClient.post(`/server/${id}/sync`);
             return response.data;
-        } catch (e) {
-            console.error(`Error Syncing server with id ${id}: `, e);
+        } catch (e: any) {
+            console.error(`Error Syncing server with id ${id}: `, e.status);
         }
         return null;
     }

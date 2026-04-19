@@ -22,7 +22,7 @@ class GrantRefreshRequest(SQLModel):
 
 
 @router.post("/{server_id}/{device_name}/grants")
-def get_device_webrtc_grant(db: DbSession, server_id: int, device_name: str, _: AuthUser = Permission("olm.sandbox.stream")):
+def get_device_webrtc_grant(db: DbSession, server_id: int, device_name: str, _: AuthUser = Permission("olm.experiment.stream")):
     health_url = check_device_server_url(db, server_id)
 
     health_url += f"/api/server/devices/{quote(device_name)}/webrtc/grants"
@@ -48,7 +48,7 @@ def get_device_webrtc_grant(db: DbSession, server_id: int, device_name: str, _: 
 
 
 @router.post("/{server_id}/{device_name}/grants/refresh")
-def refresh_device_webrtc_grant(db: DbSession, server_id: int, device_name: str, grant_token: GrantRefreshRequest, _: AuthUser = Permission("olm.sandbox.stream")):
+def refresh_device_webrtc_grant(db: DbSession, server_id: int, device_name: str, grant_token: GrantRefreshRequest, _: AuthUser = Permission("olm.experiment.stream")):
     health_url = check_device_server_url(db, server_id)
 
     health_url += f"/api/server/devices/{quote(device_name)}/webrtc/grants/refresh"
