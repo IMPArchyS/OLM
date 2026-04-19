@@ -101,6 +101,7 @@ const router = createRouter({
                     path: '/app/experiments/create',
                     name: 'experiments-create',
                     component: () => import('@/views/app/experiments/CreateExperiment.vue'),
+                    meta: { permission: 'olm.experiment.create' },
                 },
                 {
                     path: '/app/experiments/:id/show',
@@ -119,6 +120,7 @@ const router = createRouter({
             name: 'notFound',
             component: () => import('@/views/errors/Error404.vue'),
         },
+        { path: '/403', component: () => import('@/views/errors/Error403.vue') },
         {
             path: '/500',
             name: 'serverError',
@@ -144,6 +146,7 @@ router.onError((err, to) => {
 router.beforeEach(async (to, from, next) => {
     const backendPaths = ['/api', '/docs', '/redoc', '/openapi.json', '/ws', '/ovl-auth'];
     const authRoutes = ['/auth/login', '/auth/register'];
+    const requiredPermission = to.meta.permission as string;
 
     if (backendPaths.some((path) => to.path.startsWith(path))) {
         window.location.href = to.fullPath;
@@ -158,6 +161,10 @@ router.beforeEach(async (to, from, next) => {
         if (authStore.accessToken) {
             return next({ path: '/app/dashboard' });
         }
+    }
+
+    if (requiredPermission && !authStore.can(requiredPermission)) {
+        return next({ path: '/403' });
     }
 
     if (to.meta.requiresAuth) {

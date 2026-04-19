@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { apiClient } from '@/lib/apiClient';
-import type { User, AuthResponse, OauthCredentials, OauthProvider } from '@/types/authTypes';
+import { type User, type AuthResponse, type OauthCredentials, type OauthProvider, type Permision } from '@/types/authTypes';
 import type { LoginForm, RegisterForm } from '@/types/forms';
 import router from '@/router';
 
@@ -27,6 +27,7 @@ function parseJwt(token: string) {
 export const useAuthStore = defineStore('auth', () => {
     const accessToken = ref<string | null>('');
     const user = ref<User | null>(null);
+    const permissions = ref<Permision[]>([]);
     const providers = ref<OauthProvider[]>([]);
     const initialized = ref(false);
     let tokenRefreshInterval: ReturnType<typeof setInterval> | undefined = undefined;
@@ -60,11 +61,26 @@ export const useAuthStore = defineStore('auth', () => {
         );
     };
 
+    const can = (permission: string) => {
+        return !!permissions.value.find((p) => p.name === permission);
+    };
+
+    const loadPermissions = async () => {
+        try {
+            const response = await apiClient.get('/auth/permissions');
+            permissions.value = response.data.permissions;
+        } catch (err: any) {
+            console.error('Login failed:', err);
+            throw new Error(err.response?.data?.detail);
+        }
+    };
+
     const login = async (loginData: LoginForm) => {
         try {
             const response = await apiClient.post<AuthResponse>('auth/login', loginData);
             setToken(response.data.access_token);
             localStorage.setItem('OLMAccessToken', response.data.access_token);
+            await loadPermissions();
             startTokenRefresh();
         } catch (err: any) {
             console.error('Login failed:', err);
@@ -77,6 +93,7 @@ export const useAuthStore = defineStore('auth', () => {
             const response = await apiClient.post<AuthResponse>('auth/register', data);
             setToken(response.data.access_token);
             localStorage.setItem('OLMAccessToken', response.data.access_token);
+            await loadPermissions();
             startTokenRefresh();
         } catch (err: any) {
             const errorMessage =
@@ -95,6 +112,7 @@ export const useAuthStore = defineStore('auth', () => {
             .then(() => {
                 setToken(null);
                 clearInterval(tokenRefreshInterval);
+                permissions.value = [];
                 localStorage.removeItem('OLMAccessToken');
                 router.push('/auth/login');
             })
@@ -108,6 +126,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const response = await apiClient.post('auth/refresh');
             localStorage.setItem('OLMAccessToken', response.data.access_token);
+            await loadPermissions();
             setToken(response.data.access_token);
         } catch (err) {
             console.log('Token refresh failed:', err);
@@ -183,14 +202,16 @@ export const useAuthStore = defineStore('auth', () => {
             .catch((err) => {
                 console.error('Token refresh failed:', err);
             });
-
+        await loadPermissions();
         initialized.value = true;
     };
 
     return {
         accessToken,
         user,
+        permissions,
         providers,
+        can,
         initAuth,
         login,
         register,

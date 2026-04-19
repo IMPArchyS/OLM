@@ -4,12 +4,14 @@ from fastapi.responses import JSONResponse
 from datetime import datetime, timezone
 import httpx
 
+from app.api.dependencies import CurrentUser
 from app.core.config import settings
 from app.models.auth import (
     ChangeNameRequest, 
     ChangePasswordRequest, 
     LoginRequest, 
     PermissionRequest,
+    PermissionResponse,
     ProviderResponse,
     RegisterRequest,
     TokenResponse
@@ -226,22 +228,26 @@ async def check_permission(perm_request: PermissionRequest) -> bool:
     return data["valid"]
 
 
-@router.post("/check-permissions")
-async def check_permissions(jwt_token: Annotated[str, Cookie(alias="refresh_token")], perms: list[str]):
-    if not jwt_token:
-        raise HTTPException(status_code=401, detail="No jwt token")
-    
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{settings.AUTH_SERVICE_URL}/check-permissions",
-            headers={"X-Api-Key": settings.AUTH_API_KEY},
-            json={"jwt_token": jwt_token, "permissions": perms}
+@router.get("/permissions", response_model=PermissionResponse)
+async def get_permissions(user: CurrentUser):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.AUTH_SERVICE_URL}/users/{user.id}/permissions",
+                headers={"X-Api-Key": settings.AUTH_API_KEY},
+            )
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        return JSONResponse(
+            status_code=e.response.status_code,
+            content=_auth_error_payload(e.response)
         )
-    
-    if response.status_code != 200:
-        raise HTTPException(status_code=401, detail="Invalid session")
-    
-    return response.json()
+    except httpx.RequestError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"PROVIDERS Failed to connect to auth service: {str(e)}"
+        ) 
 
 
 @router.get("/providers", response_model=list[ProviderResponse])

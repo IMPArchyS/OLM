@@ -41,3 +41,9 @@ class ProviderResponse(BaseModel):
 
 class LogoutReponse(BaseModel):
     success: bool
+    
+    
+class PermissionResponse(BaseModel):
+    user_id: int
+    permissions: list[str]
+    admin: bool

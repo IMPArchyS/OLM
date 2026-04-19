@@ -1,0 +1,28 @@
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
+</script>
+
+<template>
+    <v-container fluid class="error-page pa-6">
+        <v-row class="w-100" justify="center" align="center">
+            <v-col cols="12" class="d-flex flex-column flex-sm-row justify-center align-center text-center text-sm-left">
+                <h1 class="text-h1 me-sm-8">403</h1>
+                <div>
+                    <h4 class="text-h4 pt-2">{{ t('page403.title') }}</h4>
+                    <p class="text-medium-emphasis">{{ t('page403.description') }}</p>
+                    <v-btn :to="'/'">{{ t('page403.button') }}</v-btn>
+                </div>
+            </v-col>
+        </v-row>
+    </v-container>
+</template>
+
+<style scoped>
+.error-page {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+}
+</style>
