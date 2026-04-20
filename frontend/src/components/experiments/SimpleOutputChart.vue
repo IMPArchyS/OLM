@@ -9,6 +9,8 @@ interface Props {
     height?: number;
     emptyText?: string;
     fillContainer?: boolean;
+    hideTitle?: boolean;
+    compact?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -17,6 +19,8 @@ const props = withDefaults(defineProps<Props>(), {
     height: 220,
     emptyText: 'No output data available yet.',
     fillContainer: false,
+    hideTitle: false,
+    compact: false,
 });
 
 const plotContainer = ref<HTMLElement | null>(null);
@@ -228,8 +232,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <v-card variant="outlined" class="simple-output-chart d-flex flex-column">
-        <v-card-title class="text-subtitle-1">{{ title }}</v-card-title>
+    <v-card
+        :variant="props.compact ? 'flat' : 'outlined'"
+        :class="['simple-output-chart d-flex flex-column', { 'simple-output-chart--compact': props.compact }]"
+    >
+        <v-card-title v-if="!props.hideTitle" class="text-subtitle-1">{{ title }}</v-card-title>
         <v-card-text class="chart-body">
             <div :style="chartStyle" class="chart-shell">
                 <div ref="plotContainer" class="plot-container" />
@@ -247,6 +254,10 @@ onBeforeUnmount(() => {
     display: flex;
     flex: 1 1 auto;
     min-height: 0;
+}
+
+.simple-output-chart--compact .chart-body {
+    padding: 0;
 }
 
 .chart-shell {

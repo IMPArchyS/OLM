@@ -41,6 +41,7 @@ type SandboxPanelId = 'control' | 'chart' | 'camera' | 'animation';
 
 const STORAGE_LAYOUT_KEY = 'olm:sandbox:grid-layout:v1';
 const STORAGE_VISIBILITY_KEY = 'olm:sandbox:grid-visibility:v1';
+const MOBILE_STACK_BREAKPOINT = 960;
 const panelIds: SandboxPanelId[] = ['control', 'chart', 'camera', 'animation'];
 
 const defaultPanelMeta: Record<
@@ -185,6 +186,7 @@ const readPanelVisibility = (): Record<SandboxPanelId, boolean> => {
 const panelLayout = ref<Layout>(readStoredLayout());
 const panelVisibility = ref<Record<SandboxPanelId, boolean>>(readPanelVisibility());
 const gridContainerRef = ref<HTMLElement | null>(null);
+const gridContainerWidth = ref(0);
 const gridRowHeight = ref(20);
 
 const panelTitles = computed<Record<SandboxPanelId, string>>(() => {
@@ -246,6 +248,37 @@ const visiblePanelLayout = computed<Layout>(() => {
     return panelLayout.value.filter((entry) => panelVisibility.value[itemPanelId(entry.i)]);
 });
 
+const isMobileStacked = computed(() => {
+    return gridContainerWidth.value > 0 && gridContainerWidth.value <= MOBILE_STACK_BREAKPOINT;
+});
+
+const stackedPanelLayout = computed<Layout>(() => {
+    let nextY = 0;
+
+    return panelIds
+        .filter((panelId) => panelVisibility.value[panelId])
+        .map((panelId) => {
+            const source = visiblePanelLayout.value.find((entry) => String(entry.i) === panelId);
+            const meta = defaultPanelMeta[panelId];
+            const height = Math.max(meta.minH, source?.h ?? meta.defaultH);
+            const item = {
+                i: panelId,
+                x: 0,
+                y: nextY,
+                w: 12,
+                h: height,
+                minW: 12,
+                minH: meta.minH,
+            };
+            nextY += height;
+            return item;
+        });
+});
+
+const activePanelLayout = computed<Layout>(() => {
+    return isMobileStacked.value ? stackedPanelLayout.value : visiblePanelLayout.value;
+});
+
 const resetLayout = () => {
     panelVisibility.value = {
         control: true,
@@ -257,6 +290,10 @@ const resetLayout = () => {
 };
 
 const handleLayoutUpdate = (layout: Layout) => {
+    if (isMobileStacked.value) {
+        return;
+    }
+
     const layoutById = new Map(layout.map((entry) => [String(entry.i), entry]));
     const merged = panelLayout.value.map((entry) => layoutById.get(String(entry.i)) ?? entry);
     panelLayout.value = mergeLayoutWithMeta(merged);
@@ -274,12 +311,13 @@ useResizeObserver(gridContainerRef, (entries) => {
     }
 
     const width = entry.contentRect.width;
+    gridContainerWidth.value = width;
     if (width < 700) {
         gridRowHeight.value = 16;
         return;
     }
 
-    if (width < 1100) {
+    if (width < 960) {
         gridRowHeight.value = 18;
         return;
     }
@@ -355,8 +393,8 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 </script>
 
 <template>
-    <v-card class="mt-4 sandbox-card">
-        <v-card-title class="sandbox-toolbar">
+    <v-card class="mt-4 sandbox-shell" variant="flat">
+        <div class="sandbox-toolbar">
             <span class="text-h6">{{ t('dashboard.ongoing_experiment') }}</span>
             <div class="sandbox-toolbar-controls sandbox-no-drag">
                 <div class="sandbox-toolbar-toggles">
@@ -383,9 +421,9 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                     Reset layout
                 </v-btn>
             </div>
-        </v-card-title>
+        </div>
 
-        <v-card-text class="pt-2">
+        <div class="sandbox-body">
             <v-alert v-if="!isReservationActive" type="warning" variant="tonal" density="compact" class="sandbox-reservation-alert mb-2">
                 Reservation has ended. Dashboard updates automatically when next reservation becomes active.
             </v-alert>
@@ -411,12 +449,13 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 
                 <div ref="gridContainerRef" class="sandbox-grid-host">
                     <GridLayout
-                        :layout="visiblePanelLayout"
+                        :layout="activePanelLayout"
                         :col-num="12"
                         :row-height="gridRowHeight"
-                        :margin="[12, 12]"
-                        :is-draggable="true"
-                        :is-resizable="true"
+                        :margin="[0, 0]"
+                        :container-padding="[0, 0]"
+                        :is-draggable="!isMobileStacked"
+                        :is-resizable="!isMobileStacked"
                         :is-bounded="true"
                         :use-css-transforms="true"
                         :vertical-compact="false"
@@ -424,7 +463,7 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                         @update:layout="handleLayoutUpdate"
                     >
                         <GridItem
-                            v-for="item in visiblePanelLayout"
+                            v-for="item in activePanelLayout"
                             :key="String(item.i)"
                             :x="item.x"
                             :y="item.y"
@@ -464,7 +503,8 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                                     <div v-else-if="itemPanelId(item.i) === 'chart'" class="sandbox-chart-panel">
                                         <SimpleOutputChart
                                             :output-history="outputHistory"
-                                            title="Live output"
+                                            hide-title
+                                            compact
                                             :height="240"
                                             fill-container
                                             class="h-100"
@@ -488,6 +528,7 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                                             :device_name="props.cameraDeviceName"
                                             :server_id="props.cameraServerId"
                                             compact
+                                            hide-title
                                             class="h-100"
                                         />
                                     </div>
@@ -501,12 +542,13 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                     </GridLayout>
                 </div>
             </template>
-        </v-card-text>
+        </div>
     </v-card>
 </template>
 
 <style scoped>
-.sandbox-card {
+.sandbox-shell {
+    width: 100%;
     overflow: visible;
 }
 
@@ -516,6 +558,11 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 8px 12px;
+    margin-bottom: 8px;
+}
+
+.sandbox-body {
+    min-width: 0;
 }
 
 .sandbox-toolbar-controls {
@@ -574,10 +621,12 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
     min-height: 560px;
     border-radius: 12px;
     background: rgba(var(--v-theme-surface-variant), 0.2);
-    padding: 6px;
+    padding: 0;
 }
 
 .sandbox-grid-item {
+    box-sizing: border-box;
+    padding: 4px;
     min-height: 0;
 }
 

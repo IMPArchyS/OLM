@@ -7,10 +7,12 @@ interface Props {
     device_name: string;
     server_id: number;
     compact?: boolean;
+    hideTitle?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     compact: false,
+    hideTitle: false,
 });
 
 const videoRef = ref<HTMLVideoElement | null>(null);
@@ -21,12 +23,16 @@ let grantRefreshIntervalId: number | null = null;
 const { remoteStream, loading, error, requestGrant, refreshGrant, startVideoStream, stopVideoStream } = useWebRtc();
 const toast = useToastStore();
 
-const canStart = computed(() => {
-    return !loading.value && !isStreaming.value && props.server_id > 0 && props.device_name.length > 0;
+const canToggle = computed(() => {
+    return !loading.value && props.server_id > 0 && props.device_name.length > 0;
 });
 
-const canStop = computed(() => {
-    return !loading.value && isStreaming.value;
+const toggleLabel = computed(() => {
+    return isStreaming.value ? 'Stop Stream' : 'Start Stream';
+});
+
+const toggleColor = computed(() => {
+    return isStreaming.value ? 'error' : 'primary';
 });
 
 watch(remoteStream, (stream) => {
@@ -89,6 +95,15 @@ async function handleStop(): Promise<void> {
     isStreaming.value = false;
 }
 
+async function handleToggleStream(): Promise<void> {
+    if (isStreaming.value) {
+        await handleStop();
+        return;
+    }
+
+    await handleStart();
+}
+
 function stopGrantRefresh(): void {
     if (grantRefreshIntervalId !== null) {
         clearInterval(grantRefreshIntervalId);
@@ -110,25 +125,22 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <v-card :class="['camera-view', { 'camera-view--compact': props.compact }]">
-        <v-card-title>Camera Stream</v-card-title>
+    <v-card :class="['camera-view', { 'camera-view--compact': props.compact }]" :variant="props.compact ? 'flat' : undefined">
+        <v-card-title v-if="!props.hideTitle">Camera Stream</v-card-title>
         <v-card-text class="camera-content">
-            <div class="mb-3 text-body-2">
-                <strong>Device:</strong> {{ props.device_name || 'N/A' }}
-                <span class="mx-2">|</span>
-                <strong>Server ID:</strong> {{ props.server_id || 'N/A' }}
-            </div>
-
             <div class="camera-stage">
                 <video ref="videoRef" autoplay playsinline muted class="camera-video"></video>
             </div>
 
-            <div class="d-flex flex-wrap gap-2 mt-3">
-                <v-btn color="primary" :size="props.compact ? 'small' : 'default'" :loading="loading" :disabled="!canStart" @click="handleStart">
-                    Start Stream
-                </v-btn>
-                <v-btn color="error" :size="props.compact ? 'small' : 'default'" :loading="loading" :disabled="!canStop" @click="handleStop">
-                    Stop Stream
+            <div class="camera-controls">
+                <v-btn
+                    :color="toggleColor"
+                    :size="props.compact ? 'small' : 'default'"
+                    :loading="loading"
+                    :disabled="!canToggle"
+                    @click="handleToggleStream"
+                >
+                    {{ toggleLabel }}
                 </v-btn>
             </div>
 
@@ -158,6 +170,13 @@ onBeforeUnmount(() => {
     min-height: 0;
 }
 
+.camera-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
 .camera-video {
     width: 100%;
     height: 100%;
@@ -169,5 +188,11 @@ onBeforeUnmount(() => {
 
 .camera-view--compact .camera-video {
     min-height: 180px;
+}
+
+@media (max-width: 600px) {
+    .camera-controls :deep(.v-btn) {
+        width: 100%;
+    }
 }
 </style>
