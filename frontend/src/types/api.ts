@@ -74,6 +74,7 @@ export interface Experiment {
 
 export interface ExperimentLog {
     id: number;
+    experiment_id: number;
     server_id: number;
     device_id: number;
     run: ExperimentRun | null;

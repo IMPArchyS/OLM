@@ -108,6 +108,7 @@ class ExperimentLogPublic(ExperimentLogBase):
     user_id: int
     device_id: int
     server_id: int
+    experiment_id : int
     started_at: datetime | None
     finished_at: datetime | None
     finish_reason: FinishReason

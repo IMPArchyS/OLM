@@ -86,6 +86,7 @@ export function useDevices() {
 
     return {
         devices,
+        availableDevices,
         devicesForReservation,
         loading,
         error,
