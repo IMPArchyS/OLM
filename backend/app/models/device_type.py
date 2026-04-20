@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, List
 from pydantic import BaseModel
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, Relationship, SQLModel, Column
@@ -28,7 +28,7 @@ class DeviceType(DeviceTypeBase, table=True):
     __tablename__ = "device_type" # type: ignore
     
     id: int | None = Field(default=None, primary_key=True)
-    visual_config: ModelConfig | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
+    visual_config: dict[str, Any] | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
     # Relationships
@@ -41,6 +41,7 @@ class DeviceTypeCreate(DeviceTypeBase):
 
 class DeviceTypePublic(DeviceTypeBase):
     id: int
+    visual_config: dict[str, Any] | None
 
 
 class DeviceTypeUpdate(DeviceTypeBase):

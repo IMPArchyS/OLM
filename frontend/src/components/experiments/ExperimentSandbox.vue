@@ -3,7 +3,7 @@ import { useResizeObserver } from '@vueuse/core';
 import { GridItem, GridLayout, type Layout } from 'grid-layout-plus';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
-import { Command, type Reservation } from '@/types/api';
+import { Command, type DeviceType, type Reservation } from '@/types/api';
 import ExperimentSelector from './ExperimentSelector.vue';
 import type { QueueFormData } from '@/types/forms';
 import { useExperiments } from '@/composables/useExperiments';
@@ -13,15 +13,18 @@ import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
 import CameraView from '@/components/dashboard/CameraView.vue';
 import SimpleOutputChart from './SimpleOutputChart.vue';
+import DeviceAnimationPanel from './DeviceAnimationPanel.vue';
 
 interface Props {
     reservation: Reservation;
+    deviceType?: DeviceType | null;
     cameraDeviceName?: string;
     cameraServerId?: number;
     resolvingCameraTarget?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
+    deviceType: null,
     cameraDeviceName: '',
     cameraServerId: 0,
     resolvingCameraTarget: false,
@@ -37,8 +40,7 @@ const { outputHistory, statusMessage, warningMessage, activate, deactivate, send
 type SandboxPanelId = 'control' | 'chart' | 'camera' | 'animation';
 
 const STORAGE_LAYOUT_KEY = 'olm:sandbox:grid-layout:v1';
-const STORAGE_COLLAPSE_KEY = 'olm:sandbox:grid-collapse:v1';
-const COLLAPSED_PANEL_HEIGHT = 3;
+const STORAGE_VISIBILITY_KEY = 'olm:sandbox:grid-visibility:v1';
 const panelIds: SandboxPanelId[] = ['control', 'chart', 'camera', 'animation'];
 
 const defaultPanelMeta: Record<
@@ -111,15 +113,6 @@ const makeDefaultLayout = (): Layout => {
     });
 };
 
-const defaultExpandedHeights: Record<SandboxPanelId, number> = {
-    control: defaultPanelMeta.control.defaultH,
-    chart: defaultPanelMeta.chart.defaultH,
-    camera: defaultPanelMeta.camera.defaultH,
-    animation: defaultPanelMeta.animation.defaultH,
-};
-
-const expandedHeights = ref<Record<SandboxPanelId, number>>({ ...defaultExpandedHeights });
-
 const readStoredLayout = (): Layout => {
     const fallback = makeDefaultLayout();
     const raw = localStorage.getItem(STORAGE_LAYOUT_KEY);
@@ -153,7 +146,7 @@ const readStoredLayout = (): Layout => {
                 x: Number.isFinite(item.x) ? item.x : meta.defaultX,
                 y: Number.isFinite(item.y) ? item.y : meta.defaultY,
                 w: Math.max(meta.minW, Number.isFinite(item.w) ? item.w : meta.defaultW),
-                h: Math.max(COLLAPSED_PANEL_HEIGHT, Number.isFinite(item.h) ? item.h : meta.defaultH),
+                h: Math.max(meta.minH, Number.isFinite(item.h) ? item.h : meta.defaultH),
                 minW: meta.minW,
                 minH: meta.minH,
             };
@@ -163,15 +156,15 @@ const readStoredLayout = (): Layout => {
     }
 };
 
-const readCollapsedPanels = (): Record<SandboxPanelId, boolean> => {
+const readPanelVisibility = (): Record<SandboxPanelId, boolean> => {
     const fallback: Record<SandboxPanelId, boolean> = {
-        control: false,
-        chart: false,
-        camera: false,
-        animation: false,
+        control: true,
+        chart: true,
+        camera: true,
+        animation: true,
     };
 
-    const raw = localStorage.getItem(STORAGE_COLLAPSE_KEY);
+    const raw = localStorage.getItem(STORAGE_VISIBILITY_KEY);
     if (!raw) {
         return fallback;
     }
@@ -179,10 +172,10 @@ const readCollapsedPanels = (): Record<SandboxPanelId, boolean> => {
     try {
         const parsed = JSON.parse(raw) as Partial<Record<SandboxPanelId, unknown>>;
         return {
-            control: Boolean(parsed.control),
-            chart: Boolean(parsed.chart),
-            camera: Boolean(parsed.camera),
-            animation: Boolean(parsed.animation),
+            control: parsed.control === undefined ? true : Boolean(parsed.control),
+            chart: parsed.chart === undefined ? true : Boolean(parsed.chart),
+            camera: parsed.camera === undefined ? true : Boolean(parsed.camera),
+            animation: parsed.animation === undefined ? true : Boolean(parsed.animation),
         };
     } catch {
         return fallback;
@@ -190,16 +183,9 @@ const readCollapsedPanels = (): Record<SandboxPanelId, boolean> => {
 };
 
 const panelLayout = ref<Layout>(readStoredLayout());
-const collapsedPanels = ref<Record<SandboxPanelId, boolean>>(readCollapsedPanels());
+const panelVisibility = ref<Record<SandboxPanelId, boolean>>(readPanelVisibility());
 const gridContainerRef = ref<HTMLElement | null>(null);
 const gridRowHeight = ref(20);
-
-for (const panelId of panelIds) {
-    const item = panelLayout.value.find((entry) => String(entry.i) === panelId);
-    if (item && item.h > COLLAPSED_PANEL_HEIGHT) {
-        expandedHeights.value[panelId] = item.h;
-    }
-}
 
 const panelTitles = computed<Record<SandboxPanelId, string>>(() => {
     return {
@@ -223,73 +209,61 @@ const itemPanelId = (itemId: number | string): SandboxPanelId => {
     return String(itemId) as SandboxPanelId;
 };
 
-const isPanelCollapsed = (panelId: SandboxPanelId): boolean => {
-    return collapsedPanels.value[panelId];
+const isPanelVisible = (panelId: SandboxPanelId): boolean => {
+    return panelVisibility.value[panelId];
+};
+
+const setPanelVisibility = (panelId: SandboxPanelId, visible: boolean) => {
+    panelVisibility.value = {
+        ...panelVisibility.value,
+        [panelId]: visible,
+    };
 };
 
 const mergeLayoutWithMeta = (layout: Layout): Layout => {
     return panelIds.map((panelId) => {
         const meta = defaultPanelMeta[panelId];
         const item = layout.find((entry) => String(entry.i) === panelId);
-        const isCollapsed = collapsedPanels.value[panelId];
-
-        const currentHeight = item?.h ?? meta.defaultH;
-        if (!isCollapsed && currentHeight > COLLAPSED_PANEL_HEIGHT) {
-            expandedHeights.value[panelId] = currentHeight;
-        }
 
         return {
             i: panelId,
             x: item?.x ?? meta.defaultX,
             y: item?.y ?? meta.defaultY,
             w: Math.max(meta.minW, item?.w ?? meta.defaultW),
-            h: isCollapsed ? COLLAPSED_PANEL_HEIGHT : Math.max(meta.minH, item?.h ?? expandedHeights.value[panelId]),
+            h: Math.max(meta.minH, item?.h ?? meta.defaultH),
             minW: meta.minW,
-            minH: isCollapsed ? COLLAPSED_PANEL_HEIGHT : meta.minH,
+            minH: meta.minH,
         };
     });
 };
 
 const persistLayoutState = () => {
     localStorage.setItem(STORAGE_LAYOUT_KEY, JSON.stringify(panelLayout.value));
-    localStorage.setItem(STORAGE_COLLAPSE_KEY, JSON.stringify(collapsedPanels.value));
+    localStorage.setItem(STORAGE_VISIBILITY_KEY, JSON.stringify(panelVisibility.value));
 };
 
-const togglePanelCollapsed = (panelId: SandboxPanelId) => {
-    const item = panelLayout.value.find((entry) => String(entry.i) === panelId);
-    if (!item) {
-        return;
-    }
-
-    if (!collapsedPanels.value[panelId] && item.h > COLLAPSED_PANEL_HEIGHT) {
-        expandedHeights.value[panelId] = item.h;
-    }
-
-    collapsedPanels.value = {
-        ...collapsedPanels.value,
-        [panelId]: !collapsedPanels.value[panelId],
-    };
-
-    panelLayout.value = mergeLayoutWithMeta(panelLayout.value);
-};
+const visiblePanelLayout = computed<Layout>(() => {
+    return panelLayout.value.filter((entry) => panelVisibility.value[itemPanelId(entry.i)]);
+});
 
 const resetLayout = () => {
-    collapsedPanels.value = {
-        control: false,
-        chart: false,
-        camera: false,
-        animation: false,
+    panelVisibility.value = {
+        control: true,
+        chart: true,
+        camera: true,
+        animation: true,
     };
-    expandedHeights.value = { ...defaultExpandedHeights };
     panelLayout.value = makeDefaultLayout();
 };
 
 const handleLayoutUpdate = (layout: Layout) => {
-    panelLayout.value = mergeLayoutWithMeta(layout);
+    const layoutById = new Map(layout.map((entry) => [String(entry.i), entry]));
+    const merged = panelLayout.value.map((entry) => layoutById.get(String(entry.i)) ?? entry);
+    panelLayout.value = mergeLayoutWithMeta(merged);
 };
 
 watch(panelLayout, persistLayoutState, { deep: true });
-watch(collapsedPanels, persistLayoutState, { deep: true });
+watch(panelVisibility, persistLayoutState, { deep: true });
 
 panelLayout.value = mergeLayoutWithMeta(panelLayout.value);
 
@@ -315,6 +289,10 @@ useResizeObserver(gridContainerRef, (entries) => {
 
 const canRunExperiment = computed(() => {
     return experimentsByDevice.value.length > 0 && formData.value.id !== null;
+});
+
+const deviceVisualConfig = computed(() => {
+    return props.deviceType?.visual_config ?? null;
 });
 
 onBeforeRouteLeave(() => {
@@ -378,54 +356,62 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 
 <template>
     <v-card class="mt-4 sandbox-card">
-        <v-card-title class="text-h6">{{ t('dashboard.ongoing_experiment') }}</v-card-title>
+        <v-card-title class="sandbox-toolbar">
+            <span class="text-h6">{{ t('dashboard.ongoing_experiment') }}</span>
+            <div class="sandbox-toolbar-controls sandbox-no-drag">
+                <div class="sandbox-toolbar-toggles">
+                    <v-checkbox
+                        v-for="panelId in panelIds"
+                        :key="`toggle-${panelId}`"
+                        :model-value="isPanelVisible(panelId)"
+                        density="compact"
+                        hide-details
+                        color="primary"
+                        class="sandbox-panel-toggle"
+                        @update:model-value="(value) => setPanelVisibility(panelId, Boolean(value))"
+                    >
+                        <template #label>
+                            <div class="d-flex align-center ga-1">
+                                <v-icon :icon="panelIcons[panelId]" size="14" />
+                                <span class="text-caption">{{ panelTitles[panelId] }}</span>
+                            </div>
+                        </template>
+                    </v-checkbox>
+                </div>
+
+                <v-btn size="x-small" variant="tonal" prepend-icon="mdi-backup-restore" class="sandbox-no-drag" @click="resetLayout">
+                    Reset layout
+                </v-btn>
+            </div>
+        </v-card-title>
 
         <v-card-text class="pt-2">
-            <v-alert type="info" variant="tonal" class="sandbox-debug-alert">
-                <div class="text-caption">{{ isSocketOnline ? 'WebSocket online.' : 'WebSocket offline. Pulling stream buffer.' }}</div>
-            </v-alert>
-
-            <v-alert v-if="statusMessage" type="info" variant="tonal" class="sandbox-debug-alert mt-2">
-                <div class="text-caption">{{ statusMessage }}</div>
-            </v-alert>
-
-            <v-alert v-if="warningMessage" type="warning" variant="tonal" class="sandbox-debug-alert mt-2">
-                <div class="text-caption">{{ warningMessage }}</div>
-            </v-alert>
-
-            <v-alert v-if="!isReservationActive" type="warning" variant="tonal" class="mt-3">
+            <v-alert v-if="!isReservationActive" type="warning" variant="tonal" density="compact" class="sandbox-reservation-alert mb-2">
                 Reservation has ended. Dashboard updates automatically when next reservation becomes active.
             </v-alert>
 
             <template v-else>
-                <v-card variant="outlined" class="sandbox-filter-card">
-                    <v-card-title class="text-subtitle-2">Panel controls</v-card-title>
-                    <v-card-text class="pb-2">
-                        <div class="sandbox-filter-grid">
-                            <v-btn
-                                v-for="panelId in panelIds"
-                                :key="`toggle-${panelId}`"
-                                size="small"
-                                variant="tonal"
-                                class="sandbox-no-drag"
-                                :prepend-icon="isPanelCollapsed(panelId) ? 'mdi-arrow-expand-vertical' : 'mdi-arrow-collapse-vertical'"
-                                @click="togglePanelCollapsed(panelId)"
-                            >
-                                {{ isPanelCollapsed(panelId) ? `Expand ${panelTitles[panelId]}` : `Collapse ${panelTitles[panelId]}` }}
-                            </v-btn>
-                        </div>
+                <div class="sandbox-debug-row" aria-live="polite">
+                    <v-alert type="info" variant="tonal" density="compact" class="sandbox-debug-alert mb-0">
+                        <div class="text-caption">{{ isSocketOnline ? 'WebSocket online.' : 'WebSocket offline. Pulling stream buffer.' }}</div>
+                    </v-alert>
 
-                        <div class="sandbox-filter-actions">
-                            <v-btn size="small" variant="tonal" prepend-icon="mdi-backup-restore" class="sandbox-no-drag" @click="resetLayout">
-                                Reset layout
-                            </v-btn>
-                        </div>
-                    </v-card-text>
-                </v-card>
+                    <v-alert v-if="statusMessage" type="info" variant="tonal" density="compact" class="sandbox-debug-alert mb-0">
+                        <div class="text-caption">{{ statusMessage }}</div>
+                    </v-alert>
+
+                    <v-alert v-if="warningMessage" type="warning" variant="tonal" density="compact" class="sandbox-debug-alert mb-0">
+                        <div class="text-caption">{{ warningMessage }}</div>
+                    </v-alert>
+                </div>
+
+                <v-alert v-if="visiblePanelLayout.length === 0" density="compact" variant="tonal" type="info" class="mb-2">
+                    No panels enabled. Use panel controls to toggle panels on.
+                </v-alert>
 
                 <div ref="gridContainerRef" class="sandbox-grid-host">
                     <GridLayout
-                        :layout="panelLayout"
+                        :layout="visiblePanelLayout"
                         :col-num="12"
                         :row-height="gridRowHeight"
                         :margin="[12, 12]"
@@ -438,7 +424,7 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                         @update:layout="handleLayoutUpdate"
                     >
                         <GridItem
-                            v-for="item in panelLayout"
+                            v-for="item in visiblePanelLayout"
                             :key="String(item.i)"
                             :x="item.x"
                             :y="item.y"
@@ -446,86 +432,70 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                             :h="item.h"
                             :i="item.i"
                             :min-w="item.minW ?? 4"
-                            :min-h="item.minH ?? COLLAPSED_PANEL_HEIGHT"
-                            :is-resizable="!isPanelCollapsed(itemPanelId(item.i))"
-                            drag-ignore-from=".sandbox-no-drag, button, input, textarea, select, .v-field, .v-btn, .v-input, .v-selection-control"
+                            :min-h="item.minH ?? defaultPanelMeta[itemPanelId(item.i)].minH"
+                            :is-resizable="true"
+                            drag-ignore-from=".sandbox-no-drag, button, input, textarea, select, .v-field, .v-btn, .v-input, .v-selection-control, .sandbox-animation-panel, .sandbox-animation-panel *"
                             class="sandbox-grid-item"
                         >
-                            <v-card
-                                variant="outlined"
-                                :class="[
-                                    'sandbox-section-card d-flex flex-column w-100',
-                                    { 'sandbox-section-card--collapsed': isPanelCollapsed(itemPanelId(item.i)) },
-                                ]"
-                            >
+                            <v-card variant="outlined" class="sandbox-section-card d-flex flex-column w-100">
                                 <div class="sandbox-panel-handle sandbox-section-header">
                                     <div class="sandbox-section-title">
                                         <v-icon :icon="panelIcons[itemPanelId(item.i)]" size="18" />
                                         <span class="text-subtitle-1">{{ panelTitles[itemPanelId(item.i)] }}</span>
                                     </div>
-                                    <div class="sandbox-section-actions sandbox-no-drag">
-                                        <v-btn
-                                            size="small"
-                                            variant="text"
-                                            class="sandbox-no-drag"
-                                            :icon="isPanelCollapsed(itemPanelId(item.i)) ? 'mdi-chevron-down' : 'mdi-chevron-up'"
-                                            @click.stop="togglePanelCollapsed(itemPanelId(item.i))"
-                                        />
-                                    </div>
                                 </div>
 
-                                <v-expand-transition>
-                                    <v-card-text v-if="!isPanelCollapsed(itemPanelId(item.i))" class="sandbox-section-body d-flex flex-column grow">
-                                        <div v-if="itemPanelId(item.i) === 'control'" class="sandbox-panel-content">
-                                            <ExperimentSelector
-                                                fixed-command=""
-                                                :loading="loading"
-                                                :experiments="experimentsByDevice"
-                                                :selected-device-id="props.reservation.device_id"
-                                                compact
-                                                @update:formData="handleFormDataUpdate"
-                                            />
+                                <v-card-text class="sandbox-section-body d-flex flex-column grow">
+                                    <div v-if="itemPanelId(item.i) === 'control'" class="sandbox-panel-content">
+                                        <ExperimentSelector
+                                            fixed-command=""
+                                            :loading="loading"
+                                            :experiments="experimentsByDevice"
+                                            :selected-device-id="props.reservation.device_id"
+                                            compact
+                                            @update:formData="handleFormDataUpdate"
+                                        />
 
-                                            <v-btn color="info" prepend-icon="mdi-play" @click="runExperiment" :disabled="!canRunExperiment">
-                                                {{ t('dashboard.run_experiment') }}
-                                            </v-btn>
-                                        </div>
+                                        <v-btn color="info" prepend-icon="mdi-play" @click="runExperiment" :disabled="!canRunExperiment">
+                                            {{ t('dashboard.run_experiment') }}
+                                        </v-btn>
+                                    </div>
 
-                                        <div v-else-if="itemPanelId(item.i) === 'chart'" class="sandbox-chart-panel">
-                                            <SimpleOutputChart
-                                                :output-history="outputHistory"
-                                                title="Live output"
-                                                :height="240"
-                                                fill-container
-                                                class="h-100"
-                                            />
-                                        </div>
+                                    <div v-else-if="itemPanelId(item.i) === 'chart'" class="sandbox-chart-panel">
+                                        <SimpleOutputChart
+                                            :output-history="outputHistory"
+                                            title="Live output"
+                                            :height="240"
+                                            fill-container
+                                            class="h-100"
+                                        />
+                                    </div>
 
-                                        <div v-else-if="itemPanelId(item.i) === 'camera'" class="sandbox-camera-panel">
-                                            <v-alert v-if="props.resolvingCameraTarget" type="info" variant="tonal"
-                                                >Resolving camera target...</v-alert
-                                            >
-                                            <v-alert v-else-if="!props.cameraDeviceName || !props.cameraServerId" type="warning" variant="tonal">
-                                                Unable to resolve server/device for camera stream from this reservation.
-                                            </v-alert>
-                                            <CameraView
-                                                v-else
-                                                :device_name="props.cameraDeviceName"
-                                                :server_id="props.cameraServerId"
-                                                compact
-                                                class="h-100"
-                                            />
-                                        </div>
+                                    <div v-else-if="itemPanelId(item.i) === 'camera'" class="sandbox-camera-panel">
+                                        <v-alert v-if="props.resolvingCameraTarget" type="info" variant="tonal" density="compact">
+                                            Resolving camera target...
+                                        </v-alert>
+                                        <v-alert
+                                            v-else-if="!props.cameraDeviceName || !props.cameraServerId"
+                                            type="warning"
+                                            variant="tonal"
+                                            density="compact"
+                                        >
+                                            Unable to resolve server/device for camera stream from this reservation.
+                                        </v-alert>
+                                        <CameraView
+                                            v-else
+                                            :device_name="props.cameraDeviceName"
+                                            :server_id="props.cameraServerId"
+                                            compact
+                                            class="h-100"
+                                        />
+                                    </div>
 
-                                        <div v-else class="animation-placeholder-wrapper">
-                                            <!-- TODO: Replace placeholder with animation component once API and asset contract are finalized. -->
-                                            <div class="animation-placeholder">
-                                                <v-icon icon="mdi-chart-timeline-variant" size="42" class="mb-2" />
-                                                <div class="text-body-2">Animation placeholder</div>
-                                            </div>
-                                        </div>
-                                    </v-card-text>
-                                </v-expand-transition>
+                                    <div v-else class="sandbox-animation-panel">
+                                        <DeviceAnimationPanel :visual-config="deviceVisualConfig" :output-history="outputHistory" class="h-100" />
+                                    </div>
+                                </v-card-text>
                             </v-card>
                         </GridItem>
                     </GridLayout>
@@ -540,25 +510,60 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
     overflow: visible;
 }
 
-.sandbox-filter-card {
-    margin-bottom: 12px;
+.sandbox-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+}
+
+.sandbox-toolbar-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1 1 460px;
+    gap: 6px 12px;
+    flex-wrap: wrap;
+}
+
+.sandbox-toolbar-toggles {
+    display: flex;
+    align-items: center;
+    gap: 2px 10px;
+    flex-wrap: wrap;
+}
+
+.sandbox-panel-toggle {
+    margin-inline: -4px;
+    margin-block: 0;
+}
+
+.sandbox-panel-toggle :deep(.v-selection-control) {
+    min-height: 22px;
 }
 
 .sandbox-debug-alert {
+    flex: 1 1 240px;
+    min-width: 0;
     overflow-wrap: anywhere;
     word-break: break-word;
 }
 
-.sandbox-filter-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 8px 12px;
+.sandbox-debug-alert :deep(.v-alert__content) {
+    font-size: 12px;
+    line-height: 1.25;
 }
 
-.sandbox-filter-actions {
+.sandbox-reservation-alert :deep(.v-alert__content) {
+    font-size: 13px;
+}
+
+.sandbox-debug-row {
     display: flex;
-    justify-content: flex-end;
-    margin-top: 8px;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
 }
 
 .sandbox-grid-host {
@@ -581,13 +586,8 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
     overflow: hidden;
 }
 
-.sandbox-section-card--collapsed {
-    border-style: dashed;
-}
-
 .sandbox-section-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     padding: 10px 12px;
     border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
@@ -598,11 +598,6 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
     display: flex;
     align-items: center;
     gap: 8px;
-}
-
-.sandbox-section-actions {
-    display: flex;
-    align-items: center;
 }
 
 .sandbox-section-body {
@@ -618,7 +613,8 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 }
 
 .sandbox-chart-panel,
-.sandbox-camera-panel {
+.sandbox-camera-panel,
+.sandbox-animation-panel {
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -626,21 +622,9 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
     min-height: 0;
 }
 
-.animation-placeholder {
-    min-height: 200px;
-    width: 100%;
-    flex: 1 1 auto;
-    border: 1px dashed rgba(var(--v-theme-on-surface), 0.2);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    color: rgba(var(--v-theme-on-surface), 0.7);
-}
-
 .sandbox-camera-panel :deep(.camera-view),
-.sandbox-chart-panel :deep(.simple-output-chart) {
+.sandbox-chart-panel :deep(.simple-output-chart),
+.sandbox-animation-panel :deep(.device-animation-panel) {
     flex: 1 1 auto;
 }
 
@@ -650,6 +634,15 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 }
 
 @media (max-width: 960px) {
+    .sandbox-toolbar-controls {
+        justify-content: flex-start;
+        flex-basis: 100%;
+    }
+
+    .sandbox-debug-alert {
+        flex-basis: 100%;
+    }
+
     .sandbox-grid-layout {
         min-height: 640px;
     }

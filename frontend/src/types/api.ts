@@ -26,6 +26,17 @@ export interface Reservation {
     username?: string;
 }
 
+export interface DeviceVisualAnimationTarget {
+    mesh: string;
+    type: 'emissive' | 'blink';
+    color: [number, number, number];
+}
+
+export interface DeviceVisualConfig {
+    model_file: string;
+    animations: Record<string, DeviceVisualAnimationTarget>;
+}
+
 export interface Device {
     id: number;
     name: string;
@@ -39,6 +50,7 @@ export interface Device {
 export interface DeviceType {
     id: number;
     name: string;
+    visual_config?: DeviceVisualConfig | null;
 }
 
 export interface Software {

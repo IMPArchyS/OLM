@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import type { Reservation } from '@/types/api';
+import type { Device, DeviceType, Reservation } from '@/types/api';
 import { apiClient } from '@/lib/apiClient';
 import ExperimentSandbox from '@/components/experiments/ExperimentSandbox.vue';
 import { useServers } from '@/composables/useServers';
@@ -17,9 +17,10 @@ const currentTime = ref(new Date());
 const resolvingCameraTarget = ref(false);
 const cameraDeviceName = ref('');
 const cameraServerId = ref(0);
+const reservationDeviceType = ref<DeviceType | null>(null);
 
 const { servers, fetchServers } = useServers();
-const { devices, fetchDevicesByServer } = useDevices();
+const { devices, fetchDevicesByServer, fetchDevices } = useDevices();
 
 let refreshInterval: number | null = null;
 let reservationRefreshInterval: number | null = null;
@@ -71,31 +72,60 @@ const resolveCameraTarget = async (deviceId: number): Promise<void> => {
     if (!Number.isFinite(deviceId) || deviceId <= 0) {
         cameraDeviceName.value = '';
         cameraServerId.value = 0;
+        reservationDeviceType.value = null;
         return;
     }
 
     resolvingCameraTarget.value = true;
 
     try {
+        let matchedDevice: Device | null = null;
+
         if (servers.value.length === 0) {
             await fetchServers();
         }
 
         for (const server of servers.value) {
             await fetchDevicesByServer(server.id);
-            const matchedDevice = devices.value.find((device) => device.id === deviceId);
+            const candidate = devices.value.find((device) => device.id === deviceId);
 
-            if (matchedDevice) {
+            if (candidate) {
+                matchedDevice = candidate;
                 cameraDeviceName.value = matchedDevice.name;
                 cameraServerId.value = server.id;
-                return;
+                break;
             }
         }
 
-        cameraDeviceName.value = '';
-        cameraServerId.value = 0;
+        if (!matchedDevice) {
+            cameraDeviceName.value = '';
+            cameraServerId.value = 0;
+            reservationDeviceType.value = null;
+            return;
+        }
+
+        reservationDeviceType.value = matchedDevice.device_type ?? null;
+        if (reservationDeviceType.value?.visual_config) {
+            return;
+        }
+
+        const listFetchResult = await fetchDevices();
+        if (listFetchResult.success) {
+            const fromAllDevices = devices.value.find((device) => device.id === deviceId);
+            if (fromAllDevices?.device_type) {
+                reservationDeviceType.value = fromAllDevices.device_type;
+            }
+        }
+
+        if (reservationDeviceType.value?.visual_config) {
+            return;
+        }
+
+        const response = await apiClient.get<Device>(`/device/${deviceId}/`);
+        reservationDeviceType.value = response.data.device_type ?? reservationDeviceType.value;
     } catch (e) {
         console.error('Failed to resolve camera target from reservation device_id:', e);
+        reservationDeviceType.value = null;
     } finally {
         resolvingCameraTarget.value = false;
     }
@@ -107,6 +137,7 @@ watch(
         if (!deviceId) {
             cameraDeviceName.value = '';
             cameraServerId.value = 0;
+            reservationDeviceType.value = null;
             return;
         }
 
@@ -152,40 +183,41 @@ onUnmounted(() => {
             <div v-if="loading" style="display: flex; justify-content: center; align-items: center; padding: 32px">
                 <v-progress-circular indeterminate color="primary" size="64" />
             </div>
-            <div v-else style="display: flex; flex-direction: column; gap: 16px">
+            <div v-else class="dashboard-content">
                 <div v-if="activeReservation">
-                    <v-alert type="success" variant="tonal">
-                        <v-alert-title>{{ t('dashboard.active_reservation') }}</v-alert-title>
-                        <div class="flex flex-row gap-3" style="margin-top: 8px">
-                            <p>
-                                <strong>{{ t('dashboard.started') }}:</strong>
-                                {{ formatDateTime(activeReservation.start) }}
-                            </p>
-                            <p>
-                                <strong>{{ t('dashboard.ends') }}:</strong>
-                                {{ formatDateTime(activeReservation.end) }}
-                            </p>
+                    <v-alert type="success" variant="tonal" density="compact" class="dashboard-reservation-alert">
+                        <div class="dashboard-reservation-row">
+                            <span class="text-body-2 font-weight-medium">{{ t('dashboard.active_reservation') }}</span>
+                            <div class="dashboard-reservation-meta">
+                                <v-chip size="small" variant="text" prepend-icon="mdi-clock-start">
+                                    {{ t('dashboard.started') }}: {{ formatDateTime(activeReservation.start) }}
+                                </v-chip>
+                                <v-chip size="small" variant="text" prepend-icon="mdi-clock-end">
+                                    {{ t('dashboard.ends') }}: {{ formatDateTime(activeReservation.end) }}
+                                </v-chip>
+                            </div>
                         </div>
                     </v-alert>
                     <ExperimentSandbox
                         :key="activeReservation.id"
                         :reservation="activeReservation"
+                        :device-type="reservationDeviceType"
                         :camera-device-name="cameraDeviceName"
                         :camera-server-id="cameraServerId"
                         :resolving-camera-target="resolvingCameraTarget"
                     />
                 </div>
-                <v-alert v-else-if="nextReservation" type="info" variant="tonal">
-                    <v-alert-title>{{ t('dashboard.next_reservation') }}</v-alert-title>
-                    <div class="flex flex-row gap-3" style="margin-top: 8px">
-                        <p>
-                            <strong>{{ t('dashboard.starts') }}:</strong>
-                            {{ formatDateTime(nextReservation.start) }}
-                        </p>
-                        <p>
-                            <strong>{{ t('dashboard.ends') }}:</strong>
-                            {{ formatDateTime(nextReservation.end) }}
-                        </p>
+                <v-alert v-else-if="nextReservation" type="info" variant="tonal" density="compact" class="dashboard-reservation-alert">
+                    <div class="dashboard-reservation-row">
+                        <span class="text-body-2 font-weight-medium">{{ t('dashboard.next_reservation') }}</span>
+                        <div class="dashboard-reservation-meta">
+                            <v-chip size="small" variant="text" prepend-icon="mdi-clock-start">
+                                {{ t('dashboard.starts') }}: {{ formatDateTime(nextReservation.start) }}
+                            </v-chip>
+                            <v-chip size="small" variant="text" prepend-icon="mdi-clock-end">
+                                {{ t('dashboard.ends') }}: {{ formatDateTime(nextReservation.end) }}
+                            </v-chip>
+                        </div>
                     </div>
                 </v-alert>
                 <div v-else style="text-align: center; padding: 32px 0">
@@ -200,3 +232,30 @@ onUnmounted(() => {
         </v-card-text>
     </v-card>
 </template>
+
+<style scoped>
+.dashboard-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dashboard-reservation-alert {
+    margin-bottom: 2px;
+}
+
+.dashboard-reservation-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.dashboard-reservation-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+</style>
