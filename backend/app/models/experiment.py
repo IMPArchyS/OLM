@@ -96,8 +96,8 @@ class ExperimentFormQueue(SQLModel):
     simulation_time: int
     sample_rate: int 
     software_name: SoftwareName
-    device_id: int
-    
+    device_id: int | None
+
     @model_validator(mode="before")
     @classmethod
     def empty_setpoint_to_none(cls, values):

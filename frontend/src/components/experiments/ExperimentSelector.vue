@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth';
 import type { Command, Experiment, InputArgSpec, Step } from '@/types/api';
-import type { QueueFormData } from '@/types/forms';
+import type { ExperimentFormData } from '@/types/forms';
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -19,7 +19,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-    'update:formData': [data: QueueFormData];
+    'update:formData': [data: ExperimentFormData];
 }>();
 
 const selectedExperimentId = ref<number | null>(null);
@@ -140,7 +140,7 @@ const removeSetpointStep = (index: number) => {
     setpointSteps.value.splice(index, 1);
 };
 
-const selectedSetpointChanges = computed<QueueFormData['setpoint_changes']>(() => {
+const selectedSetpointChanges = computed<ExperimentFormData['setpoint_changes']>(() => {
     if (!useSetpoints.value || setpointSteps.value.length === 0) {
         return {} as Record<string, never>;
     }
@@ -175,7 +175,7 @@ const hasOddGridCell = computed(() => {
     return (Object.keys(inputArguments.value).length + 2) % 2 !== 0;
 });
 
-const formData = computed<QueueFormData>(() => {
+const formData = computed<ExperimentFormData>(() => {
     return {
         user_id: authStore.user?.id ?? null,
         id: selectedExperimentId.value,
@@ -183,7 +183,6 @@ const formData = computed<QueueFormData>(() => {
         input_arguments: inputArguments.value,
         output_arguments: selectedExperiment.value?.output_arguments ?? [],
         setpoint_changes: selectedSetpointChanges.value,
-        schema_id: null,
         device_id: props.selectedDeviceId ?? experimentPrimaryDevice(selectedExperiment.value)?.id ?? null,
         software_name: selectedExperiment.value?.software.name ?? null,
         simulation_time: simTime.value,
@@ -235,15 +234,6 @@ defineExpose({
                 />
             </div>
 
-            <v-select
-                v-if="selectedExperiment?.schema_id"
-                :items="[]"
-                :label="t('dashboard.select_schema')"
-                :placeholder="t('dashboard.no_schemas_available')"
-                variant="outlined"
-                :density="inputDensity"
-            />
-
             <v-checkbox
                 v-if="selectedExperiment"
                 v-model="useSetpoints"
@@ -270,11 +260,7 @@ defineExpose({
                         />
                     </div>
 
-                    <div
-                        v-for="(step, index) in setpointSteps"
-                        :key="`setpoint-step-${index}`"
-                        class="experiment-selector__setpoint-item"
-                    >
+                    <div v-for="(step, index) in setpointSteps" :key="`setpoint-step-${index}`" class="experiment-selector__setpoint-item">
                         <v-number-input
                             :model-value="step.duration"
                             @update:model-value="(value) => (step.duration = Number(value ?? 0))"
@@ -291,7 +277,13 @@ defineExpose({
                             :density="inputDensity"
                         />
                         <div class="experiment-selector__setpoint-item-action">
-                            <v-btn color="error" variant="text" icon="mdi-delete" :disabled="setpointSteps.length <= 1" @click="removeSetpointStep(index)" />
+                            <v-btn
+                                color="error"
+                                variant="text"
+                                icon="mdi-delete"
+                                :disabled="setpointSteps.length <= 1"
+                                @click="removeSetpointStep(index)"
+                            />
                         </div>
                     </div>
                 </div>
@@ -324,21 +316,11 @@ defineExpose({
                 </div>
 
                 <div class="experiment-selector__grid-cell">
-                    <v-text-field
-                        v-model="simTime"
-                        :label="t('dashboard.simulation_time')"
-                        variant="outlined"
-                        :density="inputDensity"
-                    />
+                    <v-text-field v-model="simTime" :label="t('dashboard.simulation_time')" variant="outlined" :density="inputDensity" />
                 </div>
 
                 <div :class="['experiment-selector__grid-cell', { 'experiment-selector__grid-cell--orphan': hasOddGridCell }]">
-                    <v-text-field
-                        v-model="sampleRate"
-                        :label="t('dashboard.sampling_rate')"
-                        variant="outlined"
-                        :density="inputDensity"
-                    />
+                    <v-text-field v-model="sampleRate" :label="t('dashboard.sampling_rate')" variant="outlined" :density="inputDensity" />
                 </div>
             </div>
 

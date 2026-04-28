@@ -78,6 +78,9 @@ async def queue(db: DbSession, experiment: ExperimentFormQueue,  _: AuthUser = P
     if experiment.simulation_time < 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="simulation_time must be >= 0")
 
+    if experiment.device_id is None:
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="not_implemented")
+
     db_experiment = db.get(Experiment, experiment.id)
     if not db_experiment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {experiment.id} not found!")

@@ -62,7 +62,6 @@ export const useAuthStore = defineStore('auth', () => {
     };
 
     const can = (permission: string) => {
-        console.log(permissions.value);
         return permissions.value.some((p) => p === permission);
     };
 

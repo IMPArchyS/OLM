@@ -1,7 +1,7 @@
 import type { Experiment, Software } from '@/types/api';
 import { ref } from 'vue';
 import { apiClient } from '../lib/apiClient';
-import type { CreateExperimentForm, EditExperimentForm, QueueFormData } from '@/types/forms';
+import type { CreateExperimentForm, EditExperimentForm, ExperimentFormData } from '@/types/forms';
 import { Command } from '@/types/api';
 
 export function useExperiments() {
@@ -65,7 +65,7 @@ export function useExperiments() {
         }
     }
 
-    async function queueSelectedExperiment(experiment: QueueFormData): Promise<{ success: boolean; message?: string }> {
+    async function queueSelectedExperiment(experiment: ExperimentFormData): Promise<{ success: boolean; message?: string }> {
         loading.value = true;
 
         try {

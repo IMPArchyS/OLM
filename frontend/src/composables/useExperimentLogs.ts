@@ -56,6 +56,15 @@ export function useExperimentLogs() {
         }
     }
 
+    async function fetchLastUsedDeviceId(experimentId: number): Promise<number | null> {
+        try {
+            const response = await apiClient.get(`/experiment_log/${experimentId}/latest`);
+            return response.data.device_id ?? null;
+        } catch {
+            return null;
+        }
+    }
+
     return {
         experimentLogs,
         userExperimentLogs,
@@ -63,5 +72,6 @@ export function useExperimentLogs() {
         error,
         fetchExperimentLogs,
         fetchExperimentLogsByUser,
+        fetchLastUsedDeviceId,
     };
 }

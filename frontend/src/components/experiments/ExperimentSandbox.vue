@@ -5,7 +5,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
 import { Command, type DeviceType, type Reservation } from '@/types/api';
 import ExperimentSelector from './ExperimentSelector.vue';
-import type { QueueFormData } from '@/types/forms';
+import type { ExperimentFormData } from '@/types/forms';
 import { useExperiments } from '@/composables/useExperiments';
 import { useReservationStream } from '@/composables/useReservationStream';
 import { useI18n } from 'vue-i18n';
@@ -359,14 +359,13 @@ function runExperiment() {
     }
 }
 
-const formData = ref<QueueFormData>({
+const formData = ref<ExperimentFormData>({
     user_id: authStore.user?.id ?? null,
     id: null,
     command: Command.START,
     input_arguments: {},
     output_arguments: [],
     setpoint_changes: {},
-    schema_id: null,
     device_id: null,
     software_name: null,
     simulation_time: 0,

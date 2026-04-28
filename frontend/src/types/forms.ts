@@ -52,16 +52,15 @@ export interface EditExperimentForm {
     software_id: number;
 }
 
-export interface QueueFormData {
-    user_id: number | null;
+export interface ExperimentFormData {
     id: number | null;
+    user_id: number | null;
     command: Command | null;
     input_arguments: Record<string, InputArgSpec>;
     output_arguments: string[];
     setpoint_changes: StepSequence | Record<string, never>;
-    schema_id: number | null;
-    simulation_time: number;
     device_id: number | null;
     software_name: SoftwareName | null;
+    simulation_time: number;
     sample_rate: number;
 }

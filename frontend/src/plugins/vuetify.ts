@@ -27,6 +27,7 @@ const vuetify = createVuetify({
                     'surface-variant': '#f5f5f5',
                     'on-surface': '#000000',
                     'on-surface-variant': '#424242',
+                    'card-title': '#EEEEEE',
                 },
             },
             dark: {
@@ -40,6 +41,7 @@ const vuetify = createVuetify({
                     'surface-variant': '#2c2c2c',
                     'on-surface': '#ffffff',
                     'on-surface-variant': '#e0e0e0',
+                    'card-title': '#272727',
                 },
             },
         },

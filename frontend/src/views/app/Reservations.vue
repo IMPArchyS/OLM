@@ -31,11 +31,7 @@ onMounted(async () => {
         </v-card-title>
         <v-divider></v-divider>
         <v-card-text>
-            <div v-if="loading" style="display: flex; justify-content: center; padding: 16px">
-                <v-progress-circular indeterminate color="primary" size="48" />
-            </div>
             <v-select
-                v-else
                 v-model="selectedDevice"
                 :items="devicesForReservation"
                 item-title="displayName"

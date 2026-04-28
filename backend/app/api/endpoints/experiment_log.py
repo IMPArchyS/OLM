@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission
 
-from app.models.experiment_log import ExperimentLog, ExperimentLogCreate, ExperimentLogPublic
+from app.models.experiment_log import ExperimentLog, ExperimentLogCreate, ExperimentLogLatestDevice, ExperimentLogPublic
 from app.models.utils import now
 
 
@@ -15,8 +15,22 @@ def get_all(db: DbSession, _: AuthUser = Permission("olm.experiment_log.read_all
     return db.exec(stmt).all()
 
 
+@router.get("/{experiment_id}/latest", response_model=ExperimentLogLatestDevice)
+def get_latest_device_by_experiment(db: DbSession, experiment_id: int, user: CurrentUser):
+    stmt = (
+        select(ExperimentLog)
+        .where(ExperimentLog.experiment_id == experiment_id)
+        .where(ExperimentLog.user_id == user.id)
+        .where(ExperimentLog.started_at.is_not(None))
+        .order_by(ExperimentLog.started_at.desc(), ExperimentLog.id.desc())
+        .limit(1)
+    )
+    log = db.exec(stmt).first()
+    return ExperimentLogLatestDevice(device_id=log.device_id if log else None)
+
+
 @router.get("/user/{user_id}", response_model=list[ExperimentLogPublic])
-def get_all_by_user(db: DbSession, user_id: int): 
+def get_all_by_user(db: DbSession, user_id: int):
     stmt = select(ExperimentLog).where(ExperimentLog.user_id == user_id)
     return db.exec(stmt).all()
 

@@ -117,4 +117,8 @@ class ExperimentLogPublic(ExperimentLogBase):
 
 
 class ExperimentLogUpdate(ExperimentLogBase):
-    finished_at: datetime 
+    finished_at: datetime
+
+
+class ExperimentLogLatestDevice(BaseModel):
+    device_id: int | None

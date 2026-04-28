@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue';
 import { apiClient } from '@/lib/apiClient';
-import type { QueueFormData } from '@/types/forms';
+import type { ExperimentFormData } from '@/types/forms';
 import { Command } from '@/types/api';
 import { useToastStore } from '@/stores/toast';
 
@@ -68,7 +68,7 @@ export function useReservationStream() {
     const isSocketOnline = ref(false);
     const isActive = ref(false);
     const accessToken = ref<string | null>(null);
-    const pendingStartPayload = ref<QueueFormData | null>(null);
+    const pendingStartPayload = ref<ExperimentFormData | null>(null);
     const awaitingStartAcceptance = ref(false);
     const baselineTimeBeforeStart = ref<number | null>(null);
 
@@ -78,11 +78,7 @@ export function useReservationStream() {
     const lastToastSignature = ref<string>('');
     const lastToastTime = ref(0);
 
-    const showToastDedup = (
-        level: 'info' | 'success' | 'warning' | 'error',
-        message: string,
-        minGapMs = 1500,
-    ) => {
+    const showToastDedup = (level: 'info' | 'success' | 'warning' | 'error', message: string, minGapMs = 1500) => {
         const nowTime = Date.now();
         const signature = `${level}:${message}`;
         if (lastToastSignature.value === signature && nowTime - lastToastTime.value < minGapMs) {
@@ -254,9 +250,7 @@ export function useReservationStream() {
                 },
             });
 
-            const rows = Array.isArray(response.data.samples)
-                ? response.data.samples.filter((sample): sample is OutputRow => isRecord(sample))
-                : [];
+            const rows = Array.isArray(response.data.samples) ? response.data.samples.filter((sample): sample is OutputRow => isRecord(sample)) : [];
 
             if (response.data.reservation_id === null) {
                 markReservationInactive('Reservation expired or unavailable. Refresh dashboard.');
@@ -314,8 +308,7 @@ export function useReservationStream() {
             const numericTime = parseNumericTime(payload);
             if (awaitingStartAcceptance.value) {
                 const baseline = baselineTimeBeforeStart.value;
-                const startAccepted =
-                    numericTime !== null && (baseline === null || numericTime < baseline || numericTime <= 0);
+                const startAccepted = numericTime !== null && (baseline === null || numericTime < baseline || numericTime <= 0);
 
                 if (startAccepted) {
                     clearGraph();
@@ -435,7 +428,7 @@ export function useReservationStream() {
         persistNextIndex(nextIndex.value);
     };
 
-    const sendCommand = (payload: QueueFormData): { success: boolean; message?: string } => {
+    const sendCommand = (payload: ExperimentFormData): { success: boolean; message?: string } => {
         if (!accessToken.value) {
             return {
                 success: false,

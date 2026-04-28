@@ -68,7 +68,6 @@ export interface Experiment {
     sample_rate: number;
     devices: Device[];
     software: Software;
-    schema_id?: number;
     deleted_at?: string;
 }
 
