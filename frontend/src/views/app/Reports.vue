@@ -4,16 +4,18 @@ import { useExperimentLogs } from '@/composables/useExperimentLogs';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
 import type { ExperimentHistoryItem, ExperimentLog, FinishReason } from '@/types/api';
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
 const toast = useToastStore();
-const { userExperimentLogs, loading, error, fetchExperimentLogsByUser } = useExperimentLogs();
+const { experimentLogs, userExperimentLogs, loading, error, fetchExperimentLogs, fetchExperimentLogsByUser } = useExperimentLogs();
+const canReadAll = computed(() => authStore.can('olm.experiment_log.read_all'));
+const showAllLogs = ref(false);
 
 const logs = computed<ExperimentLog[]>(() => {
-    return userExperimentLogs.value;
+    return showAllLogs.value ? experimentLogs.value : userExperimentLogs.value;
 });
 
 const finishReasonLabels: Record<FinishReason, string> = {
@@ -200,18 +202,42 @@ const getInputArgumentRows = (entry: ExperimentHistoryItem): Array<{ key: string
     });
 };
 
-onMounted(async () => {
+const loadLogs = async () => {
+    if (showAllLogs.value) {
+        if (!canReadAll.value) {
+            showAllLogs.value = false;
+            toast.error('Missing permission to read all experiment logs.');
+            return;
+        }
+
+        const result = await fetchExperimentLogs();
+        if (!result.success) {
+            toast.error(result.message || 'Failed');
+        }
+        return;
+    }
+
     const result = await fetchExperimentLogsByUser(authStore.user?.id);
     if (!result.success) {
         toast.error(result.message || 'Failed');
     }
+};
+
+watch(showAllLogs, async () => {
+    await loadLogs();
+});
+
+onMounted(async () => {
+    await loadLogs();
 });
 </script>
 
 <template>
     <v-card class="mt-5">
-        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
+        <v-card-title class="d-flex flex-wrap align-center bg-surface-variant ga-4">
             <span class="text-h5">{{ t('reports.title') }}</span>
+            <v-spacer />
+            <v-switch v-if="canReadAll" v-model="showAllLogs" color="primary" density="compact" hide-details label="Show all experiments" />
         </v-card-title>
         <v-divider />
         <v-card-text>

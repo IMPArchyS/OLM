@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
-from app.api.dependencies import CurrentUser, DbSession
+from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission
 
 from app.models.experiment_log import ExperimentLog, ExperimentLogCreate, ExperimentLogPublic
 from app.models.utils import now
@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.get("/")
-def get_all(db: DbSession): 
+def get_all(db: DbSession, _: AuthUser = Permission("olm.experiment_log.read_all")): 
     stmt = select(ExperimentLog)
     return db.exec(stmt).all()
 
