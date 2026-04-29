@@ -3,10 +3,11 @@ import LanguageSelector from '@/components/layout/LanguageSelector.vue';
 import UserSelector from '@/components/layout/UserSelector.vue';
 import { useAuthStore } from '@/stores/auth';
 import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useDisplay, useTheme } from 'vuetify';
 
 const theme = useTheme();
+const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const display = useDisplay();
@@ -60,8 +61,8 @@ const navSections: NavSection[] = [
         key: 'lab',
         i18nLabel: 'nav.settings',
         items: [
-            { i18nLabel: 'nav.servers', path: '/app/servers', icon: 'mdi-server', perms: ["olm.server.read"], },
-            { i18nLabel: 'nav.experiments', path: '/app/experiments', icon: 'mdi-flask', perms: ["olm.experiment.read"], },
+            { i18nLabel: 'nav.servers', path: '/app/servers', icon: 'mdi-server', perms: ['olm.server.read'] },
+            { i18nLabel: 'nav.experiments', path: '/app/experiments', icon: 'mdi-flask', perms: ['olm.experiment.read'] },
         ],
     },
 ];
@@ -77,6 +78,8 @@ const visibleSections = computed(() => {
         .filter((section) => section.items.length > 0);
 });
 
+const showAppShell = computed(() => Boolean(route.meta.requiresAuth));
+
 onMounted(() => {
     isCollapsed.value = localStorage.getItem('isCollapsed') === 'true';
     isDrawerOpen.value = !display.smAndDown.value;
@@ -88,7 +91,7 @@ onMounted(() => {
     <v-app>
         <v-app-bar flat class="border-b mb-7">
             <v-app-bar-title>
-                <div v-if="display.smAndDown.value && authStore.accessToken" class="d-flex align-center ga-2">
+                <div v-if="showAppShell && display.smAndDown.value && authStore.accessToken" class="d-flex align-center ga-2">
                     <v-icon @click="handleMainClick">
                         {{ isDrawerOpen ? 'mdi-chevron-left' : 'mdi-chevron-right' }}
                     </v-icon>
@@ -109,7 +112,7 @@ onMounted(() => {
             </div>
         </v-app-bar>
         <v-navigation-drawer
-            v-if="authStore.accessToken"
+            v-if="showAppShell && authStore.accessToken"
             v-model="isDrawerOpen"
             :rail="isCollapsed"
             :permanent="$vuetify.display.mdAndUp"

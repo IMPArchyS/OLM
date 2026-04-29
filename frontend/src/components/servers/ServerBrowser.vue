@@ -7,8 +7,12 @@ import router from '@/router';
 import { useToastStore } from '@/stores/toast';
 
 const { t } = useI18n();
-const { servers, loading, error, fetchServers, getServer, syncServer, syncAllServers, softDeleteServer } = useServers();
+const { servers, loading, error, fetchServers, syncServer, syncAllServers, softDeleteServer, restoreServer } = useServers();
 const toast = useToastStore();
+
+const props = defineProps<{
+    showDeleted: boolean;
+}>();
 
 const emit = defineEmits<{
     selectServer: [server: Server];
@@ -16,10 +20,9 @@ const emit = defineEmits<{
 }>();
 
 const selectedDeviceServer = ref<Server | null>(null);
-const showDeletedServers = ref(false);
 
 const filteredServers = computed(() => {
-    if (showDeletedServers.value) {
+    if (props.showDeleted) {
         return servers.value;
     } else {
         return servers.value.filter((server) => !server.deleted_at);
@@ -37,10 +40,6 @@ onMounted(async () => {
     }
 });
 
-const handleCreate = () => {
-    router.push('/app/servers/create');
-};
-
 const handleDevices = (item: Server) => {
     selectedDeviceServer.value = item;
     emit('selectServer', item);
@@ -51,11 +50,25 @@ const handleEdit = (item: Server) => {
 };
 
 const handleDelete = async (item: Server) => {
-    await softDeleteServer(item);
+    const result = await softDeleteServer(item);
+    if (result.success) {
+        toast.success(t('servers.deleted'));
+    } else {
+        toast.error(result.message || t('common.error'));
+    }
 };
 
 const handleView = (item: Server) => {
     router.push(`/app/servers/${item.id}/show`);
+};
+
+const handleRestore = async (item: Server) => {
+    const result = await restoreServer(item.id);
+    if (result.success) {
+        toast.success(t('servers.restored'));
+    } else {
+        toast.error(result.message || t('common.error'));
+    }
 };
 
 const syncedAvailability = ref<Record<number, boolean>>({});
@@ -103,121 +116,96 @@ const handleSyncAll = async () => {
         toast.success(`Synced ${results.length} servers: ${availableCount} available, ${unavailableCount} unavailable`);
     }
 };
+
+defineExpose({ handleSyncAll });
 </script>
 
 <template>
-    <v-container fluid>
-        <v-data-table
-            :headers="[
-                {
-                    title: t('servers.id'),
-                    key: 'id',
-                    sortable: true,
-                },
-                {
-                    title: t('servers.name'),
-                    key: 'name',
-                    sortable: true,
-                },
-                {
-                    title: t('servers.ipAddress'),
-                    key: 'ip_address',
-                    sortable: true,
-                },
-                {
-                    title: t('servers.apiDomain'),
-                    key: 'api_domain',
-                    sortable: true,
-                },
-                {
-                    title: t('servers.available'),
-                    key: 'available',
-                },
-                {
-                    title: t('servers.production'),
-                    key: 'production',
-                },
-                {
-                    title: t('servers.enabled'),
-                    key: 'enabled',
-                },
-                {
-                    title: t('servers.actions'),
-                    key: 'actions',
-                    sortable: false,
-                    align: 'center' as const,
-                },
-            ]"
-            :items="filteredServers"
-            :loading="loading"
-            :loading-text="t('servers.loadingServers')"
-            class="elevation-1"
-            item-value="id"
-        >
-            <template #top>
-                <v-toolbar flat density="comfortable" class="px-2">
-                    <v-toolbar-title class="">
-                        {{ t('servers.servers') }}
-                    </v-toolbar-title>
-                    <v-spacer />
-                    <div class="d-flex align-center flex-wrap justify-end ga-3">
-                        <v-switch v-model="showDeletedServers" :label="t('servers.showDeleted')" color="primary" hide-details />
-                        <div class="d-flex align-center ga-2">
-                            <v-btn color="success" variant="flat" prepend-icon="mdi-sync" @click="handleSyncAll">
-                                {{ t('servers.syncServers') }}
-                            </v-btn>
-                            <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" @click="handleCreate">
-                                {{ t('servers.addServer') }}
-                            </v-btn>
-                        </div>
-                    </div>
-                </v-toolbar>
-                <v-divider />
-            </template>
-            <!-- Available Column -->
-            <template v-slot:item.available="{ item }">
-                <v-icon
-                    :color="(syncedAvailability[item.id] ?? item.available) ? 'success' : 'error'"
-                    :icon="(syncedAvailability[item.id] ?? item.available) ? 'mdi-check-circle' : 'mdi-close-circle'"
-                ></v-icon>
-            </template>
+    <v-data-table
+        :headers="[
+            {
+                title: t('servers.id'),
+                key: 'id',
+                sortable: true,
+            },
+            {
+                title: t('servers.name'),
+                key: 'name',
+                sortable: true,
+            },
+            {
+                title: t('servers.ipAddress'),
+                key: 'ip_address',
+                sortable: true,
+            },
+            {
+                title: t('servers.apiDomain'),
+                key: 'api_domain',
+                sortable: true,
+            },
+            {
+                title: t('servers.available'),
+                key: 'available',
+            },
+            {
+                title: t('servers.production'),
+                key: 'production',
+            },
+            {
+                title: t('servers.enabled'),
+                key: 'enabled',
+            },
+            {
+                title: t('servers.actions'),
+                key: 'actions',
+                sortable: false,
+                align: 'center' as const,
+            },
+        ]"
+        :items="filteredServers"
+        :loading="loading"
+        :loading-text="t('servers.loadingServers')"
+        :row-props="({ item }) => ({ class: item.deleted_at ? 'text-error' : '' })"
+        item-value="id"
+    >
+        <template v-slot:item.available="{ item }">
+            <v-icon
+                :color="(syncedAvailability[item.id] ?? item.available) ? 'success' : 'error'"
+                :icon="(syncedAvailability[item.id] ?? item.available) ? 'mdi-check-circle' : 'mdi-close-circle'"
+            ></v-icon>
+        </template>
 
-            <!-- Production Column -->
-            <template v-slot:item.production="{ item }">
-                <v-icon :color="item.production ? 'success' : 'error'" :icon="item.production ? 'mdi-check-circle' : 'mdi-close-circle'"></v-icon>
-            </template>
+        <template v-slot:item.production="{ item }">
+            <v-icon :color="item.production ? 'success' : 'error'" :icon="item.production ? 'mdi-check-circle' : 'mdi-close-circle'"></v-icon>
+        </template>
 
-            <!-- Enabled Column -->
-            <template v-slot:item.enabled="{ item }">
-                <v-icon :color="item.enabled ? 'success' : 'error'" :icon="item.enabled ? 'mdi-check-circle' : 'mdi-close-circle'"></v-icon>
-            </template>
+        <template v-slot:item.enabled="{ item }">
+            <v-icon :color="item.enabled ? 'success' : 'error'" :icon="item.enabled ? 'mdi-check-circle' : 'mdi-close-circle'"></v-icon>
+        </template>
 
-            <!-- Actions Column -->
-            <template v-slot:item.actions="{ item }">
-                <v-btn
-                    icon="mdi-toolbox"
-                    size="small"
-                    variant="text"
-                    :color="selectedDeviceServer?.id === item.id ? '' : 'primary'"
-                    @click="handleDevices(item)"
-                ></v-btn>
-                <v-btn icon="mdi-eye" size="small" variant="text" color="warning" @click="handleView(item)"></v-btn>
-                <v-btn icon="mdi-sync" size="small" variant="text" color="success" @click="handleSync(item)"></v-btn>
-                <v-btn icon="mdi-pencil" size="small" variant="text" color="primary" @click="handleEdit(item)"></v-btn>
-                <v-btn icon="mdi-trash-can" size="small" variant="text" color="error" @click="handleDelete(item)"></v-btn>
-            </template>
+        <template v-slot:item.actions="{ item }">
+            <v-btn
+                icon="mdi-toolbox"
+                size="small"
+                variant="text"
+                :color="selectedDeviceServer?.id === item.id ? '' : 'primary'"
+                @click="handleDevices(item)"
+            ></v-btn>
+            <v-btn icon="mdi-eye" size="small" variant="text" color="warning" @click="handleView(item)"></v-btn>
+            <v-btn v-if="!item.deleted_at" icon="mdi-sync" size="small" variant="text" color="success" @click="handleSync(item)"></v-btn>
+            <v-btn v-if="!item.deleted_at" icon="mdi-pencil" size="small" variant="text" color="primary" @click="handleEdit(item)"></v-btn>
+            <v-btn v-if="!item.deleted_at" icon="mdi-trash-can" size="small" variant="text" color="error" @click="handleDelete(item)"></v-btn>
+            <v-btn v-if="item.deleted_at" icon="mdi-restore" size="small" variant="text" color="secondary" @click="handleRestore(item)"></v-btn>
+        </template>
 
-            <!-- No Data -->
-            <template v-slot:no-data>
-                <v-alert type="info" variant="tonal" class="ma-4">
-                    {{ t('servers.noServersFound') }}
-                </v-alert>
-            </template>
-        </v-data-table>
+        <template v-slot:no-data>
+            <v-alert type="info" variant="tonal" class="ma-4">
+                {{ t('servers.noServersFound') }}
+            </v-alert>
+        </template>
+    </v-data-table>
 
-        <!-- Error Alert -->
-        <v-alert v-if="error" type="error" variant="tonal" class="mt-4" closable>
-            {{ error }}
-        </v-alert>
-    </v-container>
+    <v-alert v-if="error" type="error" variant="tonal" class="ma-4" closable>
+        {{ error }}
+    </v-alert>
 </template>

@@ -13,6 +13,11 @@ const vuetify = createVuetify({
         fallback: 'en',
         messages: { en, sk },
     },
+    defaults: {
+        VSwitch: {
+            baseColor: 'switch-track',
+        },
+    },
     theme: {
         defaultTheme: localStorage.getItem('theme') ?? 'light',
         themes: {
@@ -29,6 +34,7 @@ const vuetify = createVuetify({
                     'on-surface-variant': '#424242',
                     'card-title': '#EEEEEE',
                     calendar: '#dddddd',
+                    'switch-track': '#B3B3B3',
                 },
             },
             dark: {
@@ -44,6 +50,7 @@ const vuetify = createVuetify({
                     'on-surface-variant': '#e0e0e0',
                     'card-title': '#272727',
                     calendar: '#747474',
+                    'switch-track': '#6b7280',
                 },
             },
         },

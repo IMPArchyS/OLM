@@ -50,29 +50,33 @@ const handleOauthLogin = (provider: string) => {
 </script>
 
 <template>
-    <v-card max-width="400" class="mx-auto">
-        <v-card-title class="text-h5 mb-4">{{ t('auth.login') }}</v-card-title>
+    <v-card max-width="500" class="mx-auto" elevation="4">
+        <v-card-title class="bg-card-title mb-4">
+            <v-icon icon="mdi-account" class="mr-2" />
+            <span>{{ t('auth.login') }}</span>
+        </v-card-title>
         <v-card-text v-if="authStore.providers.length > 0">
             <v-btn
                 v-for="provider in authStore.providers"
                 :key="provider.id"
                 @click="handleOauthLogin(provider.name)"
                 variant="outlined"
+                color="secondary"
                 class="mb-2"
             >
                 <template #prepend>
-                    <v-img v-if="provider.logo_url" :src="provider.logo_url" width="28" height="28" class="rounded-circle" />
+                    <img v-if="provider.logo_url" :src="provider.logo_url" width="28" height="28" style="border-radius: 50%; object-fit: cover" />
                 </template>
                 {{ provider.display_name }}
             </v-btn>
         </v-card-text>
         <v-divider></v-divider>
         <v-card-text>
-            <v-form @submit.prevent="handleLogin">
+            <v-form @submit.prevent="handleLogin" class="d-flex flex-column ga-4">
                 <v-text-field
                     v-model="username"
                     prepend-inner-icon="mdi-email-outline"
-                    :label="$t('auth.email')"
+                    :label="t('auth.email')"
                     type="email"
                     :rules="[rules.validEmail, rules.requiredFor(t('auth.email'))]"
                     variant="outlined"
@@ -83,11 +87,11 @@ const handleOauthLogin = (provider: string) => {
                 <v-text-field
                     v-model="password"
                     prepend-inner-icon="mdi-lock-outline"
-                    :label="$t('auth.password')"
+                    :label="t('auth.password')"
                     :type="showPassword ? 'text' : 'password'"
+                    density="comfortable"
                     variant="outlined"
                     :rules="[rules.requiredFor(t('auth.password'))]"
-                    density="comfortable"
                     :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
                     @click:append-inner="showPassword = !showPassword"
                     required
@@ -98,7 +102,15 @@ const handleOauthLogin = (provider: string) => {
                         <span class="text-body-2">{{ t('auth.rememberMe') }}</span>
                     </template>
                 </v-checkbox>
-                <v-btn type="submit" color="primary" variant="elevated" block class="mt-2" :loading="isSubmitting" :disabled="!username || !password">
+                <v-btn
+                    prepend-icon="mdi-login"
+                    type="submit"
+                    color="primary"
+                    variant="elevated"
+                    block
+                    :loading="isSubmitting"
+                    :disabled="!username || !password"
+                >
                     {{ t('auth.login') }}
                 </v-btn>
             </v-form>

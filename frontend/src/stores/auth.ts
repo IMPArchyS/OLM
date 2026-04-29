@@ -192,16 +192,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     const initAuth = async () => {
+        if (initialized.value) return;
+
         await apiClient
             .post('auth/refresh')
             .then(async (response) => {
                 setToken(response.data.access_token);
+                await loadPermissions();
                 startTokenRefresh();
             })
             .catch((err) => {
                 console.error('Token refresh failed:', err);
             });
-        await loadPermissions();
         initialized.value = true;
     };
 
@@ -210,6 +212,7 @@ export const useAuthStore = defineStore('auth', () => {
         user,
         permissions,
         providers,
+        initialized,
         can,
         initAuth,
         login,

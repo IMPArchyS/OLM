@@ -233,11 +233,12 @@ onMounted(async () => {
 </script>
 
 <template>
-    <v-card class="mt-5">
-        <v-card-title class="d-flex flex-wrap align-center bg-surface-variant ga-4">
-            <span class="text-h5">{{ t('reports.title') }}</span>
+    <v-card>
+        <v-card-title class="bg-card-title d-flex align-center">
+            <v-icon icon="mdi-file-document-outline" class="mr-2" />
+            <span>{{ t('reports.title') }}</span>
             <v-spacer />
-            <v-switch v-if="canReadAll" v-model="showAllLogs" color="primary" density="compact" hide-details label="Show all experiments" />
+            <v-switch v-if="canReadAll" v-model="showAllLogs" color="primary" density="compact" hide-details :label="$t('reports.showAll')" />
         </v-card-title>
         <v-divider />
         <v-card-text>

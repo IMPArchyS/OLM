@@ -167,31 +167,25 @@ router.beforeEach(async (to, from, next) => {
         return;
     }
 
-    if (authRoutes.includes(to.path)) {
-        if (!authStore.accessToken) {
-            await authStore.initAuth();
-        }
+    if (!authStore.initialized) {
+        await authStore.initAuth();
+    }
 
+    if (authRoutes.includes(to.path)) {
         if (authStore.accessToken) {
             return next({ path: '/app/dashboard' });
         }
+        return next();
+    }
+
+    if (to.meta.requiresAuth && !authStore.accessToken) {
+        return next({ path: '/auth/login' });
     }
 
     if (requiredPermission && !authStore.can(requiredPermission)) {
         return next({ path: '/403' });
     }
 
-    if (to.meta.requiresAuth) {
-        if (!authStore.accessToken) {
-            await authStore.initAuth();
-        }
-
-        if (!authStore.accessToken) {
-            return next({ path: '/auth/login' });
-        }
-
-        return next();
-    }
     next();
 });
 

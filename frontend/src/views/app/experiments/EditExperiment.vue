@@ -22,7 +22,7 @@ const route = useRoute();
 const experimentId = Number(route.params.id);
 
 const { devices, fetchDevices } = useDevices();
-const { softwares, defaultCommands, fetchSoftwares, getExperimentById, updateExperiment } = useExperiments();
+const { softwares, defaultCommands, fetchSoftwares, getExperimentById, updateExperiment, restoreExperiment } = useExperiments();
 
 const loading = ref(false);
 const formRef = ref();
@@ -33,6 +33,7 @@ const selectedSoftwareId = ref<number | null>(null);
 const inputArgumentRows = ref<InputArgumentRow[]>([{ key: '', type: 'string', value: '', unit: '' }]);
 const outputArguments = ref<string[]>([]);
 const hasDeletedLinkedDevice = ref(false);
+const deletedAt = ref<string | null>(null);
 
 const requiredRule = (value: unknown) => !!value || t('validation.required');
 const deviceRules = computed(() => [
@@ -142,6 +143,7 @@ const hydrateForm = async () => {
             return;
         }
 
+        deletedAt.value = experiment.deleted_at ?? null;
         selectedSoftwareId.value = experiment.software?.id ?? null;
         selectedDeviceIds.value = experiment.devices
             .map((device) => device.id)
@@ -204,6 +206,16 @@ const handleSave = async () => {
         await router.push({ name: 'experiments' });
     } else {
         toast.error(result.message || t('common.error'));
+    }
+};
+
+const handleRestore = async () => {
+    const result = await restoreExperiment(experimentId);
+    if (result.success) {
+        toast.success(result.message || t('experiments.restored'));
+        deletedAt.value = null;
+    } else {
+        toast.error(result.message || t('experiments.restoreUnavailable'));
     }
 };
 
@@ -333,7 +345,10 @@ onMounted(async () => {
                 <v-btn prepend-icon="mdi-close" color="grey" variant="outlined" @click="handleCancel">
                     {{ t('actions.cancel') }}
                 </v-btn>
-                <v-btn prepend-icon="mdi-plus" color="primary" variant="elevated" @click="handleSave">
+                <v-btn v-if="deletedAt" prepend-icon="mdi-restore" color="secondary" variant="elevated" @click="handleRestore">
+                    {{ t('actions.restore') }}
+                </v-btn>
+                <v-btn v-if="!deletedAt" prepend-icon="mdi-content-save" color="primary" variant="elevated" @click="handleSave">
                     {{ t('actions.save') }}
                 </v-btn>
             </v-card-actions>

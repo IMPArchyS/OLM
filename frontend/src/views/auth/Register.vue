@@ -39,38 +39,38 @@ const handleRegister = async () => {
 </script>
 
 <template>
-    <v-card max-width="400" class="mx-auto">
-        <v-card-title class="text-h5 mb-4">{{ t('auth.register') }}</v-card-title>
-        <v-divider></v-divider>
+    <v-card max-width="500" class="mx-auto" elevation="4">
+        <v-card-title class="bg-card-title mb-4">
+            <v-icon icon="mdi-account" class="mr-2" />
+            <span>{{ t('auth.register') }}</span>
+        </v-card-title>
         <v-card-text>
-            <v-form @submit.prevent="handleRegister">
+            <v-form @submit.prevent="handleRegister" class="d-flex flex-column ga-4">
                 <v-text-field
                     v-model="name"
                     prepend-inner-icon="mdi-rename"
-                    :label="$t('auth.name')"
+                    :label="t('auth.name')"
                     :rules="[rules.requiredFor(t('auth.name'))]"
                     variant="outlined"
                     density="comfortable"
                     required
                     :disabled="isSubmitting"
-                    class="mb-4"
                 />
                 <v-text-field
                     v-model="username"
                     prepend-inner-icon="mdi-email-outline"
-                    :label="$t('auth.email')"
+                    :label="t('auth.email')"
                     type="email"
                     :rules="[rules.validEmail, rules.requiredFor(t('auth.email'))]"
                     variant="outlined"
                     density="comfortable"
                     required
                     :disabled="isSubmitting"
-                    class="mb-4"
                 />
                 <v-text-field
                     v-model="password"
                     prepend-inner-icon="mdi-lock-outline"
-                    :label="$t('auth.password')"
+                    :label="t('auth.password')"
                     :type="showPassword ? 'text' : 'password'"
                     :rules="[rules.requiredFor(t('auth.password'))]"
                     variant="outlined"
@@ -79,26 +79,24 @@ const handleRegister = async () => {
                     @click:append-inner="showPassword = !showPassword"
                     required
                     :disabled="isSubmitting"
-                    class="mb-4"
                 />
                 <v-text-field
                     v-model="confirmPassword"
                     prepend-inner-icon="mdi-repeat-variant"
-                    :label="$t('auth.confirmPassword')"
+                    :label="t('auth.confirmPassword')"
                     :type="showPassword ? 'text' : 'password'"
                     :rules="[rules.requiredFor(t('auth.confirmPassword'))]"
                     variant="outlined"
                     density="comfortable"
                     required
                     :disabled="isSubmitting"
-                    class="mb-4"
                 />
                 <v-btn
+                    prepend-icon="mdi-account-plus"
                     type="submit"
                     color="primary"
                     variant="elevated"
                     block
-                    class="mt-2"
                     :loading="isSubmitting"
                     :disabled="!username || !name || !password || !confirmPassword"
                 >

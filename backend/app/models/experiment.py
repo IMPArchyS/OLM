@@ -46,6 +46,7 @@ class ExperimentDevicePublic(SQLModel):
     name: str
     maintenance_start: time | None = None
     maintenance_end: time | None = None
+    deleted_at: datetime | None = None
 
 
 class ExperimentBase(SQLModel):
@@ -77,6 +78,7 @@ class ExperimentCreate(ExperimentBase):
 
 class ExperimentPublic(ExperimentBase):
     id: int
+    deleted_at: datetime | None = None
     devices: list[ExperimentDevicePublic] = []
     software: SoftwarePublic
 

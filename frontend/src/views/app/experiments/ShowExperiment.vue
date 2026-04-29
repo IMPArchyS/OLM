@@ -13,7 +13,7 @@ const toast = useToastStore();
 const route = useRoute();
 const experimentId = Number(route.params.id);
 
-const { getExperimentById } = useExperiments();
+const { getExperimentById, restoreExperiment } = useExperiments();
 const { devices, fetchDevices } = useDevices();
 
 const loading = ref(false);
@@ -29,6 +29,17 @@ const hasDeletedLinkedDevice = computed(() => {
 
 const handleBack = () => {
     router.push({ name: 'experiments' });
+};
+
+const handleRestore = async () => {
+    if (!experiment.value) return;
+    const result = await restoreExperiment(experiment.value.id);
+    if (result.success) {
+        toast.success(result.message || t('experiments.restored'));
+        experiment.value = { ...experiment.value, deleted_at: undefined };
+    } else {
+        toast.error(result.message || t('experiments.restoreUnavailable'));
+    }
 };
 
 const handleEdit = () => {
@@ -140,7 +151,10 @@ onMounted(async () => {
                 <v-btn prepend-icon="mdi-close" color="grey" variant="outlined" @click="handleBack">
                     {{ t('actions.back') }}
                 </v-btn>
-                <v-btn prepend-icon="mdi-pencil" color="primary" variant="elevated" @click="handleEdit">
+                <v-btn v-if="experiment.deleted_at" prepend-icon="mdi-restore" color="secondary" variant="elevated" @click="handleRestore">
+                    {{ t('actions.restore') }}
+                </v-btn>
+                <v-btn v-if="!experiment.deleted_at" prepend-icon="mdi-pencil" color="primary" variant="elevated" @click="handleEdit">
                     {{ t('actions.edit') }}
                 </v-btn>
             </v-card-actions>

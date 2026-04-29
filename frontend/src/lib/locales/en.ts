@@ -90,7 +90,7 @@ export default {
         viewServer: 'Server Details',
         syncServer: 'Sync Server',
         syncServers: 'Sync Servers',
-        showDeleted: 'Show Deleted Servers',
+        showDeleted: 'Show Deleted',
         serverName: 'Server Name',
         serverIP: 'Server IP',
         serverStatus: 'Server Status',
@@ -105,6 +105,8 @@ export default {
         actions: 'Actions',
         loadingServers: 'Loading servers...',
         noServersFound: 'No servers found',
+        deleted: 'Server deleted',
+        restored: 'Server restored',
     },
     devices: {
         title: 'Devices',
@@ -112,7 +114,7 @@ export default {
         addDevice: 'Add Device',
         editDevice: 'Edit Device',
         deleteDevice: 'Delete Device',
-        showDeleted: 'Show Deleted Devices',
+        showDeleted: 'Show Deleted',
         viewDevice: 'View Device',
         syncDevice: 'Sync Device',
         syncDevices: 'Sync Devices',
@@ -160,7 +162,7 @@ export default {
         addInputArgument: 'Add Input Argument',
         noInputArguments: 'No input arguments defined',
         noOutputArguments: 'No output arguments defined',
-        showDeleted: 'Show Deleted Experiments',
+        showDeleted: 'Show Deleted',
         restored: 'Experiment restored',
         restoreUnavailable: 'Restore unavailable for current backend',
         deletedLinkedDeviceWarning: 'At least one linked device is deleted. Edit experiment and reassign devices.',
@@ -214,6 +216,7 @@ export default {
     },
     reports: {
         title: 'Reports',
+        showAll: 'Show All',
     },
     queues: {
         title: 'Queue',
@@ -239,6 +242,11 @@ export default {
         sin_frequency: 'Sinus frequency',
         cos_amplitude: 'Cosinus amplitude',
         cos_frequency: 'Cosinus frequency',
+    },
+    page403: {
+        title: "Oops! You don't have permissions.",
+        description: "You aren't authorized for the page you are looking for.",
+        button: 'Go to Home',
     },
     page404: {
         title: "Oops! You're lost.",

@@ -102,6 +102,8 @@ export default {
         actions: 'Akcie',
         loadingServers: 'Načítavam servery...',
         noServersFound: 'Žiadne servery nenájdené',
+        deleted: 'Server vymazaný',
+        restored: 'Server obnovený',
     },
     devices: {
         title: 'Zariadenia',
@@ -190,6 +192,11 @@ export default {
         sin_frequency: 'Sínus frekvencia',
         cos_amplitude: 'Kosínus amplitúda',
         cos_frequency: 'Kosínus frekvencia',
+    },
+    page403: {
+        title: 'Oops! Nemáte oprávnenia.',
+        description: 'Na Stránku, ktorú hľadáte nemáte oprávnenie.',
+        button: 'Späť domov',
     },
     page404: {
         title: 'Oops! Stratili sme sa.',

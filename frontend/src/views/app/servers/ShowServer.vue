@@ -18,7 +18,7 @@ const currentServer = ref<Server>({
     api_domain: '',
     port: 0,
 });
-const { nameRules, ipRules, domainRules, portRules, getServerById, syncServer, restoreServer } = useServers();
+const { getServerById, syncServer, restoreServer } = useServers();
 const { params } = useRoute();
 
 const serverId = +(params.id as string);
@@ -77,55 +77,52 @@ const handleBack = () => {
 };
 </script>
 <template>
-    <v-card :loading="loading">
-        <v-card-title class="bg-card-title">
-            <v-icon icon="mdi-clock-outline" class="mr-2" />
-            <span>{{ t('servers.viewServer') }}</span>
-        </v-card-title>
+    <v-container fluid>
+        <v-card :loading="loading">
+            <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
+                <span class="text-h5">{{ t('servers.viewServer') }}</span>
+            </v-card-title>
 
-        <v-divider></v-divider>
+            <v-divider />
 
-        <v-card-text v-if="!loading">
-            <v-text-field
-                v-model="currentServer.name"
-                :label="t('servers.name')"
-                :rules="nameRules"
-                variant="outlined"
-                density="comfortable"
-                readonly
-            ></v-text-field>
+            <v-card-text v-if="!loading">
+                <v-row class="mb-2">
+                    <v-col cols="12" sm="6" md="3">
+                        <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.name') }}</div>
+                        <div class="text-body-1">{{ currentServer.name }}</div>
+                    </v-col>
+                    <v-col cols="12" sm="6" md="3">
+                        <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.ipAddress') }}</div>
+                        <div class="text-body-1">{{ currentServer.ip_address }}</div>
+                    </v-col>
+                    <v-col cols="12" sm="6" md="3">
+                        <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.apiDomain') }}</div>
+                        <div class="text-body-1">{{ currentServer.api_domain }}</div>
+                    </v-col>
+                    <v-col cols="12" sm="6" md="3">
+                        <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.port') }}</div>
+                        <div class="text-body-1">{{ currentServer.port }}</div>
+                    </v-col>
+                </v-row>
 
-            <v-text-field
-                v-model="currentServer.ip_address"
-                :label="t('servers.ipAddress')"
-                :rules="ipRules"
-                variant="outlined"
-                density="comfortable"
-                readonly
-            ></v-text-field>
+                <div class="d-flex flex-wrap ga-6">
+                    <div>
+                        <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.production') }}</div>
+                        <v-chip :color="currentServer.production ? 'success' : 'default'" variant="tonal" size="small">
+                            {{ currentServer.production ? t('common.yes') : t('common.no') }}
+                        </v-chip>
+                    </div>
+                    <div>
+                        <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.enabled') }}</div>
+                        <v-chip :color="currentServer.enabled ? 'success' : 'default'" variant="tonal" size="small">
+                            {{ currentServer.enabled ? t('common.yes') : t('common.no') }}
+                        </v-chip>
+                    </div>
+                </div>
+            </v-card-text>
 
-            <v-text-field
-                v-model="currentServer.api_domain"
-                :label="t('servers.apiDomain')"
-                :rules="domainRules"
-                variant="outlined"
-                density="comfortable"
-                readonly
-            ></v-text-field>
-
-            <v-text-field
-                v-model.number="currentServer.port"
-                label="Port"
-                :rules="portRules"
-                variant="outlined"
-                density="comfortable"
-                readonly
-            ></v-text-field>
-
-            <v-switch v-model="currentServer.production" :label="t('servers.production')" color="primary" hide-details readonly></v-switch>
-            <v-switch v-model="currentServer.enabled" :label="t('servers.enabled')" color="primary" hide-details readonly></v-switch>
-            <v-card-actions>
-                <v-spacer></v-spacer>
+            <v-card-actions v-if="!loading">
+                <v-spacer />
                 <v-btn prepend-icon="mdi-close" color="grey" variant="outlined" @click="handleBack">
                     {{ t('actions.back') }}
                 </v-btn>
@@ -139,7 +136,8 @@ const handleBack = () => {
                     {{ t('actions.restore') }}
                 </v-btn>
             </v-card-actions>
-        </v-card-text>
-        <DeviceBrowser :selected-server="currentServer" />
-    </v-card>
+
+            <DeviceBrowser :selected-server="currentServer" />
+        </v-card>
+    </v-container>
 </template>

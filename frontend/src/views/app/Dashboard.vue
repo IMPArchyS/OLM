@@ -175,8 +175,9 @@ onUnmounted(() => {
 
 <template>
     <v-card>
-        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-            <span class="text-h5">{{ t('dashboard.title') }}</span>
+        <v-card-title class="bg-card-title">
+            <v-icon icon="mdi-view-dashboard" class="mr-2" />
+            <span>{{ t('dashboard.title') }}</span>
         </v-card-title>
         <v-divider></v-divider>
         <v-card-text>

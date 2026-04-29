@@ -89,22 +89,28 @@ export function useServers() {
     async function restoreServer(id: number): Promise<{ success: boolean; message?: string }> {
         try {
             await apiClient.post(`/server/${id}/restore`);
+            await fetchServers();
             return { success: true };
         } catch (e: any) {
-            console.error(`Error fetching server with id ${id}: `, e);
+            console.error(`Error restoring server with id ${id}: `, e);
             return {
                 success: false,
-                message: e.response?.data?.message || 'Failed to create server',
+                message: e.response?.data?.message || 'Failed to restore server',
             };
         }
     }
 
-    async function softDeleteServer(server: Server) {
+    async function softDeleteServer(server: Server): Promise<{ success: boolean; message?: string }> {
         try {
             await apiClient.delete(`/server/${server.id}`);
-        } catch (e) {
+            await fetchServers();
+            return { success: true };
+        } catch (e: any) {
             console.error('Error deleting server:', e);
-            throw e;
+            return {
+                success: false,
+                message: e.response?.data?.message || 'Failed to delete server',
+            };
         }
     }
 

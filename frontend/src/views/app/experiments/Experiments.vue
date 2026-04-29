@@ -59,11 +59,6 @@ const handleEdit = (item: Experiment) => {
 };
 
 const handleDelete = async (item: Experiment) => {
-    const shouldDelete = window.confirm(t('experiments.confirmDelete'));
-    if (!shouldDelete) {
-        return;
-    }
-
     const result = await deleteExperiment(item.id);
     if (result.success) {
         toast.success(result.message || t('experiments.deleted'));
@@ -113,6 +108,7 @@ const formatInputArgument = (value: unknown) => {
             :items="filteredExperiments"
             :loading="loading"
             :loading-text="t('experiments.loading')"
+            :row-props="({ item }) => ({ class: item.deleted_at ? 'text-error' : '' })"
             item-value="id"
         >
 
@@ -127,10 +123,10 @@ const formatInputArgument = (value: unknown) => {
                                 v-for="device in item.devices"
                                 :key="device.id"
                                 size="small"
-                                :variant="isDeletedExperimentDevice(device) ? 'tonal' : 'outlined'"
-                                :color="isDeletedExperimentDevice(device) ? 'warning' : undefined"
+                                :variant="item.deleted_at || isDeletedExperimentDevice(device) ? 'tonal' : 'outlined'"
+                                :color="item.deleted_at ? 'error' : isDeletedExperimentDevice(device) ? 'warning' : undefined"
                                 :prepend-icon="isDeletedExperimentDevice(device) ? 'mdi-alert-circle' : undefined"
-                                :class="isDeletedExperimentDevice(device) ? 'font-weight-medium' : ''"
+                                :class="item.deleted_at || isDeletedExperimentDevice(device) ? 'font-weight-medium' : ''"
                             >
                                 {{ device.name }}
                             </v-chip>
@@ -141,7 +137,13 @@ const formatInputArgument = (value: unknown) => {
 
                 <template #item.commands="{ item }">
                     <div class="d-flex flex-wrap ga-1 py-2">
-                        <v-chip v-for="command in item.commands" :key="`${item.id}-${command}`" size="small" color="info" variant="tonal">
+                        <v-chip
+                            v-for="command in item.commands"
+                            :key="`${item.id}-${command}`"
+                            size="small"
+                            :color="item.deleted_at ? 'error' : 'info'"
+                            variant="tonal"
+                        >
                             {{ command }}
                         </v-chip>
                     </div>

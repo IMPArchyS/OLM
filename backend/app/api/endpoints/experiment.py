@@ -180,10 +180,24 @@ def update(db: DbSession, id: int, experiment: ExperimentUpdate,  _: AuthUser = 
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete(db: DbSession, id: int,  _: AuthUser = Permission("olm.experiment.delete")):
+def delete(db: DbSession, id: int, _: AuthUser = Permission("olm.experiment.delete")):
     db_experiment = db.get(Experiment, id)
     if not db_experiment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {id} not found!")
-    db.delete(db_experiment)
+    db_experiment.deleted_at = now()
+    db.add(db_experiment)
     db.commit()
+
+
+@router.post("/{id}/restore", response_model=ExperimentPublic)
+def restore(db: DbSession, id: int, _: AuthUser = Permission("olm.experiment.delete")):
+    db_experiment = db.get(Experiment, id)
+    if not db_experiment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {id} not found!")
+    if not db_experiment.deleted_at:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Experiment is not deleted!")
+    db_experiment.deleted_at = None
+    db.add(db_experiment)
+    db.commit()
+    db.refresh(db_experiment)
     return db_experiment
