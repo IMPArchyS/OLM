@@ -65,6 +65,24 @@ export function useExperimentLogs() {
         }
     }
 
+    async function deleteExperimentLog(id: number): Promise<{ success: boolean; message?: string }> {
+        try {
+            await apiClient.delete(`/experiment_log/${id}`);
+            return { success: true };
+        } catch (e: any) {
+            return { success: false, message: e.response?.data?.detail || 'Failed to delete log' };
+        }
+    }
+
+    async function restoreExperimentLog(id: number): Promise<{ success: boolean; message?: string }> {
+        try {
+            await apiClient.patch(`/experiment_log/${id}/restore`);
+            return { success: true };
+        } catch (e: any) {
+            return { success: false, message: e.response?.data?.detail || 'Failed to restore log' };
+        }
+    }
+
     return {
         experimentLogs,
         userExperimentLogs,
@@ -73,5 +91,7 @@ export function useExperimentLogs() {
         fetchExperimentLogs,
         fetchExperimentLogsByUser,
         fetchLastUsedDeviceId,
+        deleteExperimentLog,
+        restoreExperimentLog,
     };
 }

@@ -295,7 +295,6 @@ defineExpose({
                 </div>
             </div>
 
-            <!-- Experiment Command Parameters  " -->
             <div v-if="selectedExperiment" class="experiment-selector__args-grid">
                 <div v-for="(spec, key) in inputArguments" :key="key" class="experiment-selector__grid-cell">
                     <v-text-field
@@ -324,7 +323,6 @@ defineExpose({
                 </div>
             </div>
 
-            <!-- Slot for additional controls (e.g., buttons) -->
             <slot
                 :selected-experiment="selectedExperiment"
                 :selected-command="selectedCommand"
@@ -333,11 +331,6 @@ defineExpose({
                 :sample-rate="sampleRate"
             />
         </div>
-
-        <!-- Empty State -->
-        <v-alert v-else type="info" variant="tonal">
-            {{ t('queues.no_experiment_found') }}
-        </v-alert>
     </div>
 </template>
 

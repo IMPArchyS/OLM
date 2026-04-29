@@ -38,7 +38,7 @@ onMounted(async () => {
                 :label="t('reservations.selectDevice')"
                 :placeholder="t('reservations.chooseDevice')"
                 variant="outlined"
-                density="comfortable"
+                density="compact"
             />
             <div v-if="selectedDevice && selectedDeviceData" style="height: calc(100vh - 260px)">
                 <DeviceReservationCalendar :selected-device-id="selectedDevice" :selected-device-data="selectedDeviceData" />

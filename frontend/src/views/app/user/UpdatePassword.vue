@@ -92,7 +92,7 @@ const handlePasswordUpdate = async () => {
                     required
                 ></v-text-field>
 
-                <v-alert v-if="passwordErrors.length > 0" type="error" class="mb-6">
+                <v-alert v-if="passwordErrors.length > 0" type="error" variant="tonal" class="mb-6">
                     <ul class="mb-0 pl-4">
                         <li v-for="error in passwordErrors" :key="error">{{ error }}</li>
                     </ul>

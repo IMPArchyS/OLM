@@ -59,14 +59,14 @@ class ExperimentLogBase(SQLModel):
 
 class ExperimentLog(ExperimentLogBase, table=True):
     __tablename__ = "experiment_log" # type: ignore
-    
+
     id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(default=None)
-    
+
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
     deleted_at: datetime | None = Field(default=None)
-    
+
     started_at: datetime | None = Field(default=None)
     finished_at: datetime | None = Field(default=None)
     finish_reason: FinishReason = Field(
@@ -81,7 +81,7 @@ class ExperimentLog(ExperimentLogBase, table=True):
             server_default=FinishReason.REASON_NONE.value,
         ),
     )
-    
+
     # Relationships
     experiment_id: int = Field(foreign_key="experiment.id")
     experiment: "Experiment" = Relationship(back_populates="experiment_logs")
@@ -108,12 +108,18 @@ class ExperimentLogPublic(ExperimentLogBase):
     user_id: int
     device_id: int
     server_id: int
-    experiment_id : int
+    experiment_id: int
     started_at: datetime | None
     finished_at: datetime | None
     finish_reason: FinishReason
     modified_at: datetime
     deleted_at: datetime | None
+
+
+class ExperimentLogPublicEnriched(ExperimentLogPublic):
+    server_name: str | None = None
+    device_name: str | None = None
+    software_name: str | None = None
 
 
 class ExperimentLogUpdate(ExperimentLogBase):

@@ -74,8 +74,12 @@ export interface Experiment {
 export interface ExperimentLog {
     id: number;
     experiment_id: number;
+    user_id: number;
     server_id: number;
     device_id: number;
+    server_name?: string;
+    device_name?: string;
+    software_name?: string;
     run: ExperimentRun | null;
     started_at: string | null;
     finished_at: string | null;
