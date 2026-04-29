@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from sqlmodel import select
+from sqlmodel import col, select
 from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission
 
 from app.models.experiment_log import ExperimentLog, ExperimentLogCreate, ExperimentLogLatestDevice, ExperimentLogPublic
@@ -21,8 +21,8 @@ def get_latest_device_by_experiment(db: DbSession, experiment_id: int, user: Cur
         select(ExperimentLog)
         .where(ExperimentLog.experiment_id == experiment_id)
         .where(ExperimentLog.user_id == user.id)
-        .where(ExperimentLog.started_at.is_not(None))
-        .order_by(ExperimentLog.started_at.desc(), ExperimentLog.id.desc())
+        .where(col(ExperimentLog.started_at).is_not(None))
+        .order_by(col(ExperimentLog.started_at).desc(), col(ExperimentLog.id).desc())
         .limit(1)
     )
     log = db.exec(stmt).first()

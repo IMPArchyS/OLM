@@ -390,7 +390,6 @@ defineExpose({
     padding: 10px;
     border-radius: 8px;
     border: 1px solid rgba(128, 128, 128, 0.3);
-    background: rgba(255, 255, 255, 0.25);
 }
 
 .experiment-selector__setpoint-item--start {
