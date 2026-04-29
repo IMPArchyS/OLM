@@ -10,7 +10,7 @@ const toast = useToastStore();
 
 const selectedDevice = ref<number | null>(null);
 
-const { devicesForReservation, loading, fetchAvailableDevices, getAvailableDeviceById } = useDevices();
+const { devicesForReservation, fetchAvailableDevices, getAvailableDeviceById } = useDevices();
 
 const selectedDeviceData = computed(() => {
     return selectedDevice.value ? getAvailableDeviceById(selectedDevice.value) : null;
@@ -18,16 +18,15 @@ const selectedDeviceData = computed(() => {
 
 onMounted(async () => {
     const result = await fetchAvailableDevices();
-    if (!result.success) {
-        toast.error(result.message || 'Failed');
-    }
+    if (!result.success) toast.error(result.message || 'Failed');
 });
 </script>
 
 <template>
     <v-card>
-        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-            <span class="text-h5">{{ t('reservations.title') }}</span>
+        <v-card-title class="bg-card-title">
+            <v-icon icon="mdi-calendar" class="mr-2" />
+            <span>{{ t('reservations.title') }}</span>
         </v-card-title>
         <v-divider></v-divider>
         <v-card-text>

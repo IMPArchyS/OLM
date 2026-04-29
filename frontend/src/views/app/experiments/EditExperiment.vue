@@ -322,7 +322,7 @@ onMounted(async () => {
                             <v-text-field v-model="row.unit" :label="t('experiments.argUnit')" variant="outlined" density="comfortable" />
                         </v-col>
                         <v-col cols="12" md="1" class="d-flex justify-end align-center">
-                            <v-btn icon="mdi-delete" color="error" variant="text" @click="removeInputArgument(index)" />
+                            <v-btn icon="mdi-trash-can" color="error" variant="text" @click="removeInputArgument(index)" />
                         </v-col>
                     </v-row>
                 </v-form>
@@ -330,10 +330,10 @@ onMounted(async () => {
 
             <v-card-actions v-if="!loading">
                 <v-spacer />
-                <v-btn color="grey" variant="text" @click="handleCancel">
+                <v-btn prepend-icon="mdi-close" color="grey" variant="outlined" @click="handleCancel">
                     {{ t('actions.cancel') }}
                 </v-btn>
-                <v-btn color="primary" variant="elevated" @click="handleSave">
+                <v-btn prepend-icon="mdi-plus" color="primary" variant="elevated" @click="handleSave">
                     {{ t('actions.save') }}
                 </v-btn>
             </v-card-actions>

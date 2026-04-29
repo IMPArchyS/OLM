@@ -156,12 +156,12 @@ const handleSyncAll = async () => {
         >
             <template #top>
                 <v-toolbar flat density="comfortable" class="px-2">
-                    <v-toolbar-title class="text-h6">
+                    <v-toolbar-title class="">
                         {{ t('servers.servers') }}
                     </v-toolbar-title>
                     <v-spacer />
                     <div class="d-flex align-center flex-wrap justify-end ga-3">
-                        <v-switch v-model="showDeletedServers" :label="t('servers.showDeleted')" color="info" hide-details />
+                        <v-switch v-model="showDeletedServers" :label="t('servers.showDeleted')" color="primary" hide-details />
                         <div class="d-flex align-center ga-2">
                             <v-btn color="success" variant="flat" prepend-icon="mdi-sync" @click="handleSyncAll">
                                 {{ t('servers.syncServers') }}
@@ -204,7 +204,7 @@ const handleSyncAll = async () => {
                 <v-btn icon="mdi-eye" size="small" variant="text" color="warning" @click="handleView(item)"></v-btn>
                 <v-btn icon="mdi-sync" size="small" variant="text" color="success" @click="handleSync(item)"></v-btn>
                 <v-btn icon="mdi-pencil" size="small" variant="text" color="primary" @click="handleEdit(item)"></v-btn>
-                <v-btn icon="mdi-delete" size="small" variant="text" color="error" @click="handleDelete(item)"></v-btn>
+                <v-btn icon="mdi-trash-can" size="small" variant="text" color="error" @click="handleDelete(item)"></v-btn>
             </template>
 
             <!-- No Data -->

@@ -97,35 +97,24 @@ const formatInputArgument = (value: unknown) => {
 
 <template>
     <v-card>
-        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-            <span class="text-h5">{{ t('experiments.title') }}</span>
+        <v-card-title class="bg-card-title d-flex align-center flex-wrap ga-3">
+            <v-icon icon="mdi-flask" class="mr-2" />
+            <span>{{ t('experiments.title') }}</span>
+            <v-spacer />
+            <v-switch v-model="showDeletedExperiments" :label="t('experiments.showDeleted')" color="info" hide-details density="compact" />
+            <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" @click="handleCreate">
+                {{ t('experiments.addExperiment') }}
+            </v-btn>
         </v-card-title>
         <v-divider />
 
-        <v-container fluid>
-            <v-data-table
-                :headers="headers"
-                :items="filteredExperiments"
-                :loading="loading"
-                :loading-text="t('experiments.loading')"
-                class="elevation-1"
-                item-value="id"
-            >
-                <template #top>
-                    <v-toolbar flat density="comfortable" class="px-2">
-                        <v-toolbar-title class="text-h6">
-                            {{ t('experiments.listTitle') }}
-                        </v-toolbar-title>
-                        <v-spacer />
-                        <div class="d-flex align-center flex-wrap justify-end ga-3">
-                            <v-switch v-model="showDeletedExperiments" :label="t('experiments.showDeleted')" color="info" hide-details />
-                            <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" @click="handleCreate">
-                                {{ t('experiments.addExperiment') }}
-                            </v-btn>
-                        </div>
-                    </v-toolbar>
-                    <v-divider />
-                </template>
+        <v-data-table
+            :headers="headers"
+            :items="filteredExperiments"
+            :loading="loading"
+            :loading-text="t('experiments.loading')"
+            item-value="id"
+        >
 
                 <template #item.software="{ item }">
                     {{ item.software?.name || t('experiments.noSoftware') }}
@@ -161,7 +150,7 @@ const formatInputArgument = (value: unknown) => {
                 <template #item.actions="{ item }">
                     <v-btn icon="mdi-eye" size="small" variant="text" color="warning" @click.stop="handleView(item)" />
                     <v-btn v-if="!item.deleted_at" icon="mdi-pencil" size="small" variant="text" color="primary" @click.stop="handleEdit(item)" />
-                    <v-btn v-if="!item.deleted_at" icon="mdi-delete" size="small" variant="text" color="error" @click.stop="handleDelete(item)" />
+                    <v-btn v-if="!item.deleted_at" icon="mdi-trash-can" size="small" variant="text" color="error" @click.stop="handleDelete(item)" />
                     <v-btn
                         v-if="item.deleted_at"
                         icon="mdi-restore"
@@ -224,9 +213,8 @@ const formatInputArgument = (value: unknown) => {
                 </template>
             </v-data-table>
 
-            <v-alert v-if="error" type="error" variant="tonal" class="mt-4" closable>
-                {{ error }}
-            </v-alert>
-        </v-container>
+        <v-alert v-if="error" type="error" variant="tonal" class="ma-4" closable>
+            {{ error }}
+        </v-alert>
     </v-card>
 </template>

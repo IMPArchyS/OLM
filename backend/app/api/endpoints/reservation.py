@@ -44,14 +44,24 @@ def get_by_id(db: DbSession, id: int):
     return db_reservation
 
 
+MAX_RESERVATION_MINUTES = 30
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, reservation: ReservationCreate, user: CurrentUser, _: AuthUser = Permission("olm.reservation.create")):
     db_reservation = Reservation.model_validate(reservation)
     db_reservation.user_id = user.id
-    
+
+    duration_minutes = (reservation.end - reservation.start).total_seconds() / 60
+    if duration_minutes > MAX_RESERVATION_MINUTES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Reservation cannot be longer than {MAX_RESERVATION_MINUTES} minutes"
+        )
+
     if not db.get(Device, reservation.device_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {reservation.device_id} not found!")
-    
+
     overlapping_stmt = select(Reservation).where(
         Reservation.device_id == reservation.device_id,
         Reservation.start < reservation.end,
@@ -81,6 +91,15 @@ async def update(db: DbSession, id: int, reservation: ReservationUpdate, user: C
         if not can_update_all:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
+    new_start = reservation.start if reservation.start is not None else db_reservation.start
+    new_end = reservation.end if reservation.end is not None else db_reservation.end
+    duration_minutes = (new_end - new_start).total_seconds() / 60
+    if duration_minutes > MAX_RESERVATION_MINUTES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Reservation cannot be longer than {MAX_RESERVATION_MINUTES} minutes"
+        )
+
     reservation_data = reservation.model_dump(exclude_unset=True)
     db_reservation.sqlmodel_update(reservation_data)
 
@@ -90,9 +109,6 @@ async def update(db: DbSession, id: int, reservation: ReservationUpdate, user: C
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {reservation.device_id} not found!")    
 
     if reservation.start is not None or reservation.end is not None:
-        new_start = reservation.start if reservation.start is not None else db_reservation.start
-        new_end = reservation.end if reservation.end is not None else db_reservation.end
-        
         overlapping_stmt = select(Reservation).where(
             Reservation.id != id,
             Reservation.device_id == new_device_id,

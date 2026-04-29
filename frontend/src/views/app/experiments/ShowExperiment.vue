@@ -137,10 +137,10 @@ onMounted(async () => {
 
             <v-card-actions v-if="!loading && experiment">
                 <v-spacer />
-                <v-btn color="grey" variant="text" @click="handleBack">
+                <v-btn prepend-icon="mdi-close" color="grey" variant="outlined" @click="handleBack">
                     {{ t('actions.back') }}
                 </v-btn>
-                <v-btn color="primary" variant="elevated" @click="handleEdit">
+                <v-btn prepend-icon="mdi-pencil" color="primary" variant="elevated" @click="handleEdit">
                     {{ t('actions.edit') }}
                 </v-btn>
             </v-card-actions>

@@ -79,14 +79,35 @@ export function useDeviceReservationCalendar(props: Props) {
         return false;
     }
 
+    const MAX_DURATION_MS = 30 * 60 * 1000;
+
+    function resolveAllDaySlot(date: Date): { start: Date; end: Date } {
+        const now = new Date();
+        const isToday = date.toDateString() === now.toDateString();
+        const start = isToday
+            ? new Date(Math.ceil(now.getTime() / MAX_DURATION_MS) * MAX_DURATION_MS)
+            : new Date(new Date(date).setHours(12, 0, 0, 0));
+        return { start, end: new Date(start.getTime() + MAX_DURATION_MS) };
+    }
+
     function handleDateSelect(selectInfo: DateSelectArg) {
         selectInfo.view.calendar.unselect();
         if (!props.selectedDeviceId) return;
-        if (checkMaintenanceConflict(selectInfo.start, selectInfo.end, 'Cannot create reservation during maintenance period')) return;
+
+        let start = selectInfo.start;
+        let end = selectInfo.end;
+
+        if (selectInfo.allDay) {
+            const slot = resolveAllDaySlot(start);
+            start = slot.start;
+            end = slot.end;
+        }
+
+        if (checkMaintenanceConflict(start, end, 'Cannot create reservation during maintenance period')) return;
         reservationForm.value = {
             device_id: props.selectedDeviceId,
-            start: formatDateTimeLocal(selectInfo.start),
-            end: formatDateTimeLocal(selectInfo.end),
+            start: formatDateTimeLocal(start),
+            end: formatDateTimeLocal(end),
         };
         editingReservation.value = null;
         isModalOpen.value = true;
@@ -95,6 +116,18 @@ export function useDeviceReservationCalendar(props: Props) {
     function handleEventClick(clickInfo: EventClickArg) {
         const event = clickInfo.event;
         if (event.extendedProps.isMaintenance) {
+            if (clickInfo.view.type === 'dayGridMonth' && props.selectedDeviceId && event.start) {
+                const slot = resolveAllDaySlot(event.start);
+                if (checkMaintenanceConflict(slot.start, slot.end, 'Cannot create reservation during maintenance period')) return;
+                reservationForm.value = {
+                    device_id: props.selectedDeviceId,
+                    start: formatDateTimeLocal(slot.start),
+                    end: formatDateTimeLocal(slot.end),
+                };
+                editingReservation.value = null;
+                isModalOpen.value = true;
+                return;
+            }
             toast.warning('Maintenance periods cannot be edited');
             return;
         }
@@ -118,6 +151,10 @@ export function useDeviceReservationCalendar(props: Props) {
         const endDate = new Date(reservationForm.value.end);
         if (startDate < new Date() || endDate < new Date()) {
             toast.error('Cannot create reservation in the past');
+            return;
+        }
+        if (endDate.getTime() - startDate.getTime() > MAX_DURATION_MS) {
+            toast.error('Reservation cannot be longer than 30 minutes');
             return;
         }
         if (checkMaintenanceConflict(startDate, endDate, 'Reservation conflicts with daily maintenance period')) return;
@@ -166,13 +203,12 @@ export function useDeviceReservationCalendar(props: Props) {
         firstDay: 1,
         initialView: 'timeGridWeek',
         timeZone: 'local',
-        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' },
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
         buttonText: {
             today: t('calendar.today'),
             month: t('calendar.month'),
             week: t('calendar.week'),
             day: t('calendar.day'),
-            list: t('calendar.list'),
         },
         slotMinTime: '00:00:00',
         slotMaxTime: '24:00:00',
@@ -184,13 +220,13 @@ export function useDeviceReservationCalendar(props: Props) {
         weekends: true,
         events: calendarEvents.value,
         select: handleDateSelect,
+        selectAllow: (selectInfo) => selectInfo.allDay || selectInfo.end.getTime() - selectInfo.start.getTime() <= MAX_DURATION_MS,
         eventClick: handleEventClick,
         eventAllow: (_dropInfo, draggedEvent) => (draggedEvent?.start ? draggedEvent.start >= new Date() : true),
         eventDidMount: (info) => {
             const eventEnd = info.event.end || info.event.start;
             if (info.event.extendedProps.isMaintenance) {
                 info.el.style.cursor = 'not-allowed';
-                info.el.title = 'Maintenance period - cannot be modified';
             } else if (eventEnd && eventEnd < new Date()) {
                 info.el.style.opacity = '0.6';
                 info.el.style.cursor = 'not-allowed';

@@ -280,7 +280,7 @@ defineExpose({
                             <v-btn
                                 color="error"
                                 variant="text"
-                                icon="mdi-delete"
+                                icon="mdi-trash-can"
                                 :disabled="setpointSteps.length <= 1"
                                 @click="removeSetpointStep(index)"
                             />

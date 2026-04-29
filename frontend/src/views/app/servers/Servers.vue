@@ -20,8 +20,9 @@ const handleServersLoaded = (servers: Server[]) => {
 
 <template>
     <v-card>
-        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-            <span class="text-h5">{{ $t('servers.title') }}</span>
+        <v-card-title class="bg-card-title">
+            <v-icon icon="mdi-server" class="mr-2" />
+            <span>{{ $t('servers.title') }}</span>
         </v-card-title>
         <ServerBrowser @select-server="handleSelectServer" @servers-loaded="handleServersLoaded" />
         <v-divider />

@@ -80,6 +80,7 @@ export default {
     },
     servers: {
         title: 'Aktuálne servery',
+        servers: 'Servery',
         addServer: 'Pridať server',
         editServer: 'Upraviť server',
         deleteServer: 'Vymazať server',

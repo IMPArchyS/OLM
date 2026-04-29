@@ -58,8 +58,9 @@ const handlePasswordUpdate = async () => {
 
 <template>
     <v-card>
-        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-            <span class="text-h5">{{ t('actions.update') }}</span>
+        <v-card-title class="bg-card-title">
+            <v-icon icon="mdi-lock-reset" class="mr-2" />
+            <span>{{ t('profile.updatePassword') }}</span>
         </v-card-title>
         <v-card-text class="mt-5">
             <v-form @submit.prevent="handlePasswordUpdate">
@@ -96,13 +97,13 @@ const handlePasswordUpdate = async () => {
                         <li v-for="error in passwordErrors" :key="error">{{ error }}</li>
                     </ul>
                 </v-alert>
-
-                <div class="d-flex justify-center">
-                    <v-btn color="primary" class="w-3" type="submit" :disabled="isSubmitting">
-                        {{ t('actions.save') }}
-                    </v-btn>
-                </div>
             </v-form>
         </v-card-text>
+        <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn prepend-icon="mdi-plus" color="primary" variant="elevated" :disabled="isSubmitting || !isFormValid" @click="handlePasswordUpdate">
+                {{ t('actions.save') }}
+            </v-btn>
+        </v-card-actions>
     </v-card>
 </template>

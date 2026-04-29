@@ -54,14 +54,14 @@ const handleRegister = () => {
             <v-list>
                 <v-list-item @click="handleUpdateProfile">
                     <template v-slot:prepend>
-                        <v-icon>mdi-account</v-icon>
+                        <v-icon>mdi-account-edit</v-icon>
                     </template>
                     <v-list-item-title>{{ t('profile.updateProfile') }}</v-list-item-title>
                 </v-list-item>
 
                 <v-list-item @click="handleUpdatePassword">
                     <template v-slot:prepend>
-                        <v-icon>mdi-key</v-icon>
+                        <v-icon>mdi-lock-reset</v-icon>
                     </template>
                     <v-list-item-title>{{ t('profile.updatePassword') }}</v-list-item-title>
                 </v-list-item>

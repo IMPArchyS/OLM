@@ -70,7 +70,7 @@ onMounted(() => {
                 <v-card-actions>
                     <v-btn color="grey" variant="text" @click="closeModal"> Cancel </v-btn>
                     <v-spacer />
-                    <v-btn v-if="editingReservation" color="error" variant="text" @click="deleteReservation"> Delete </v-btn>
+                    <v-btn v-if="editingReservation" color="error" variant="outlined" @click="deleteReservation"> Delete </v-btn>
                     <v-btn color="primary" variant="elevated" @click="saveReservation"> Save </v-btn>
                 </v-card-actions>
             </v-card>
@@ -81,5 +81,13 @@ onMounted(() => {
 <style>
 thead {
     background: rgb(var(--v-theme-surface-variant)) !important;
+}
+
+td {
+    border-color: rgb(var(--v-theme-calendar)) !important;
+}
+
+tr {
+    border-color: rgb(var(--v-theme-calendar)) !important;
 }
 </style>

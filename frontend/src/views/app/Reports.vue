@@ -268,15 +268,11 @@ onMounted(async () => {
                             <v-chip size="small" variant="tonal">Started: {{ formatDateTime(log.started_at) }}</v-chip>
                             <v-chip size="small" variant="tonal">Finished: {{ formatDateTime(log.finished_at) }}</v-chip>
                             <v-chip size="small" variant="tonal">Finish reason: {{ formatFinishReason(log.finish_reason) }}</v-chip>
-
                             <v-chip size="small" variant="tonal">
-                                Estimated simulation time: {{ estimateSimulationTime(log) !== null ? `${estimateSimulationTime(log)} s` : 'N/A' }}
+                                Simulation time: {{ estimateSimulationTime(log) !== null ? `${estimateSimulationTime(log)} s` : 'N/A' }}
                             </v-chip>
                             <v-chip size="small" variant="tonal">
-                                Estimated sample interval: {{ estimateSampleInterval(log) !== null ? `${estimateSampleInterval(log)} s` : 'N/A' }}
-                            </v-chip>
-                            <v-chip size="small" variant="tonal">
-                                Estimated sample rate: {{ estimateSampleRate(log) !== null ? `${estimateSampleRate(log)} Hz` : 'N/A' }}
+                                Sample rate: {{ estimateSampleInterval(log) !== null ? `${estimateSampleInterval(log)} s` : 'N/A' }}
                             </v-chip>
                         </div>
 

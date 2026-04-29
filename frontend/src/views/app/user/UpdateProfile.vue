@@ -31,23 +31,27 @@ onMounted(() => {
 </script>
 <template>
     <v-card>
-        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-            <span class="text-h5">{{ t('actions.update') }}</span>
+        <v-card-title class="bg-card-title">
+            <v-icon icon="mdi-account-edit" class="mr-2" />
+            <span>{{ t('actions.update') }}</span>
         </v-card-title>
         <v-card-text class="mt-5">
             <v-form @submit.prevent="handleProfileUpdate">
                 <v-text-field
                     v-model="username"
-                    :label="t('auth.username')"
+                    :label="t('auth.name')"
                     type="text"
                     class="mb-4"
                     variant="outlined"
                     density="comfortable"
                 ></v-text-field>
-                <div class="d-flex justify-center">
-                    <v-btn color="primary" class="w-3" type="submit" :disabled="isSubmitting">{{ t('actions.save') }}</v-btn>
-                </div>
             </v-form>
         </v-card-text>
+        <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn prepend-icon="mdi-plus" color="primary" variant="elevated" :disabled="isSubmitting" @click="handleProfileUpdate">{{
+                t('actions.save')
+            }}</v-btn>
+        </v-card-actions>
     </v-card>
 </template>
