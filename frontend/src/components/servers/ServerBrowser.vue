@@ -7,7 +7,7 @@ import router from '@/router';
 import { useToastStore } from '@/stores/toast';
 
 const { t } = useI18n();
-const { servers, loading, error, fetchServers, syncServer, syncAllServers, softDeleteServer, restoreServer } = useServers();
+const { servers, loading, fetchServers, syncServer, syncAllServers, softDeleteServer, restoreServer } = useServers();
 const toast = useToastStore();
 
 const props = defineProps<{
@@ -30,7 +30,10 @@ const filteredServers = computed(() => {
 });
 
 onMounted(async () => {
-    await fetchServers();
+    const result = await fetchServers();
+    if (!result.success) {
+        toast.error(result.message || t('common.error'));
+    }
     if (servers.value.length > 0) {
         emit('serversLoaded', servers.value);
         const firstServer = servers.value.filter((server) => !server.deleted_at)[0];
@@ -198,14 +201,6 @@ defineExpose({ handleSyncAll });
             <v-btn v-if="item.deleted_at" icon="mdi-restore" size="small" variant="text" color="secondary" @click="handleRestore(item)"></v-btn>
         </template>
 
-        <template v-slot:no-data>
-            <v-alert type="info" variant="tonal" class="ma-4">
-                {{ t('servers.noServersFound') }}
-            </v-alert>
-        </template>
     </v-data-table>
 
-    <v-alert v-if="error" type="error" variant="tonal" class="ma-4" closable>
-        {{ error }}
-    </v-alert>
 </template>

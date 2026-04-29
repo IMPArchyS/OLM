@@ -27,13 +27,15 @@ export function useServers() {
         (v: number) => (v > 0 && v <= 65535) || t('validation.invalidPortRange'),
     ];
 
-    async function fetchServers(): Promise<void> {
+    async function fetchServers(): Promise<{ success: boolean; message?: string }> {
         try {
             const response = await apiClient.get('/server/');
             servers.value = response.data;
-        } catch (e) {
+            return { success: true };
+        } catch (e: any) {
             console.error('Failed to fetch servers:', e);
             servers.value = [];
+            return { success: false, message: e.response?.data?.message || 'Failed to fetch servers' };
         }
     }
 

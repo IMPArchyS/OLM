@@ -23,6 +23,7 @@ const { params } = useRoute();
 
 const serverId = +(params.id as string);
 const loading = ref(false);
+const showDeletedDevices = ref(false);
 
 const handleEdit = () => {
     router.push(`/app/servers/${serverId}/edit`);
@@ -137,7 +138,23 @@ const handleBack = () => {
                 </v-btn>
             </v-card-actions>
 
-            <DeviceBrowser :selected-server="currentServer" />
+            <v-divider />
+            <div class="d-flex align-center px-4 py-2">
+                <v-icon icon="mdi-devices" size="small" class="mr-2 text-medium-emphasis" />
+                <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">
+                    {{ t('servers.devices') + ': ' + currentServer.name }}
+                </span>
+                <v-spacer />
+                <v-switch
+                    v-model="showDeletedDevices"
+                    :label="t('devices.showDeleted')"
+                    color="info"
+                    hide-details
+                    density="compact"
+                />
+            </div>
+            <v-divider />
+            <DeviceBrowser :selected-server="currentServer" :show-deleted="showDeletedDevices" />
         </v-card>
     </v-container>
 </template>

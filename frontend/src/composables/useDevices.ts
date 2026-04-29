@@ -57,17 +57,17 @@ export function useDevices() {
         }
     }
 
-    async function fetchDevicesByServer(serverId: number): Promise<void> {
+    async function fetchDevicesByServer(serverId: number): Promise<{ success: boolean; message?: string }> {
         loading.value = true;
-        error.value = null;
 
         try {
             const response = await apiClient.get(`/server/${serverId}/devices`);
             devices.value = response.data;
-        } catch (e) {
+            return { success: true };
+        } catch (e: any) {
             console.error('Error fetching devices for server:', e);
-            error.value = 'Error fetching devices';
             devices.value = [];
+            return { success: false, message: e.response?.data?.message || 'Error fetching devices' };
         } finally {
             loading.value = false;
         }

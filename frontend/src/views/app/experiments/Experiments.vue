@@ -9,7 +9,7 @@ import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 const toast = useToastStore();
-const { experiments, loading, error, fetchExperiments, deleteExperiment, restoreExperiment } = useExperiments();
+const { experiments, loading, fetchExperiments, deleteExperiment, restoreExperiment } = useExperiments();
 const { devices, fetchDevices } = useDevices();
 const showDeletedExperiments = ref(false);
 const deletedDeviceIdSet = computed(() => new Set(devices.value.filter((device) => !!device.deleted_at).map((device) => device.id)));
@@ -76,18 +76,6 @@ const handleRestore = async (item: Experiment) => {
         toast.error(result.message || t('experiments.restoreUnavailable'));
     }
 };
-
-const formatInputArgument = (value: unknown) => {
-    if (typeof value === 'number') {
-        return value;
-    }
-
-    if (typeof value === 'string') {
-        return value;
-    }
-
-    return '';
-};
 </script>
 
 <template>
@@ -111,112 +99,49 @@ const formatInputArgument = (value: unknown) => {
             :row-props="({ item }) => ({ class: item.deleted_at ? 'text-error' : '' })"
             item-value="id"
         >
+            <template #item.software="{ item }">
+                {{ item.software?.name || t('experiments.noSoftware') }}
+            </template>
 
-                <template #item.software="{ item }">
-                    {{ item.software?.name || t('experiments.noSoftware') }}
-                </template>
-
-                <template #item.devices="{ item }">
-                    <div class="py-2">
-                        <div class="d-flex flex-wrap ga-1">
-                            <v-chip
-                                v-for="device in item.devices"
-                                :key="device.id"
-                                size="small"
-                                :variant="item.deleted_at || isDeletedExperimentDevice(device) ? 'tonal' : 'outlined'"
-                                :color="item.deleted_at ? 'error' : isDeletedExperimentDevice(device) ? 'warning' : undefined"
-                                :prepend-icon="isDeletedExperimentDevice(device) ? 'mdi-alert-circle' : undefined"
-                                :class="item.deleted_at || isDeletedExperimentDevice(device) ? 'font-weight-medium' : ''"
-                            >
-                                {{ device.name }}
-                            </v-chip>
-                            <span v-if="item.devices.length === 0" class="text-medium-emphasis">{{ t('experiments.noDevices') }}</span>
-                        </div>
-                    </div>
-                </template>
-
-                <template #item.commands="{ item }">
-                    <div class="d-flex flex-wrap ga-1 py-2">
+            <template #item.devices="{ item }">
+                <div class="py-2">
+                    <div class="d-flex flex-wrap ga-1">
                         <v-chip
-                            v-for="command in item.commands"
-                            :key="`${item.id}-${command}`"
+                            v-for="device in item.devices"
+                            :key="device.id"
                             size="small"
-                            :color="item.deleted_at ? 'error' : 'info'"
-                            variant="tonal"
+                            :variant="item.deleted_at || isDeletedExperimentDevice(device) ? 'tonal' : 'outlined'"
+                            :color="item.deleted_at ? 'error' : isDeletedExperimentDevice(device) ? 'warning' : undefined"
+                            :prepend-icon="isDeletedExperimentDevice(device) ? 'mdi-alert-circle' : undefined"
+                            :class="item.deleted_at || isDeletedExperimentDevice(device) ? 'font-weight-medium' : ''"
                         >
-                            {{ command }}
+                            {{ device.name }}
                         </v-chip>
+                        <span v-if="item.devices.length === 0" class="text-medium-emphasis">{{ t('experiments.noDevices') }}</span>
                     </div>
-                </template>
+                </div>
+            </template>
 
-                <template #item.actions="{ item }">
-                    <v-btn icon="mdi-eye" size="small" variant="text" color="warning" @click.stop="handleView(item)" />
-                    <v-btn v-if="!item.deleted_at" icon="mdi-pencil" size="small" variant="text" color="primary" @click.stop="handleEdit(item)" />
-                    <v-btn v-if="!item.deleted_at" icon="mdi-trash-can" size="small" variant="text" color="error" @click.stop="handleDelete(item)" />
-                    <v-btn
-                        v-if="item.deleted_at"
-                        icon="mdi-restore"
+            <template #item.commands="{ item }">
+                <div class="d-flex flex-wrap ga-1 py-2">
+                    <v-chip
+                        v-for="command in item.commands"
+                        :key="`${item.id}-${command}`"
                         size="small"
-                        variant="text"
-                        color="secondary"
-                        @click.stop="handleRestore(item)"
-                    />
-                </template>
+                        :color="item.deleted_at ? 'error' : 'info'"
+                        variant="tonal"
+                    >
+                        {{ command }}
+                    </v-chip>
+                </div>
+            </template>
 
-                <template #expanded-row="{ columns, item }">
-                    <tr>
-                        <td :colspan="columns.length">
-                            <v-card variant="tonal" class="ma-3">
-                                <v-card-title class="text-subtitle-1">{{ t('experiments.inputArguments') }}</v-card-title>
-                                <v-card-text>
-                                    <v-row v-if="Object.keys(item.input_arguments).length > 0">
-                                        <v-col v-for="(spec, key) in item.input_arguments" :key="`${item.id}-${key}`" cols="12" md="6" lg="4">
-                                            <v-sheet class="pa-3 border rounded">
-                                                <div class="text-subtitle-2">{{ key }}</div>
-                                                <div class="text-body-2">{{ t('experiments.argType') }}: {{ spec.type }}</div>
-                                                <div class="text-body-2">{{ t('experiments.argValue') }}: {{ formatInputArgument(spec.value) }}</div>
-                                                <div class="text-body-2">{{ t('experiments.argUnit') }}: {{ spec.unit || '-' }}</div>
-                                            </v-sheet>
-                                        </v-col>
-                                    </v-row>
-                                    <v-alert v-else type="info" variant="tonal">
-                                        {{ t('experiments.noInputArguments') }}
-                                    </v-alert>
-                                </v-card-text>
-
-                                <v-divider />
-
-                                <v-card-title class="text-subtitle-1">{{ t('experiments.outputArguments') }}</v-card-title>
-                                <v-card-text>
-                                    <div class="d-flex flex-wrap ga-1" v-if="item.output_arguments.length > 0">
-                                        <v-chip
-                                            v-for="arg in item.output_arguments"
-                                            :key="`${item.id}-output-${arg}`"
-                                            size="small"
-                                            color="primary"
-                                            variant="outlined"
-                                        >
-                                            {{ arg }}
-                                        </v-chip>
-                                    </div>
-                                    <v-alert v-else type="info" variant="tonal">
-                                        {{ t('experiments.noOutputArguments') }}
-                                    </v-alert>
-                                </v-card-text>
-                            </v-card>
-                        </td>
-                    </tr>
-                </template>
-
-                <template #no-data>
-                    <v-alert type="info" variant="tonal" class="ma-4">
-                        {{ t('experiments.noExperiments') }}
-                    </v-alert>
-                </template>
-            </v-data-table>
-
-        <v-alert v-if="error" type="error" variant="tonal" class="ma-4" closable>
-            {{ error }}
-        </v-alert>
+            <template #item.actions="{ item }">
+                <v-btn icon="mdi-eye" size="small" variant="text" color="warning" @click.stop="handleView(item)" />
+                <v-btn v-if="!item.deleted_at" icon="mdi-pencil" size="small" variant="text" color="primary" @click.stop="handleEdit(item)" />
+                <v-btn v-if="!item.deleted_at" icon="mdi-trash-can" size="small" variant="text" color="error" @click.stop="handleDelete(item)" />
+                <v-btn v-if="item.deleted_at" icon="mdi-restore" size="small" variant="text" color="secondary" @click.stop="handleRestore(item)" />
+            </template>
+        </v-data-table>
     </v-card>
 </template>

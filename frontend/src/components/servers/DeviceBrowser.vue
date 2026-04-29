@@ -2,6 +2,7 @@
 import { watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useDevices } from '@/composables/useDevices';
+import { useToastStore } from '@/stores/toast';
 import type { Server } from '@/types/api';
 
 const { t } = useI18n();
@@ -11,7 +12,8 @@ const props = defineProps<{
     showDeleted: boolean;
 }>();
 
-const { devices, loading, error, fetchDevicesByServer } = useDevices();
+const { devices, loading, fetchDevicesByServer } = useDevices();
+const toast = useToastStore();
 
 const filteredDevices = computed(() => {
     if (props.showDeleted) {
@@ -25,19 +27,18 @@ watch(
     () => props.selectedServer,
     async (newServer) => {
         if (newServer) {
-            await fetchDevicesByServer(newServer.id);
+            const result = await fetchDevicesByServer(newServer.id);
+            if (!result.success) {
+                toast.error(result.message || t('common.error'));
+            }
         }
     },
 );
 </script>
 
 <template>
-    <v-alert v-if="!selectedServer" type="info" variant="tonal" icon="mdi-information-outline" class="ma-4">
-        {{ t('devices.selectServer') }}
-    </v-alert>
-
     <v-data-table
-        v-else
+        v-if="selectedServer"
         :headers="[
             { title: t('devices.id'), key: 'id', sortable: true },
             { title: t('devices.name'), key: 'name', sortable: true },
@@ -56,14 +57,6 @@ watch(
             </v-chip>
         </template>
 
-        <template v-slot:no-data>
-            <v-alert type="info" variant="tonal" class="ma-4">
-                {{ t('devices.noDevicesFound') }}
-            </v-alert>
-        </template>
     </v-data-table>
 
-    <v-alert v-if="error" type="error" variant="tonal" class="ma-4" closable>
-        {{ error }}
-    </v-alert>
 </template>
