@@ -79,7 +79,7 @@ const handleRestore = async (item: Experiment) => {
 </script>
 
 <template>
-    <v-card>
+    <v-card elevation="4">
         <v-card-title class="bg-card-title d-flex align-center flex-wrap ga-3">
             <v-icon icon="mdi-flask" class="mr-2" />
             <span>{{ t('experiments.title') }}</span>

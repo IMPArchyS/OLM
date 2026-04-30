@@ -35,7 +35,7 @@ const handleCancel = () => {
 </script>
 
 <template>
-    <v-card>
+    <v-card elevation="4">
         <v-card-title class="bg-card-title">
             <v-icon icon="mdi-clock-outline" class="mr-2" />
             <span>{{ t('servers.addServer') }}</span>

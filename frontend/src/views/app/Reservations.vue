@@ -23,7 +23,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <v-card>
+    <v-card elevation="4">
         <v-card-title class="bg-card-title">
             <v-icon icon="mdi-calendar" class="mr-2" />
             <span>{{ t('reservations.title') }}</span>

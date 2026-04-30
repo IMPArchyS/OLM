@@ -145,7 +145,7 @@ onMounted(() => {
             </template>
         </v-navigation-drawer>
 
-        <v-main>
+        <v-main style="overflow-y: auto;">
             <div class="px-7 mb-5 mt-5">
                 <router-view />
             </div>

@@ -265,7 +265,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <v-card>
+    <v-card elevation="4">
         <v-card-title class="bg-card-title d-flex align-center">
             <v-icon icon="mdi-file-document-outline" class="mr-2" />
             <span>{{ t('reports.title') }}</span>

@@ -132,7 +132,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <v-card>
+    <v-card elevation="4">
         <v-card-title class="bg-card-title dashboard-title-bar">
             <div class="dashboard-title-left">
                 <v-icon icon="mdi-view-dashboard" class="mr-2" />

@@ -58,7 +58,7 @@ const handleCancel = () => {
 };
 </script>
 <template>
-    <v-card :loading="loading">
+    <v-card :loading="loading" elevation="4">
         <v-card-title class="bg-card-title">
             <v-icon icon="mdi-clock-outline" class="mr-2" />
             <span>{{ t('servers.editServer') }}</span>

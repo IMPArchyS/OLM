@@ -78,83 +78,75 @@ const handleBack = () => {
 };
 </script>
 <template>
-    <v-container fluid>
-        <v-card :loading="loading">
-            <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-                <span class="text-h5">{{ t('servers.viewServer') }}</span>
-            </v-card-title>
+    <v-card :loading="loading" elevation="4">
+        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
+            <span class="text-h5">{{ t('servers.viewServer') }}</span>
+        </v-card-title>
 
-            <v-divider />
+        <v-divider />
 
-            <v-card-text v-if="!loading">
-                <v-row class="mb-2">
-                    <v-col cols="12" sm="6" md="3">
-                        <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.name') }}</div>
-                        <div class="text-body-1">{{ currentServer.name }}</div>
-                    </v-col>
-                    <v-col cols="12" sm="6" md="3">
-                        <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.ipAddress') }}</div>
-                        <div class="text-body-1">{{ currentServer.ip_address }}</div>
-                    </v-col>
-                    <v-col cols="12" sm="6" md="3">
-                        <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.apiDomain') }}</div>
-                        <div class="text-body-1">{{ currentServer.api_domain }}</div>
-                    </v-col>
-                    <v-col cols="12" sm="6" md="3">
-                        <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.port') }}</div>
-                        <div class="text-body-1">{{ currentServer.port }}</div>
-                    </v-col>
-                </v-row>
+        <v-card-text v-if="!loading">
+            <v-row class="mb-2">
+                <v-col cols="12" sm="6" md="3">
+                    <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.name') }}</div>
+                    <div class="text-body-1">{{ currentServer.name }}</div>
+                </v-col>
+                <v-col cols="12" sm="6" md="3">
+                    <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.ipAddress') }}</div>
+                    <div class="text-body-1">{{ currentServer.ip_address }}</div>
+                </v-col>
+                <v-col cols="12" sm="6" md="3">
+                    <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.apiDomain') }}</div>
+                    <div class="text-body-1">{{ currentServer.api_domain }}</div>
+                </v-col>
+                <v-col cols="12" sm="6" md="3">
+                    <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.port') }}</div>
+                    <div class="text-body-1">{{ currentServer.port }}</div>
+                </v-col>
+            </v-row>
 
-                <div class="d-flex flex-wrap ga-6">
-                    <div>
-                        <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.production') }}</div>
-                        <v-chip :color="currentServer.production ? 'success' : 'default'" variant="tonal" size="small">
-                            {{ currentServer.production ? t('common.yes') : t('common.no') }}
-                        </v-chip>
-                    </div>
-                    <div>
-                        <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.enabled') }}</div>
-                        <v-chip :color="currentServer.enabled ? 'success' : 'default'" variant="tonal" size="small">
-                            {{ currentServer.enabled ? t('common.yes') : t('common.no') }}
-                        </v-chip>
-                    </div>
+            <div class="d-flex flex-wrap ga-6">
+                <div>
+                    <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.production') }}</div>
+                    <v-chip :color="currentServer.production ? 'success' : 'default'" variant="tonal" size="small">
+                        {{ currentServer.production ? t('common.yes') : t('common.no') }}
+                    </v-chip>
                 </div>
-            </v-card-text>
-
-            <v-card-actions v-if="!loading">
-                <v-spacer />
-                <v-btn prepend-icon="mdi-close" color="grey" variant="outlined" @click="handleBack">
-                    {{ t('actions.back') }}
-                </v-btn>
-                <v-btn v-if="!currentServer.deleted_at" prepend-icon="mdi-sync" color="green" variant="elevated" @click="handleSync(currentServer)">
-                    {{ t('actions.sync') }}
-                </v-btn>
-                <v-btn v-if="!currentServer.deleted_at" prepend-icon="mdi-pencil" color="primary" variant="elevated" @click="handleEdit">
-                    {{ t('actions.edit') }}
-                </v-btn>
-                <v-btn v-if="currentServer.deleted_at" prepend-icon="mdi-restore" color="secondary" variant="elevated" @click="handleRestore">
-                    {{ t('actions.restore') }}
-                </v-btn>
-            </v-card-actions>
-
-            <v-divider />
-            <div class="d-flex align-center px-4 py-2">
-                <v-icon icon="mdi-devices" size="small" class="mr-2 text-medium-emphasis" />
-                <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">
-                    {{ t('servers.devices') + ': ' + currentServer.name }}
-                </span>
-                <v-spacer />
-                <v-switch
-                    v-model="showDeletedDevices"
-                    :label="t('devices.showDeleted')"
-                    color="info"
-                    hide-details
-                    density="compact"
-                />
+                <div>
+                    <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.enabled') }}</div>
+                    <v-chip :color="currentServer.enabled ? 'success' : 'default'" variant="tonal" size="small">
+                        {{ currentServer.enabled ? t('common.yes') : t('common.no') }}
+                    </v-chip>
+                </div>
             </div>
-            <v-divider />
-            <DeviceBrowser :selected-server="currentServer" :show-deleted="showDeletedDevices" />
-        </v-card>
-    </v-container>
+        </v-card-text>
+
+        <v-card-actions v-if="!loading">
+            <v-spacer />
+            <v-btn prepend-icon="mdi-close" color="grey" variant="outlined" @click="handleBack">
+                {{ t('actions.back') }}
+            </v-btn>
+            <v-btn v-if="!currentServer.deleted_at" prepend-icon="mdi-sync" color="green" variant="elevated" @click="handleSync(currentServer)">
+                {{ t('actions.sync') }}
+            </v-btn>
+            <v-btn v-if="!currentServer.deleted_at" prepend-icon="mdi-pencil" color="primary" variant="elevated" @click="handleEdit">
+                {{ t('actions.edit') }}
+            </v-btn>
+            <v-btn v-if="currentServer.deleted_at" prepend-icon="mdi-restore" color="secondary" variant="elevated" @click="handleRestore">
+                {{ t('actions.restore') }}
+            </v-btn>
+        </v-card-actions>
+
+        <v-divider />
+        <div class="d-flex align-center px-4 py-2">
+            <v-icon icon="mdi-devices" size="small" class="mr-2 text-medium-emphasis" />
+            <span class="text-subtitle-1 font-weight-bold text-medium-emphasis">
+                {{ t('servers.devices') + ': ' + currentServer.name }}
+            </span>
+            <v-spacer />
+            <v-switch v-model="showDeletedDevices" :label="t('devices.showDeleted')" color="info" hide-details density="compact" />
+        </div>
+        <v-divider />
+        <DeviceBrowser :selected-server="currentServer" :show-deleted="showDeletedDevices" />
+    </v-card>
 </template>

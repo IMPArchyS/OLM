@@ -34,7 +34,7 @@ const handleSyncAll = () => {
 </script>
 
 <template>
-    <v-card>
+    <v-card elevation="4">
         <v-card-title class="bg-card-title d-flex align-center flex-wrap ga-3">
             <v-icon icon="mdi-server" class="mr-2" />
             <span>{{ t('servers.title') }}</span>

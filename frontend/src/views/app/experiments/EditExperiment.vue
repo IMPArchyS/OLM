@@ -229,129 +229,127 @@ onMounted(async () => {
 </script>
 
 <template>
-    <v-container fluid>
-        <v-card :loading="loading">
-            <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-                <span class="text-h5">{{ t('experiments.editExperiment') }}</span>
-            </v-card-title>
+    <v-card :loading="loading" elevation="4">
+        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
+            <span class="text-h5">{{ t('experiments.editExperiment') }}</span>
+        </v-card-title>
 
-            <v-divider />
+        <v-divider />
 
-            <v-card-text v-if="!loading">
-                <v-alert v-if="hasDeletedLinkedDevice" type="warning" variant="tonal" class="mb-4">
-                    {{ t('experiments.deletedLinkedDeviceWarning') }}
-                </v-alert>
+        <v-card-text v-if="!loading">
+            <v-alert v-if="hasDeletedLinkedDevice" type="warning" variant="tonal" class="mb-4">
+                {{ t('experiments.deletedLinkedDeviceWarning') }}
+            </v-alert>
 
-                <v-form ref="formRef" v-model="valid">
-                    <v-select
-                        v-model="selectedSoftwareId"
-                        :items="softwares"
-                        item-title="name"
-                        item-value="id"
-                        :label="t('experiments.software')"
-                        :rules="[requiredRule]"
-                        variant="outlined"
-                        density="comfortable"
-                        required
-                    />
+            <v-form ref="formRef" v-model="valid">
+                <v-select
+                    v-model="selectedSoftwareId"
+                    :items="softwares"
+                    item-title="name"
+                    item-value="id"
+                    :label="t('experiments.software')"
+                    :rules="[requiredRule]"
+                    variant="outlined"
+                    density="comfortable"
+                    required
+                />
 
-                    <v-select
-                        v-model="selectedDeviceIds"
-                        :items="availableDevices"
-                        item-title="name"
-                        item-value="id"
-                        :label="t('experiments.devices')"
-                        :rules="deviceRules"
-                        :hint="
-                            selectedSoftwareId
-                                ? availableDevices.length > 0
-                                    ? ''
-                                    : t('experiments.noCompatibleDevices')
-                                : t('experiments.pickSoftwareFirst')
-                        "
-                        persistent-hint
-                        variant="outlined"
-                        density="comfortable"
-                        multiple
-                        chips
-                        :disabled="!selectedSoftwareId"
-                        required
-                    />
+                <v-select
+                    v-model="selectedDeviceIds"
+                    :items="availableDevices"
+                    item-title="name"
+                    item-value="id"
+                    :label="t('experiments.devices')"
+                    :rules="deviceRules"
+                    :hint="
+                        selectedSoftwareId
+                            ? availableDevices.length > 0
+                                ? ''
+                                : t('experiments.noCompatibleDevices')
+                            : t('experiments.pickSoftwareFirst')
+                    "
+                    persistent-hint
+                    variant="outlined"
+                    density="comfortable"
+                    multiple
+                    chips
+                    :disabled="!selectedSoftwareId"
+                    required
+                />
 
-                    <div class="mb-4">
-                        <div class="text-subtitle-1 mb-2">{{ t('experiments.commands') }}</div>
-                        <div class="d-flex flex-wrap ga-2">
-                            <v-chip v-for="command in defaultCommands" :key="command" color="info" variant="tonal">
-                                {{ command }}
-                            </v-chip>
-                        </div>
+                <div class="mb-4">
+                    <div class="text-subtitle-1 mb-2">{{ t('experiments.commands') }}</div>
+                    <div class="d-flex flex-wrap ga-2">
+                        <v-chip v-for="command in defaultCommands" :key="command" color="info" variant="tonal">
+                            {{ command }}
+                        </v-chip>
                     </div>
+                </div>
 
-                    <v-combobox
-                        v-model="outputArguments"
-                        :label="t('experiments.outputArguments')"
-                        :hint="t('experiments.outputArgumentsHint')"
-                        persistent-hint
-                        variant="outlined"
-                        density="comfortable"
-                        multiple
-                        chips
-                        closable-chips
-                    />
+                <v-combobox
+                    v-model="outputArguments"
+                    :label="t('experiments.outputArguments')"
+                    :hint="t('experiments.outputArgumentsHint')"
+                    persistent-hint
+                    variant="outlined"
+                    density="comfortable"
+                    multiple
+                    chips
+                    closable-chips
+                />
 
-                    <div class="d-flex justify-space-between align-center mt-6 mb-2">
-                        <div class="text-subtitle-1">{{ t('experiments.inputArguments') }}</div>
-                        <v-btn color="info" variant="tonal" prepend-icon="mdi-plus" @click="addInputArgument">
-                            {{ t('experiments.addInputArgument') }}
-                        </v-btn>
-                    </div>
+                <div class="d-flex justify-space-between align-center mt-6 mb-2">
+                    <div class="text-subtitle-1">{{ t('experiments.inputArguments') }}</div>
+                    <v-btn color="info" variant="tonal" prepend-icon="mdi-plus" @click="addInputArgument">
+                        {{ t('experiments.addInputArgument') }}
+                    </v-btn>
+                </div>
 
-                    <v-row v-for="(row, index) in inputArgumentRows" :key="`input-arg-${index}`" class="mb-2">
-                        <v-col cols="12" md="3">
-                            <v-text-field v-model="row.key" :label="t('experiments.argName')" variant="outlined" density="comfortable" required />
-                        </v-col>
-                        <v-col cols="12" md="2">
-                            <v-select
-                                v-model="row.type"
-                                :items="['number', 'string']"
-                                :label="t('experiments.argType')"
-                                variant="outlined"
-                                density="comfortable"
-                            />
-                        </v-col>
-                        <v-col cols="12" md="3">
-                            <v-text-field
-                                v-if="row.type === 'number'"
-                                v-model.number="row.value"
-                                type="number"
-                                :label="t('experiments.argValue')"
-                                variant="outlined"
-                                density="comfortable"
-                            />
-                            <v-text-field v-else v-model="row.value" :label="t('experiments.argValue')" variant="outlined" density="comfortable" />
-                        </v-col>
-                        <v-col cols="12" md="3">
-                            <v-text-field v-model="row.unit" :label="t('experiments.argUnit')" variant="outlined" density="comfortable" />
-                        </v-col>
-                        <v-col cols="12" md="1" class="d-flex justify-end align-center">
-                            <v-btn icon="mdi-trash-can" color="error" variant="text" @click="removeInputArgument(index)" />
-                        </v-col>
-                    </v-row>
-                </v-form>
-            </v-card-text>
+                <v-row v-for="(row, index) in inputArgumentRows" :key="`input-arg-${index}`" class="mb-2">
+                    <v-col cols="12" md="3">
+                        <v-text-field v-model="row.key" :label="t('experiments.argName')" variant="outlined" density="comfortable" required />
+                    </v-col>
+                    <v-col cols="12" md="2">
+                        <v-select
+                            v-model="row.type"
+                            :items="['number', 'string']"
+                            :label="t('experiments.argType')"
+                            variant="outlined"
+                            density="comfortable"
+                        />
+                    </v-col>
+                    <v-col cols="12" md="3">
+                        <v-text-field
+                            v-if="row.type === 'number'"
+                            v-model.number="row.value"
+                            type="number"
+                            :label="t('experiments.argValue')"
+                            variant="outlined"
+                            density="comfortable"
+                        />
+                        <v-text-field v-else v-model="row.value" :label="t('experiments.argValue')" variant="outlined" density="comfortable" />
+                    </v-col>
+                    <v-col cols="12" md="3">
+                        <v-text-field v-model="row.unit" :label="t('experiments.argUnit')" variant="outlined" density="comfortable" />
+                    </v-col>
+                    <v-col cols="12" md="1" class="d-flex justify-end align-center">
+                        <v-btn icon="mdi-trash-can" color="error" variant="text" @click="removeInputArgument(index)" />
+                    </v-col>
+                </v-row>
+            </v-form>
+        </v-card-text>
 
-            <v-card-actions v-if="!loading">
-                <v-spacer />
-                <v-btn prepend-icon="mdi-close" color="grey" variant="outlined" @click="handleCancel">
-                    {{ t('actions.cancel') }}
-                </v-btn>
-                <v-btn v-if="deletedAt" prepend-icon="mdi-restore" color="secondary" variant="elevated" @click="handleRestore">
-                    {{ t('actions.restore') }}
-                </v-btn>
-                <v-btn v-if="!deletedAt" prepend-icon="mdi-content-save" color="primary" variant="elevated" @click="handleSave">
-                    {{ t('actions.save') }}
-                </v-btn>
-            </v-card-actions>
-        </v-card>
-    </v-container>
+        <v-card-actions v-if="!loading">
+            <v-spacer />
+            <v-btn prepend-icon="mdi-close" color="grey" variant="outlined" @click="handleCancel">
+                {{ t('actions.cancel') }}
+            </v-btn>
+            <v-btn v-if="deletedAt" prepend-icon="mdi-restore" color="secondary" variant="elevated" @click="handleRestore">
+                {{ t('actions.restore') }}
+            </v-btn>
+            <v-btn v-if="!deletedAt" prepend-icon="mdi-content-save" color="primary" variant="elevated" @click="handleSave">
+                {{ t('actions.save') }}
+            </v-btn>
+        </v-card-actions>
+    </v-card>
 </template>
