@@ -37,14 +37,14 @@ const handleSyncAll = () => {
     <v-card elevation="4">
         <v-card-title class="bg-card-title d-flex align-center flex-wrap ga-3">
             <v-icon icon="mdi-server" class="mr-2" />
-            <span>{{ t('servers.title') }}</span>
+            <span>{{ t('nav.servers') }}</span>
             <v-spacer />
-            <v-switch v-model="showDeletedServers" :label="t('servers.showDeleted')" color="primary" hide-details density="compact" />
+            <v-switch v-model="showDeletedServers" :label="t('common.showDeleted')" color="primary" hide-details density="compact" />
             <v-btn color="success" variant="flat" prepend-icon="mdi-sync" @click="handleSyncAll">
-                {{ t('servers.syncServers') }}
+                {{ t('actions.syncAll') }}
             </v-btn>
             <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" @click="handleCreate">
-                {{ t('servers.addServer') }}
+                {{ t('actions.create') }}
             </v-btn>
         </v-card-title>
         <v-divider />
@@ -64,7 +64,7 @@ const handleSyncAll = () => {
             <v-switch
                 v-if="selectedServer"
                 v-model="showDeletedDevices"
-                :label="t('devices.showDeleted')"
+                :label="t('common.showDeleted')"
                 color="info"
                 hide-details
                 density="compact"

@@ -230,8 +230,9 @@ onMounted(async () => {
 
 <template>
     <v-card :loading="loading" elevation="4">
-        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-            <span class="text-h5">{{ t('experiments.editExperiment') }}</span>
+        <v-card-title class="bg-card-title">
+            <v-icon icon="mdi-pencil-box-outline" class="mr-2" />
+            <span>{{ t('actions.edit') }}</span>
         </v-card-title>
 
         <v-divider />

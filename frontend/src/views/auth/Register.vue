@@ -49,8 +49,8 @@ const handleRegister = async () => {
                 <v-text-field
                     v-model="name"
                     prepend-inner-icon="mdi-rename"
-                    :label="t('auth.name')"
-                    :rules="[rules.requiredFor(t('auth.name'))]"
+                    :label="t('auth.username')"
+                    :rules="[rules.requiredFor(t('auth.username'))]"
                     variant="outlined"
                     density="comfortable"
                     required

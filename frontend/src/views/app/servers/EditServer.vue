@@ -60,8 +60,8 @@ const handleCancel = () => {
 <template>
     <v-card :loading="loading" elevation="4">
         <v-card-title class="bg-card-title">
-            <v-icon icon="mdi-clock-outline" class="mr-2" />
-            <span>{{ t('servers.editServer') }}</span>
+            <v-icon icon="mdi-pencil-box-outline" class="mr-2" />
+            <span>{{ t('actions.edit') }}</span>
         </v-card-title>
 
         <v-divider></v-divider>
@@ -70,7 +70,7 @@ const handleCancel = () => {
             <v-form v-model="valid">
                 <v-text-field
                     v-model="formData.name"
-                    :label="t('servers.name')"
+                    :label="t('common.name')"
                     :rules="nameRules"
                     variant="outlined"
                     density="comfortable"
@@ -111,10 +111,10 @@ const handleCancel = () => {
             <v-card-actions>
                 <v-spacer></v-spacer>
                 <v-btn prepend-icon="mdi-close" color="grey" variant="outlined" @click="handleCancel">
-                    {{ t('reservations.cancel') }}
+                    {{ t('actions.cancel') }}
                 </v-btn>
                 <v-btn prepend-icon="mdi-plus" color="primary" variant="elevated" @click="handleSave">
-                    {{ t('reservations.save') }}
+                    {{ t('actions.save') }}
                 </v-btn>
             </v-card-actions>
         </v-card-text>

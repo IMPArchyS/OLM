@@ -78,8 +78,9 @@ onMounted(async () => {
 
 <template>
     <v-card :loading="loading" elevation="4">
-        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-            <span class="text-h5">{{ t('experiments.viewExperiment') }}</span>
+        <v-card-title class="bg-card-title">
+            <v-icon icon="mdi-flask" class="mr-2" />
+            <span>{{ t('experiments.viewExperiment') }}</span>
         </v-card-title>
 
         <v-divider />

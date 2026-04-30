@@ -26,7 +26,7 @@ onMounted(async () => {
     <v-card elevation="4">
         <v-card-title class="bg-card-title">
             <v-icon icon="mdi-calendar" class="mr-2" />
-            <span>{{ t('reservations.title') }}</span>
+            <span>{{ t('nav.reservations') }}</span>
         </v-card-title>
         <v-divider></v-divider>
         <v-card-text>
@@ -36,7 +36,6 @@ onMounted(async () => {
                 item-title="displayName"
                 item-value="id"
                 :label="t('reservations.selectDevice')"
-                :placeholder="t('reservations.chooseDevice')"
                 variant="outlined"
                 density="compact"
             />

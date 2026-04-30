@@ -161,8 +161,9 @@ onMounted(async () => {
 
 <template>
     <v-card elevation="4">
-        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-            <span class="text-h5">{{ t('experiments.addExperiment') }}</span>
+        <v-card-title class="bg-card-title">
+            <v-icon icon="mdi-plus-box-outline" class="mr-2" />
+            <span>{{ t('actions.create') }}</span>
         </v-card-title>
 
         <v-divider />

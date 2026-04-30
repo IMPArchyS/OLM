@@ -10,7 +10,12 @@ const { t } = useI18n();
 const { nameRules, ipRules, domainRules, portRules, createServer } = useServers();
 const toast = useToastStore();
 
-const formData = ref<CreateServerForm>({});
+const formData = ref<CreateServerForm>({
+    name: '',
+    ip_address: '',
+    api_domain: '',
+    port: 0,
+});
 
 const valid = ref(false);
 
@@ -30,15 +35,20 @@ const handleCreate = async () => {
 
 const handleCancel = () => {
     router.push({ name: 'servers' });
-    formData.value = {};
+    formData.value = {
+        name: '',
+        ip_address: '',
+        api_domain: '',
+        port: 0,
+    };
 };
 </script>
 
 <template>
     <v-card elevation="4">
         <v-card-title class="bg-card-title">
-            <v-icon icon="mdi-clock-outline" class="mr-2" />
-            <span>{{ t('servers.addServer') }}</span>
+            <v-icon icon="mdi-plus-box-outline" class="mr-2" />
+            <span>{{ t('actions.create') }}</span>
         </v-card-title>
 
         <v-divider></v-divider>
@@ -47,7 +57,7 @@ const handleCancel = () => {
             <v-form v-model="valid">
                 <v-text-field
                     v-model="formData.name"
-                    :label="t('servers.name')"
+                    :label="t('common.name')"
                     :rules="nameRules"
                     variant="outlined"
                     density="comfortable"
@@ -86,10 +96,10 @@ const handleCancel = () => {
         <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn prepend-icon="mdi-close" color="grey" variant="outlined" @click="handleCancel">
-                {{ t('reservations.cancel') }}
+                {{ t('actions.cancel') }}
             </v-btn>
             <v-btn prepend-icon="mdi-plus" color="primary" variant="elevated" @click="handleCreate">
-                {{ t('servers.addServer') }}
+                {{ t('actions.create') }}
             </v-btn>
         </v-card-actions>
     </v-card>

@@ -127,12 +127,12 @@ defineExpose({ handleSyncAll });
     <v-data-table
         :headers="[
             {
-                title: t('servers.id'),
+                title: t('common.id'),
                 key: 'id',
                 sortable: true,
             },
             {
-                title: t('servers.name'),
+                title: t('common.name'),
                 key: 'name',
                 sortable: true,
             },
@@ -159,7 +159,7 @@ defineExpose({ handleSyncAll });
                 key: 'enabled',
             },
             {
-                title: t('servers.actions'),
+                title: t('common.actions'),
                 key: 'actions',
                 sortable: false,
                 align: 'center' as const,
@@ -167,7 +167,6 @@ defineExpose({ handleSyncAll });
         ]"
         :items="filteredServers"
         :loading="loading"
-        :loading-text="t('servers.loadingServers')"
         :row-props="({ item }) => ({ class: item.deleted_at ? 'text-error' : '' })"
         item-value="id"
     >
@@ -200,7 +199,5 @@ defineExpose({ handleSyncAll });
             <v-btn v-if="!item.deleted_at" icon="mdi-trash-can" size="small" variant="text" color="error" @click="handleDelete(item)"></v-btn>
             <v-btn v-if="item.deleted_at" icon="mdi-restore" size="small" variant="text" color="secondary" @click="handleRestore(item)"></v-btn>
         </template>
-
     </v-data-table>
-
 </template>

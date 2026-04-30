@@ -40,14 +40,13 @@ watch(
     <v-data-table
         v-if="selectedServer"
         :headers="[
-            { title: t('devices.id'), key: 'id', sortable: true },
-            { title: t('devices.name'), key: 'name', sortable: true },
+            { title: t('common.id'), key: 'id', sortable: true },
+            { title: t('common.name'), key: 'name', sortable: true },
             { title: t('devices.type'), key: 'device_type.name', sortable: true },
             { title: t('devices.software'), key: 'software', sortable: false },
         ]"
         :items="filteredDevices"
         :loading="loading"
-        :loading-text="t('devices.loadingDevices')"
         :row-props="({ item }) => ({ class: item.deleted_at ? 'text-error' : '' })"
         item-value="id"
     >
@@ -56,7 +55,5 @@ watch(
                 {{ software.name }}
             </v-chip>
         </template>
-
     </v-data-table>
-
 </template>

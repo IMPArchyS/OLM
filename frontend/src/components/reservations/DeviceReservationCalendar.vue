@@ -37,7 +37,7 @@ onMounted(() => {
         <v-dialog v-model="isModalOpen" max-width="600px">
             <v-card>
                 <v-card-title>
-                    {{ editingReservation ? $t('reservations.edit') : $t('reservations.new') }}
+                    {{ editingReservation ? $t('actions.edit') : $t('actions.create') }}
                 </v-card-title>
                 <v-card-text>
                     <v-form @submit.prevent="saveReservation">

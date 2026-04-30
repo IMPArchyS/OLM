@@ -268,7 +268,7 @@ onMounted(async () => {
     <v-card elevation="4">
         <v-card-title class="bg-card-title d-flex align-center">
             <v-icon icon="mdi-file-document-outline" class="mr-2" />
-            <span>{{ t('reports.title') }}</span>
+            <span>{{ t('nav.reports') }}</span>
             <v-spacer />
             <v-switch v-if="canReadAll" v-model="showAllLogs" color="primary" density="compact" hide-details :label="t('reports.showAll')" />
         </v-card-title>

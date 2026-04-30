@@ -56,14 +56,14 @@ const handleRegister = () => {
                     <template v-slot:prepend>
                         <v-icon>mdi-account-edit</v-icon>
                     </template>
-                    <v-list-item-title>{{ t('profile.updateProfile') }}</v-list-item-title>
+                    <v-list-item-title>{{ t('auth.updateProfile') }}</v-list-item-title>
                 </v-list-item>
 
                 <v-list-item @click="handleUpdatePassword">
                     <template v-slot:prepend>
                         <v-icon>mdi-lock-reset</v-icon>
                     </template>
-                    <v-list-item-title>{{ t('profile.updatePassword') }}</v-list-item-title>
+                    <v-list-item-title>{{ t('auth.updatePassword') }}</v-list-item-title>
                 </v-list-item>
 
                 <v-divider />
@@ -73,7 +73,7 @@ const handleRegister = () => {
                         <v-icon color="error">mdi-logout</v-icon>
                     </template>
                     <v-list-item-title style="color: rgb(var(--v-theme-error))">
-                        {{ t('profile.logOut') }}
+                        {{ t('auth.logOut') }}
                     </v-list-item-title>
                 </v-list-item>
             </v-list>

@@ -39,7 +39,7 @@ onMounted(() => {
             <v-form @submit.prevent="handleProfileUpdate">
                 <v-text-field
                     v-model="username"
-                    :label="t('auth.name')"
+                    :label="t('auth.username')"
                     type="text"
                     class="mb-4"
                     variant="outlined"

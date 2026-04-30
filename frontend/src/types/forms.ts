@@ -19,10 +19,10 @@ export interface ReservationForm {
 }
 
 export interface CreateServerForm {
-    name?: string;
-    ip_address?: string;
-    api_domain?: string;
-    port?: number;
+    name: string;
+    ip_address: string;
+    api_domain: string;
+    port: number;
 }
 
 export interface EditServerForm {

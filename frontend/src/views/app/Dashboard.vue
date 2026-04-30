@@ -136,7 +136,7 @@ onUnmounted(() => {
         <v-card-title class="bg-card-title dashboard-title-bar">
             <div class="dashboard-title-left">
                 <v-icon icon="mdi-view-dashboard" class="mr-2" />
-                <span>{{ t('dashboard.title') }}</span>
+                <span>{{ t('nav.dashboard') }}</span>
             </div>
             <div v-if="activeReservation" class="dashboard-title-chips">
                 <v-chip size="small" color="success" variant="tonal" prepend-icon="mdi-check-circle">

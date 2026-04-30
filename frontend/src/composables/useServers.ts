@@ -10,7 +10,7 @@ export function useServers() {
     const error = ref<string | null>(null);
 
     const { t } = useI18n();
-    const nameRules = [(v: string) => !!v || `${t('servers.name')} ${t('validation.required')}`];
+    const nameRules = [(v: string) => !!v || `${t('common.name')} ${t('validation.required')}`];
 
     const ipRules = [
         (v: string) => !!v || `${t('servers.ipAddress')} ${t('validation.required')}`,

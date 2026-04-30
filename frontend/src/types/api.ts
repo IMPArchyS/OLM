@@ -81,24 +81,18 @@ export interface ExperimentLog {
     server_name?: string;
     device_name?: string;
     software_name?: string;
-    run: ExperimentRun | null;
+    run: { input_history: ExperimentHistoryItem[]; output_history: Record<string, unknown>[] } | null;
     started_at: string | null;
     finished_at: string | null;
     finish_reason: FinishReason;
-    modified_at?: string;
     deleted_at?: string | null;
-}
-
-export interface ExperimentRun {
-    input_history: ExperimentHistoryItem[];
-    output_history: Record<string, any>[];
 }
 
 export type FinishReason = 'n/a' | 'user_stop' | 'simulation_time_reached' | 'device_timeout' | 'exception_error';
 
 export interface ExperimentHistoryItem {
     command: Command;
-    input_args: Record<string, any>;
+    input_args: Record<string, unknown>;
 }
 
 export interface Step {

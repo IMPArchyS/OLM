@@ -23,11 +23,11 @@ const filteredExperiments = computed(() => {
 });
 
 const headers = computed(() => [
-    { title: t('experiments.id'), key: 'id', sortable: true },
+    { title: t('common.id'), key: 'id', sortable: true },
     { title: t('experiments.software'), key: 'software', sortable: true },
     { title: t('experiments.devices'), key: 'devices', sortable: false },
     { title: t('experiments.commands'), key: 'commands', sortable: false },
-    { title: t('experiments.actions'), key: 'actions', sortable: false, align: 'center' as const },
+    { title: t('common.actions'), key: 'actions', sortable: false, align: 'center' as const },
 ]);
 
 onMounted(async () => {
@@ -82,11 +82,11 @@ const handleRestore = async (item: Experiment) => {
     <v-card elevation="4">
         <v-card-title class="bg-card-title d-flex align-center flex-wrap ga-3">
             <v-icon icon="mdi-flask" class="mr-2" />
-            <span>{{ t('experiments.title') }}</span>
+            <span>{{ t('nav.experiments') }}</span>
             <v-spacer />
-            <v-switch v-model="showDeletedExperiments" :label="t('experiments.showDeleted')" color="info" hide-details density="compact" />
+            <v-switch v-model="showDeletedExperiments" :label="t('common.showDeleted')" color="info" hide-details density="compact" />
             <v-btn color="primary" variant="flat" prepend-icon="mdi-plus" @click="handleCreate">
-                {{ t('experiments.addExperiment') }}
+                {{ t('actions.create') }}
             </v-btn>
         </v-card-title>
         <v-divider />
@@ -95,7 +95,6 @@ const handleRestore = async (item: Experiment) => {
             :headers="headers"
             :items="filteredExperiments"
             :loading="loading"
-            :loading-text="t('experiments.loading')"
             :row-props="({ item }) => ({ class: item.deleted_at ? 'text-error' : '' })"
             item-value="id"
         >

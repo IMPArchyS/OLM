@@ -79,8 +79,9 @@ const handleBack = () => {
 </script>
 <template>
     <v-card :loading="loading" elevation="4">
-        <v-card-title class="d-flex justify-space-between align-center bg-surface-variant">
-            <span class="text-h5">{{ t('servers.viewServer') }}</span>
+        <v-card-title class="bg-card-title">
+            <v-icon icon="mdi-server" class="mr-2" />
+            <span>{{ t('servers.viewServer') }}</span>
         </v-card-title>
 
         <v-divider />
@@ -88,7 +89,7 @@ const handleBack = () => {
         <v-card-text v-if="!loading">
             <v-row class="mb-2">
                 <v-col cols="12" sm="6" md="3">
-                    <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('servers.name') }}</div>
+                    <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('common.name') }}</div>
                     <div class="text-body-1">{{ currentServer.name }}</div>
                 </v-col>
                 <v-col cols="12" sm="6" md="3">
@@ -144,7 +145,7 @@ const handleBack = () => {
                 {{ t('servers.devices') + ': ' + currentServer.name }}
             </span>
             <v-spacer />
-            <v-switch v-model="showDeletedDevices" :label="t('devices.showDeleted')" color="info" hide-details density="compact" />
+            <v-switch v-model="showDeletedDevices" :label="t('common.showDeleted')" color="info" hide-details density="compact" />
         </div>
         <v-divider />
         <DeviceBrowser :selected-server="currentServer" :show-deleted="showDeletedDevices" />

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { apiClient } from '@/lib/apiClient';
-import { type User, type AuthResponse, type OauthCredentials, type OauthProvider, type Permision } from '@/types/authTypes';
+import { type User, type AuthResponse, type OauthCredentials, type OauthProvider } from '@/types/authTypes';
 import type { LoginForm, RegisterForm } from '@/types/forms';
 import router from '@/router';
 
@@ -38,13 +38,10 @@ export const useAuthStore = defineStore('auth', () => {
             const payload = parseJwt(newAccessToken);
             if (payload) {
                 const parsedUserId = Number(payload.sub);
-                const parsedRoleId = Number(payload.role_id);
                 user.value = {
                     id: Number.isFinite(parsedUserId) ? parsedUserId : 0,
                     username: payload.username,
                     name: payload.name,
-                    admin: payload.admin,
-                    role_id: Number.isFinite(parsedRoleId) ? parsedRoleId : 0,
                 };
             }
         } else {
