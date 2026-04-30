@@ -187,6 +187,8 @@ export default {
         next_reservation: 'Next Reservation',
         no_reservations: 'No reservations scheduled',
         create_reservation: 'Create Reservation',
+        waiting_title: 'Hang tight!',
+        waiting_body: 'Your next reservation is coming up. Experiment controls will appear automatically once it starts.',
         started: 'Started',
         starts: 'Starts',
         ends: 'Ends',

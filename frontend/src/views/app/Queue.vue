@@ -52,6 +52,19 @@ onMounted(async () => {
 });
 
 const addToQueue = async () => {
+    console.log(
+        JSON.stringify(
+            {
+                ...formData.value,
+                device_id: resolvedDeviceId.value,
+                output_arguments: selectedExperiment.value?.output_arguments ?? [],
+            },
+            null,
+            2,
+        ),
+    );
+    toast.info('DEBUG - Testing');
+    return;
     const result = await queueSelectedExperiment({
         ...formData.value,
         device_id: resolvedDeviceId.value,

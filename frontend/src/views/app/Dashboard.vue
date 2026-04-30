@@ -176,11 +176,15 @@ onUnmounted(() => {
                     :resolving-camera-target="resolvingCameraTarget"
                 />
             </div>
-            <div v-else style="text-align: center; padding: 32px 16px">
-                <p style="font-size: 18px; margin-bottom: 16px">
-                    {{ t('dashboard.no_reservations') }}
-                </p>
-                <v-btn @click="goToReservations" color="primary" variant="elevated">
+            <div v-else-if="nextReservation" class="dashboard-waiting">
+                <v-icon icon="mdi-timer-sand" size="52" color="info" class="mb-3" />
+                <p class="text-h6 mb-2">{{ t('dashboard.waiting_title') }}</p>
+                <p class="text-body-1 text-medium-emphasis">{{ t('dashboard.waiting_body') }}</p>
+            </div>
+            <div v-else class="dashboard-empty">
+                <v-icon icon="mdi-calendar-blank-outline" size="52" color="on-surface-variant" class="mb-3" />
+                <p class="text-h6 mb-2">{{ t('dashboard.no_reservations') }}</p>
+                <v-btn class="mt-2" color="primary" variant="elevated" prepend-icon="mdi-calendar-plus" @click="goToReservations">
                     {{ t('dashboard.create_reservation') }}
                 </v-btn>
             </div>
@@ -208,5 +212,15 @@ onUnmounted(() => {
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
+}
+
+.dashboard-waiting,
+.dashboard-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 16px;
+    text-align: center;
 }
 </style>

@@ -160,8 +160,11 @@ const layout = computed(() => {
 });
 
 const chartStyle = computed(() => {
+    if (props.fillContainer) {
+        return { height: '100%' };
+    }
     return {
-        height: props.fillContainer ? '100%' : `${props.height}px`,
+        height: `${props.height}px`,
         minHeight: `${props.height}px`,
     };
 });

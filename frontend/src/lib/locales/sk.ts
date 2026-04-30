@@ -266,6 +266,10 @@ export default {
         restore: 'Obnoviť',
         sync: 'Synchronizovať',
     },
+    dashboard: {
+        waiting_title: 'Chvíľku strpenia!',
+        waiting_body: 'Vaša ďalšia rezervácia začína čoskoro. Ovládacie prvky experimentu sa zobrazia automaticky po jej začatí.',
+    },
     users: {
         title: 'Používatelia',
     },

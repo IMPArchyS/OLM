@@ -132,14 +132,14 @@ onBeforeUnmount(() => {
 .device-animation-panel {
     width: 100%;
     height: 100%;
-    min-height: 260px;
+    min-height: 0;
 }
 
 .device-animation-canvas-shell {
     position: relative;
     width: 100%;
     height: 100%;
-    min-height: 260px;
+    min-height: 0;
     overscroll-behavior: contain;
     border-radius: 10px;
     overflow: hidden;

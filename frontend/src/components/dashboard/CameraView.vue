@@ -35,6 +35,10 @@ const toggleColor = computed(() => {
     return isStreaming.value ? 'error' : 'primary';
 });
 
+const toggleIcon = computed(() => {
+    return isStreaming.value ? 'mdi-video-off' : 'mdi-video';
+});
+
 watch(remoteStream, (stream) => {
     if (videoRef.value) {
         videoRef.value.srcObject = stream;
@@ -136,8 +140,10 @@ onBeforeUnmount(() => {
                 <v-btn
                     :color="toggleColor"
                     :size="props.compact ? 'small' : 'default'"
+                    :prepend-icon="toggleIcon"
                     :loading="loading"
                     :disabled="!canToggle"
+                    block
                     @click="handleToggleStream"
                 >
                     {{ toggleLabel }}
@@ -171,28 +177,16 @@ onBeforeUnmount(() => {
 }
 
 .camera-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
+    margin-top: 8px;
+    flex-shrink: 0;
 }
 
 .camera-video {
     width: 100%;
     height: 100%;
-    min-height: 240px;
+    min-height: 0;
     border-radius: 8px;
     background: #000;
     object-fit: contain;
-}
-
-.camera-view--compact .camera-video {
-    min-height: 180px;
-}
-
-@media (max-width: 600px) {
-    .camera-controls :deep(.v-btn) {
-        width: 100%;
-    }
 }
 </style>
