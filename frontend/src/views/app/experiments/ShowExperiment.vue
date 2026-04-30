@@ -90,13 +90,10 @@ onMounted(async () => {
                     {{ t('experiments.deletedLinkedDeviceWarning') }}
                 </v-alert>
 
-                <v-text-field
-                    :model-value="experiment.software?.name || t('experiments.noSoftware')"
-                    :label="t('experiments.software')"
-                    variant="outlined"
-                    density="comfortable"
-                    readonly
-                />
+                <div class="mb-4">
+                    <div class="text-subtitle-2 text-medium-emphasis mb-1">{{ t('experiments.software') }}</div>
+                    <div class="text-body-1">{{ experiment.software?.name || t('experiments.noSoftware') }}</div>
+                </div>
 
                 <div class="mb-4">
                     <div class="text-subtitle-1 mb-2">{{ t('experiments.commands') }}</div>

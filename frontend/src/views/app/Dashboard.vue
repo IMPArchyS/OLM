@@ -5,8 +5,6 @@ import { useI18n } from 'vue-i18n';
 import type { Device, DeviceType, Reservation } from '@/types/api';
 import { apiClient } from '@/lib/apiClient';
 import ExperimentSandbox from '@/components/experiments/ExperimentSandbox.vue';
-import { useServers } from '@/composables/useServers';
-import { useDevices } from '@/composables/useDevices';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -18,9 +16,6 @@ const resolvingCameraTarget = ref(false);
 const cameraDeviceName = ref('');
 const cameraServerId = ref(0);
 const reservationDeviceType = ref<DeviceType | null>(null);
-
-const { servers, fetchServers } = useServers();
-const { devices, fetchDevicesByServer, fetchDevices } = useDevices();
 
 let refreshInterval: number | null = null;
 let reservationRefreshInterval: number | null = null;
@@ -79,52 +74,15 @@ const resolveCameraTarget = async (deviceId: number): Promise<void> => {
     resolvingCameraTarget.value = true;
 
     try {
-        let matchedDevice: Device | null = null;
-
-        if (servers.value.length === 0) {
-            await fetchServers();
-        }
-
-        for (const server of servers.value) {
-            await fetchDevicesByServer(server.id);
-            const candidate = devices.value.find((device) => device.id === deviceId);
-
-            if (candidate) {
-                matchedDevice = candidate;
-                cameraDeviceName.value = matchedDevice.name;
-                cameraServerId.value = server.id;
-                break;
-            }
-        }
-
-        if (!matchedDevice) {
-            cameraDeviceName.value = '';
-            cameraServerId.value = 0;
-            reservationDeviceType.value = null;
-            return;
-        }
-
-        reservationDeviceType.value = matchedDevice.device_type ?? null;
-        if (reservationDeviceType.value?.visual_config) {
-            return;
-        }
-
-        const listFetchResult = await fetchDevices();
-        if (listFetchResult.success) {
-            const fromAllDevices = devices.value.find((device) => device.id === deviceId);
-            if (fromAllDevices?.device_type) {
-                reservationDeviceType.value = fromAllDevices.device_type;
-            }
-        }
-
-        if (reservationDeviceType.value?.visual_config) {
-            return;
-        }
-
         const response = await apiClient.get<Device>(`/device/${deviceId}/`);
-        reservationDeviceType.value = response.data.device_type ?? reservationDeviceType.value;
+        const device = response.data;
+        cameraDeviceName.value = device.name;
+        cameraServerId.value = device.server_id;
+        reservationDeviceType.value = device.device_type ?? null;
     } catch (e) {
         console.error('Failed to resolve camera target from reservation device_id:', e);
+        cameraDeviceName.value = '';
+        cameraServerId.value = 0;
         reservationDeviceType.value = null;
     } finally {
         resolvingCameraTarget.value = false;
@@ -175,85 +133,77 @@ onUnmounted(() => {
 
 <template>
     <v-card>
-        <v-card-title class="bg-card-title">
-            <v-icon icon="mdi-view-dashboard" class="mr-2" />
-            <span>{{ t('dashboard.title') }}</span>
+        <v-card-title class="bg-card-title dashboard-title-bar">
+            <div class="dashboard-title-left">
+                <v-icon icon="mdi-view-dashboard" class="mr-2" />
+                <span>{{ t('dashboard.title') }}</span>
+            </div>
+            <div v-if="activeReservation" class="dashboard-title-chips">
+                <v-chip size="small" color="success" variant="tonal" prepend-icon="mdi-check-circle">
+                    {{ t('dashboard.active_reservation') }}
+                </v-chip>
+                <v-chip size="small" color="success" variant="tonal" prepend-icon="mdi-clock-start">
+                    {{ t('dashboard.started') }}: {{ formatDateTime(activeReservation.start) }}
+                </v-chip>
+                <v-chip size="small" color="success" variant="tonal" prepend-icon="mdi-clock-end">
+                    {{ t('dashboard.ends') }}: {{ formatDateTime(activeReservation.end) }}
+                </v-chip>
+            </div>
+            <div v-else-if="nextReservation" class="dashboard-title-chips">
+                <v-chip size="small" color="info" variant="tonal" prepend-icon="mdi-clock-outline">
+                    {{ t('dashboard.next_reservation') }}
+                </v-chip>
+                <v-chip size="small" color="info" variant="tonal" prepend-icon="mdi-clock-start">
+                    {{ t('dashboard.starts') }}: {{ formatDateTime(nextReservation.start) }}
+                </v-chip>
+                <v-chip size="small" color="info" variant="tonal" prepend-icon="mdi-clock-end">
+                    {{ t('dashboard.ends') }}: {{ formatDateTime(nextReservation.end) }}
+                </v-chip>
+            </div>
         </v-card-title>
         <v-divider></v-divider>
-        <v-card-text>
+        <v-card-text class="pt-0">
             <div v-if="loading" style="display: flex; justify-content: center; align-items: center; padding: 32px">
                 <v-progress-circular indeterminate color="primary" size="64" />
             </div>
-            <div v-else class="dashboard-content">
-                <div v-if="activeReservation">
-                    <v-alert type="success" variant="tonal" density="compact" class="dashboard-reservation-alert">
-                        <div class="dashboard-reservation-row">
-                            <span class="text-body-2 font-weight-medium">{{ t('dashboard.active_reservation') }}</span>
-                            <div class="dashboard-reservation-meta">
-                                <v-chip size="small" variant="text" prepend-icon="mdi-clock-start">
-                                    {{ t('dashboard.started') }}: {{ formatDateTime(activeReservation.start) }}
-                                </v-chip>
-                                <v-chip size="small" variant="text" prepend-icon="mdi-clock-end">
-                                    {{ t('dashboard.ends') }}: {{ formatDateTime(activeReservation.end) }}
-                                </v-chip>
-                            </div>
-                        </div>
-                    </v-alert>
-                    <ExperimentSandbox
-                        :key="activeReservation.id"
-                        :reservation="activeReservation"
-                        :device-type="reservationDeviceType"
-                        :camera-device-name="cameraDeviceName"
-                        :camera-server-id="cameraServerId"
-                        :resolving-camera-target="resolvingCameraTarget"
-                    />
-                </div>
-                <v-alert v-else-if="nextReservation" type="info" variant="tonal" density="compact" class="dashboard-reservation-alert">
-                    <div class="dashboard-reservation-row">
-                        <span class="text-body-2 font-weight-medium">{{ t('dashboard.next_reservation') }}</span>
-                        <div class="dashboard-reservation-meta">
-                            <v-chip size="small" variant="text" prepend-icon="mdi-clock-start">
-                                {{ t('dashboard.starts') }}: {{ formatDateTime(nextReservation.start) }}
-                            </v-chip>
-                            <v-chip size="small" variant="text" prepend-icon="mdi-clock-end">
-                                {{ t('dashboard.ends') }}: {{ formatDateTime(nextReservation.end) }}
-                            </v-chip>
-                        </div>
-                    </div>
-                </v-alert>
-                <div v-else style="text-align: center; padding: 32px 0">
-                    <p style="font-size: 18px; margin-bottom: 16px">
-                        {{ t('dashboard.no_reservations') }}
-                    </p>
-                    <v-btn @click="goToReservations" color="primary" variant="elevated">
-                        {{ t('dashboard.create_reservation') }}
-                    </v-btn>
-                </div>
+            <div v-else-if="activeReservation">
+                <ExperimentSandbox
+                    :key="activeReservation.id"
+                    :reservation="activeReservation"
+                    :device-type="reservationDeviceType"
+                    :camera-device-name="cameraDeviceName"
+                    :camera-server-id="cameraServerId"
+                    :resolving-camera-target="resolvingCameraTarget"
+                />
+            </div>
+            <div v-else style="text-align: center; padding: 32px 16px">
+                <p style="font-size: 18px; margin-bottom: 16px">
+                    {{ t('dashboard.no_reservations') }}
+                </p>
+                <v-btn @click="goToReservations" color="primary" variant="elevated">
+                    {{ t('dashboard.create_reservation') }}
+                </v-btn>
             </div>
         </v-card-text>
     </v-card>
 </template>
 
 <style scoped>
-.dashboard-content {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.dashboard-reservation-alert {
-    margin-bottom: 2px;
-}
-
-.dashboard-reservation-row {
+.dashboard-title-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
     flex-wrap: wrap;
+    gap: 8px;
+    padding-block: 10px;
 }
 
-.dashboard-reservation-meta {
+.dashboard-title-left {
+    display: flex;
+    align-items: center;
+}
+
+.dashboard-title-chips {
     display: flex;
     align-items: center;
     gap: 6px;

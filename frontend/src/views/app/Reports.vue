@@ -189,7 +189,7 @@ const estimateSimulationTime = (log: ExperimentLog): number | null => {
     if (times.length === 0) return null;
     const minTime = Math.min(...times);
     const maxTime = Math.max(...times);
-    const duration = maxTime - minTime;
+    const duration = maxTime - minTime + 1;
     return Number((duration > 0 ? duration : maxTime).toFixed(3));
 };
 
@@ -445,6 +445,7 @@ onMounted(async () => {
 
 .input-entry-card {
     background: rgba(var(--v-theme-surface-variant), 0.2);
+    border-color: rgba(var(--v-theme-on-surface), 0.18) !important;
 }
 
 .input-arg-grid {

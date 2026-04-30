@@ -302,6 +302,21 @@ const handleLayoutUpdate = (layout: Layout) => {
 watch(panelLayout, persistLayoutState, { deep: true });
 watch(panelVisibility, persistLayoutState, { deep: true });
 
+// ! TODO: remove debug toasts once WebSocket/stream reporting is stable
+watch(isSocketOnline, (online, wasOnline) => {
+    if (wasOnline !== undefined) {
+        online ? toast.info('WebSocket online.') : toast.warning('WebSocket offline. Pulling stream buffer.');
+    }
+});
+
+watch(statusMessage, (msg) => {
+    if (msg) toast.info(msg);
+});
+
+watch(warningMessage, (msg) => {
+    if (msg) toast.warning(msg);
+});
+
 panelLayout.value = mergeLayoutWithMeta(panelLayout.value);
 
 useResizeObserver(gridContainerRef, (entries) => {
@@ -392,9 +407,8 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 </script>
 
 <template>
-    <v-card class="mt-4 sandbox-shell" variant="flat">
+    <v-card class="sandbox-shell" variant="flat">
         <div class="sandbox-toolbar">
-            <span class="text-h6">{{ t('dashboard.ongoing_experiment') }}</span>
             <div class="sandbox-toolbar-controls sandbox-no-drag">
                 <div class="sandbox-toolbar-toggles">
                     <v-checkbox
@@ -428,20 +442,6 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
             </v-alert>
 
             <template v-else>
-                <div class="sandbox-debug-row" aria-live="polite">
-                    <v-alert type="info" variant="tonal" density="compact" class="sandbox-debug-alert mb-0">
-                        <div class="text-caption">{{ isSocketOnline ? 'WebSocket online.' : 'WebSocket offline. Pulling stream buffer.' }}</div>
-                    </v-alert>
-
-                    <v-alert v-if="statusMessage" type="info" variant="tonal" density="compact" class="sandbox-debug-alert mb-0">
-                        <div class="text-caption">{{ statusMessage }}</div>
-                    </v-alert>
-
-                    <v-alert v-if="warningMessage" type="warning" variant="tonal" density="compact" class="sandbox-debug-alert mb-0">
-                        <div class="text-caption">{{ warningMessage }}</div>
-                    </v-alert>
-                </div>
-
                 <v-alert v-if="visiblePanelLayout.length === 0" density="compact" variant="tonal" type="info" class="mb-2">
                     No panels enabled. Use panel controls to toggle panels on.
                 </v-alert>
@@ -481,6 +481,14 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                                         <v-icon :icon="panelIcons[itemPanelId(item.i)]" size="18" />
                                         <span class="text-subtitle-1">{{ panelTitles[itemPanelId(item.i)] }}</span>
                                     </div>
+                                    <v-btn
+                                        icon="mdi-close"
+                                        size="x-small"
+                                        variant="text"
+                                        density="compact"
+                                        class="sandbox-no-drag"
+                                        @click="setPanelVisibility(itemPanelId(item.i), false)"
+                                    />
                                 </div>
 
                                 <v-card-text class="sandbox-section-body d-flex flex-column grow">
@@ -554,10 +562,10 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 .sandbox-toolbar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     flex-wrap: wrap;
-    gap: 8px 12px;
-    margin-bottom: 8px;
+    gap: 4px 8px;
+    margin-bottom: 4px;
 }
 
 .sandbox-body {
@@ -589,27 +597,8 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
     min-height: 22px;
 }
 
-.sandbox-debug-alert {
-    flex: 1 1 240px;
-    min-width: 0;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-}
-
-.sandbox-debug-alert :deep(.v-alert__content) {
-    font-size: 12px;
-    line-height: 1.25;
-}
-
 .sandbox-reservation-alert :deep(.v-alert__content) {
     font-size: 13px;
-}
-
-.sandbox-debug-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 8px;
 }
 
 .sandbox-grid-host {
@@ -637,6 +626,7 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 .sandbox-section-header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 10px 12px;
     border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.12);
     cursor: move;
@@ -684,10 +674,6 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
 @media (max-width: 960px) {
     .sandbox-toolbar-controls {
         justify-content: flex-start;
-        flex-basis: 100%;
-    }
-
-    .sandbox-debug-alert {
         flex-basis: 100%;
     }
 

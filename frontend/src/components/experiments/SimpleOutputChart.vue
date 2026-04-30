@@ -250,6 +250,10 @@ onBeforeUnmount(() => {
     height: 100%;
 }
 
+.simple-output-chart:not(.simple-output-chart--compact) {
+    border-color: rgba(var(--v-theme-on-surface), 0.18) !important;
+}
+
 .chart-body {
     display: flex;
     flex: 1 1 auto;

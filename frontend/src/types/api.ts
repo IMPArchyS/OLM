@@ -40,6 +40,7 @@ export interface DeviceVisualConfig {
 export interface Device {
     id: number;
     name: string;
+    server_id: number;
     maintenance_start: string;
     maintenance_end: string;
     softwares?: Software[];

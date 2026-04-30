@@ -214,7 +214,7 @@ export default {
         },
     },
     queues: {
-        title: 'Dávkovanie experimentov',
+        title: 'Fronta',
         add_to_queue: 'Pridať do fronty',
         no_experiment_found: 'Nenašli sa experimenty',
         target_strategy_title: 'Stratégia cieľového zariadenia',
