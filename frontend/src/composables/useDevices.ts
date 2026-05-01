@@ -1,17 +1,19 @@
 import { ref, computed } from 'vue';
 import type { Device } from '@/types/api';
 import { apiClient } from '../lib/apiClient';
+import { useI18n } from 'vue-i18n';
 
 export function useDevices() {
     const devices = ref<Device[]>([]);
     const availableDevices = ref<Device[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
+    const { t } = useI18n();
 
     const devicesForReservation = computed(() => {
         return availableDevices.value.map((device) => ({
             id: device.id,
-            displayName: device.name + ' | ' + device.softwares?.map((s) => s.name).join(', '),
+            displayName: device.name + ' | ' + (device.softwares?.map((s) => s.name).join(', ') ?? ''),
         }));
     });
 
@@ -29,10 +31,7 @@ export function useDevices() {
         } catch (e: any) {
             console.error('Error fetching devices:', e);
             devices.value = [];
-            return {
-                success: false,
-                message: e.response?.data?.message || 'Failed to fetch available devices',
-            };
+            return { success: false, message: t('error.fetch') };
         } finally {
             loading.value = false;
         }
@@ -48,10 +47,7 @@ export function useDevices() {
         } catch (e: any) {
             console.error('Error fetching available devices:', e);
             availableDevices.value = [];
-            return {
-                success: false,
-                message: e.response?.data?.message || 'Failed to fetch available devices',
-            };
+            return { success: false, message: t('error.fetch') };
         } finally {
             loading.value = false;
         }
@@ -67,20 +63,9 @@ export function useDevices() {
         } catch (e: any) {
             console.error('Error fetching devices for server:', e);
             devices.value = [];
-            return { success: false, message: e.response?.data?.message || 'Error fetching devices' };
+            return { success: false, message: t('error.fetch') };
         } finally {
             loading.value = false;
-        }
-    }
-
-    async function getDeviceByExperimentId(experimentId: number): Promise<Device | undefined> {
-        try {
-            const response = await apiClient.get(`/experiment/${experimentId}/devices`);
-            const devicesByExperiment = response.data as Device[];
-            return devicesByExperiment[0];
-        } catch (e) {
-            console.error(`Error fetching device for experiment ${experimentId}:`, e);
-            return undefined;
         }
     }
 
@@ -94,6 +79,5 @@ export function useDevices() {
         fetchAvailableDevices,
         fetchDevicesByServer,
         getAvailableDeviceById,
-        getDeviceByExperimentId,
     };
 }

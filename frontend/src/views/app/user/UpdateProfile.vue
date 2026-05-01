@@ -17,7 +17,7 @@ const handleProfileUpdate = async () => {
 
     const result = await authStore.updateProfile({ name: username.value });
     if (!result.success) {
-        toast.error(result.message || 'Failed');
+        toast.error(result.message || t('error.update'));
     } else {
         username.value = authStore.user?.name || username.value;
         toast.success(t('auth.updateNameSuccess'));

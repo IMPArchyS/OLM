@@ -23,6 +23,8 @@ const rules = {
     requiredFor: (fieldLabel: string) => (value: unknown) => hasValue(value) || requiredMessage(fieldLabel),
     requiredFile: (value: unknown) => hasValue(value) || requiredMessage(),
     validEmail: (value: string) => emailRegex.test(value) || i18n.global.t('validation.invalidFormat').toString(),
+    validIp: (value: string) => /^(\d{1,3}\.){3}\d{1,3}$/.test(value) || i18n.global.t('validation.invalidIpFormat').toString(),
+    validPort: (value: number) => (value > 0 && value <= 65535) || i18n.global.t('validation.invalidPortRange').toString(),
 };
 
 export default rules;

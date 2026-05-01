@@ -1,12 +1,14 @@
 import type { ExperimentLog } from '@/types/api';
 import { ref } from 'vue';
 import { apiClient } from '../lib/apiClient';
+import { useI18n } from 'vue-i18n';
 
 export function useExperimentLogs() {
     const experimentLogs = ref<ExperimentLog[]>([]);
     const userExperimentLogs = ref<ExperimentLog[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
+    const { t } = useI18n();
 
     async function fetchExperimentLogs(): Promise<{ success: boolean; message?: string }> {
         loading.value = true;
@@ -19,26 +21,20 @@ export function useExperimentLogs() {
         } catch (e: any) {
             console.error('Error fetching experimentLogs:', e);
             experimentLogs.value = [];
-            error.value = e.response?.data?.message || 'Failed to fetch available experimentLogs';
-            return {
-                success: false,
-                message: error.value || 'Failed to fetch available experimentLogs',
-            };
+            error.value = t('error.fetch');
+            return { success: false, message: error.value };
         } finally {
             loading.value = false;
         }
     }
 
     async function fetchExperimentLogsByUser(userId?: number): Promise<{ success: boolean; message?: string }> {
-        loading.value = true;
         error.value = null;
         if (!userId) {
-            error.value = 'Error fetching User id is Null';
-            return {
-                success: false,
-                message: error.value || 'Error fetching User id is Null',
-            };
+            error.value = t('error.fetch');
+            return { success: false, message: error.value };
         }
+        loading.value = true;
         try {
             const response = await apiClient.get(`/experiment_log/user/${userId}`);
             userExperimentLogs.value = response.data;
@@ -46,11 +42,8 @@ export function useExperimentLogs() {
         } catch (e: any) {
             console.error('Error fetching userExperimentLogs:', e);
             userExperimentLogs.value = [];
-            error.value = e.response?.data?.message || 'Failed to fetch available userExperimentLogs';
-            return {
-                success: false,
-                message: error.value || 'Failed to fetch available userExperimentLogs',
-            };
+            error.value = t('error.fetch');
+            return { success: false, message: error.value };
         } finally {
             loading.value = false;
         }
@@ -70,7 +63,7 @@ export function useExperimentLogs() {
             await apiClient.delete(`/experiment_log/${id}`);
             return { success: true };
         } catch (e: any) {
-            return { success: false, message: e.response?.data?.detail || 'Failed to delete log' };
+            return { success: false, message: t('error.delete') };
         }
     }
 
@@ -79,7 +72,7 @@ export function useExperimentLogs() {
             await apiClient.patch(`/experiment_log/${id}/restore`);
             return { success: true };
         } catch (e: any) {
-            return { success: false, message: e.response?.data?.detail || 'Failed to restore log' };
+            return { success: false, message: t('error.restore') };
         }
     }
 

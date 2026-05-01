@@ -28,8 +28,21 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
     (response) => response,
-    (error) => {
+    async (error) => {
         const status = error?.response?.status;
+        const originalRequest = error.config as any;
+
+        if (status === 401 && !originalRequest._retry && !originalRequest.url?.includes('auth/refresh')) {
+            originalRequest._retry = true;
+            try {
+                await authStore.refreshAccessToken();
+                originalRequest.headers.Authorization = `Bearer ${authStore.accessToken}`;
+                return apiClient(originalRequest);
+            } catch {
+                return Promise.reject(error);
+            }
+        }
+
         if (status >= 500 && status !== 501) {
             router.push({ name: 'serverError' });
         }

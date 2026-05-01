@@ -52,6 +52,12 @@ def create(db: DbSession, reservation: ReservationCreate, user: CurrentUser, _: 
     db_reservation = Reservation.model_validate(reservation)
     db_reservation.user_id = user.id
 
+    if reservation.end <= reservation.start:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Reservation end time must be after start time"
+        )
+
     duration_minutes = (reservation.end - reservation.start).total_seconds() / 60
     if duration_minutes > MAX_RESERVATION_MINUTES:
         raise HTTPException(
@@ -93,6 +99,13 @@ async def update(db: DbSession, id: int, reservation: ReservationUpdate, user: C
 
     new_start = reservation.start if reservation.start is not None else db_reservation.start
     new_end = reservation.end if reservation.end is not None else db_reservation.end
+
+    if new_end <= new_start:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Reservation end time must be after start time"
+        )
+
     duration_minutes = (new_end - new_start).total_seconds() / 60
     if duration_minutes > MAX_RESERVATION_MINUTES:
         raise HTTPException(

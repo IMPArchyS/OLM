@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { apiClient } from '../lib/apiClient';
 import type { CreateExperimentForm, EditExperimentForm, ExperimentFormData } from '@/types/forms';
 import { Command } from '@/types/api';
+import { useI18n } from 'vue-i18n';
 
 export function useExperiments() {
     const experiments = ref<Experiment[]>([]);
@@ -10,6 +11,7 @@ export function useExperiments() {
     const softwares = ref<Software[]>([]);
     const loading = ref(false);
     const error = ref<string | null>(null);
+    const { t } = useI18n();
 
     const defaultCommands: Command[] = [Command.INIT, Command.START, Command.CHANGE, Command.STOP];
 
@@ -37,10 +39,7 @@ export function useExperiments() {
         } catch (e: any) {
             console.error('Error fetching experiments:', e);
             experiments.value = [];
-            return {
-                success: false,
-                message: e.response?.data?.message || 'Failed to fetch available experiments',
-            };
+            return { success: false, message: t('error.fetch') };
         } finally {
             loading.value = false;
         }
@@ -56,10 +55,7 @@ export function useExperiments() {
         } catch (e: any) {
             console.error('Error fetching experimentsByDevice:', e);
             experimentsByDevice.value = [];
-            return {
-                success: false,
-                message: e.response?.data?.message || 'Failed to fetch available experimentsByDevice',
-            };
+            return { success: false, message: t('error.fetch') };
         } finally {
             loading.value = false;
         }
@@ -72,11 +68,8 @@ export function useExperiments() {
             await apiClient.post(`/experiment/queue`, experiment);
             return { success: true };
         } catch (e: any) {
-            console.error('Error fetching experimentsByDevice:', e);
-            return {
-                success: false,
-                message: e.response?.data?.message || 'Failed to queue experiment',
-            };
+            console.error('Error  queue Selected Experiment:', e);
+            return { success: false, message: t('error.queue') };
         } finally {
             loading.value = false;
         }
@@ -97,13 +90,12 @@ export function useExperiments() {
         try {
             const response = await apiClient.post('/experiment/', experiment);
             experiments.value.push(normalizeExperiment(response.data));
+            // TODO ask if this also refreshes the items on page
+            // await fetchExperiments();
             return { success: true };
         } catch (e: any) {
             console.error('Error creating experiment:', e);
-            return {
-                success: false,
-                message: e.response?.data?.detail || e.response?.data?.message || 'Failed to create experiment',
-            };
+            return { success: false, message: t('error.create') };
         }
     }
 
@@ -119,10 +111,7 @@ export function useExperiments() {
             return { success: true };
         } catch (e: any) {
             console.error('Error updating experiment:', e);
-            return {
-                success: false,
-                message: e.response?.data?.detail || e.response?.data?.message || 'Failed to update experiment',
-            };
+            return { success: false, message: t('error.update') };
         }
     }
 
@@ -133,10 +122,7 @@ export function useExperiments() {
             return { success: true };
         } catch (e: any) {
             console.error('Error deleting experiment:', e);
-            return {
-                success: false,
-                message: e.response?.data?.detail || e.response?.data?.message || 'Failed to delete experiment',
-            };
+            return { success: false, message: t('error.delete') };
         }
     }
 
@@ -147,10 +133,7 @@ export function useExperiments() {
             return { success: true };
         } catch (e: any) {
             console.error('Error restoring experiment:', e);
-            return {
-                success: false,
-                message: e.response?.data?.detail || e.response?.data?.message || 'Failed to restore experiment',
-            };
+            return { success: false, message: t('error.restore') };
         }
     }
 
@@ -164,10 +147,7 @@ export function useExperiments() {
         } catch (e: any) {
             console.error('Error fetching softwares:', e);
             softwares.value = [];
-            return {
-                success: false,
-                message: e.response?.data?.detail || e.response?.data?.message || 'Failed to fetch softwares',
-            };
+            return { success: false, message: t('error.fetch') };
         } finally {
             loading.value = false;
         }

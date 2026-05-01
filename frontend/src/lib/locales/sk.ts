@@ -32,6 +32,12 @@ export default {
         register: 'Registrácia zlyhala',
         auth_failed: 'Autentifikácia zlyhala',
         matchPassword: 'Heslá sa nezhodujú',
+        fetch: 'Chyba pri načítaní',
+        create: 'Chyba pri vytvorení',
+        update: 'Chyba pri aktualizácií',
+        delete: 'Chyba pri vymazaní',
+        restore: 'Chyba pri obnovení',
+        queue: 'Chyba pri dávkovaní',
     },
     validation: {
         required: 'povinné pole',
@@ -40,6 +46,7 @@ export default {
         invalidIpFormat: 'Neplatný formát IP adresy',
         invalidPortRange: 'Port musí byť medzi 1 a 65535',
         formInvalid: 'Formulár obsahuje neplatné polia',
+        endAfterStart: 'Koniec musí byť po štarte',
     },
     reservations: {
         selectDevice: 'Vyberte zariadenie',

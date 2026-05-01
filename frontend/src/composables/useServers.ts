@@ -4,6 +4,7 @@ import { apiClient } from '../lib/apiClient';
 import type { CreateServerForm, EditServerForm } from '@/types/forms';
 import { useI18n } from 'vue-i18n';
 import { useToastStore } from '@/stores/toast';
+import rules from '@/utils/validationRules';
 
 export function useServers() {
     const servers = ref<Server[]>([]);
@@ -12,22 +13,10 @@ export function useServers() {
 
     const { t } = useI18n();
     const toast = useToastStore();
-    const nameRules = [(v: string) => !!v || `${t('common.name')} ${t('validation.required')}`];
-
-    const ipRules = [
-        (v: string) => !!v || `${t('servers.ipAddress')} ${t('validation.required')}`,
-        (v: string) => {
-            const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
-            return ipPattern.test(v) || t('validation.invalidIpFormat');
-        },
-    ];
-
-    const domainRules = [(v: string) => !!v || `${t('servers.apiDomain')} ${t('validation.required')}`];
-
-    const portRules = [
-        (v: number) => !!v || `${t('servers.port')} ${t('validation.required')}`,
-        (v: number) => (v > 0 && v <= 65535) || t('validation.invalidPortRange'),
-    ];
+    const nameRules = [rules.requiredFor(t('common.name'))];
+    const ipRules = [rules.requiredFor(t('servers.ipAddress')), rules.validIp];
+    const domainRules = [rules.requiredFor(t('servers.apiDomain'))];
+    const portRules = [rules.requiredFor(t('servers.port')), rules.validPort];
 
     async function fetchServers(): Promise<{ success: boolean; message?: string }> {
         try {
@@ -37,7 +26,7 @@ export function useServers() {
         } catch (e: any) {
             console.error('Failed to fetch servers:', e);
             servers.value = [];
-            return { success: false, message: e.response?.data?.message || 'Failed to fetch servers' };
+            return { success: false, message: t('error.fetch') };
         }
     }
 
@@ -46,23 +35,8 @@ export function useServers() {
             await apiClient.patch(`/server/${server.id}`, server);
             return { success: true };
         } catch (e: any) {
-            console.error('Error creating server:', e);
-            return {
-                success: false,
-                message: e.response?.data?.message || 'Failed to create server',
-            };
-        }
-    }
-
-    async function getServer(server: Server): Promise<void> {
-        try {
-            const response = await apiClient.get(`/server/${server.id}`);
-            const index = servers.value.findIndex((s) => s.id === server.id);
-            if (index !== -1) {
-                servers.value[index] = response.data;
-            }
-        } catch (e) {
-            console.error('Error fetching server:', e);
+            console.error('Error updating server:', e);
+            return { success: false, message: t('error.update') };
         }
     }
 
@@ -83,10 +57,7 @@ export function useServers() {
             return { success: true };
         } catch (e: any) {
             console.error('Error creating server:', e);
-            return {
-                success: false,
-                message: e.response?.data?.message || 'Failed to create server',
-            };
+            return { success: false, message: t('error.create') };
         }
     }
 
@@ -97,10 +68,7 @@ export function useServers() {
             return { success: true };
         } catch (e: any) {
             console.error(`Error restoring server with id ${id}: `, e);
-            return {
-                success: false,
-                message: e.response?.data?.message || 'Failed to restore server',
-            };
+            return { success: false, message: t('error.restore') };
         }
     }
 
@@ -111,10 +79,7 @@ export function useServers() {
             return { success: true };
         } catch (e: any) {
             console.error('Error deleting server:', e);
-            return {
-                success: false,
-                message: e.response?.data?.message || 'Failed to delete server',
-            };
+            return { success: false, message: t('error.delete') };
         }
     }
 
@@ -163,7 +128,6 @@ export function useServers() {
         fetchServers,
         updateServer,
         restoreServer,
-        getServer,
         getServerById,
         syncServer,
         syncServerWithToast,

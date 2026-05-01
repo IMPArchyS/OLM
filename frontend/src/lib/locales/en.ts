@@ -32,6 +32,12 @@ export default {
         register: 'Register failed',
         auth_failed: 'Auth failed',
         matchPassword: "Passwords don't match",
+        fetch: 'Failed to load data',
+        create: 'Failed to create',
+        update: 'Failed to update',
+        delete: 'Failed to delete',
+        restore: 'Failed to restore',
+        queue: 'Failed to queue',
     },
     validation: {
         required: 'is required',
@@ -40,6 +46,7 @@ export default {
         invalidIpFormat: 'Invalid IP address format',
         invalidPortRange: 'Port must be between 1 and 65535',
         formInvalid: 'Form contains invalid fields',
+        endAfterStart: 'End time must be after start time',
     },
     reservations: {
         selectDevice: 'Select Device',

@@ -2,6 +2,11 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class User(BaseModel):
+    id: int
+    name: str
+
+
 class PermissionRequest(BaseModel):
     jwt_token: str
     permission: str

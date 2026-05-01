@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, status
+from datetime import date, datetime, timedelta
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import select
 from app.api.dependencies import DbSession
 
@@ -37,3 +38,34 @@ def get_device_software(db: DbSession, id: int):
     if not db_device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {id} not found!")
     return db_device.softwares
+
+
+@router.get("/{id}/maintenance-events")
+def get_maintenance_events(
+    db: DbSession,
+    id: int,
+    from_date: date = Query(..., alias="from"),
+    to_date: date = Query(..., alias="to"),
+):
+    db_device = db.get(Device, id)
+    if not db_device:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {id} not found!")
+
+    if not db_device.maintenance_start or not db_device.maintenance_end:
+        return []
+
+    events = []
+    current = from_date
+    while current <= to_date:
+        events.append({
+            "id": f"maintenance-{current.isoformat()}",
+            "title": "Maintenance",
+            "start": datetime.combine(current, db_device.maintenance_start).isoformat(),
+            "end": datetime.combine(current, db_device.maintenance_end).isoformat(),
+            "backgroundColor": "#ef4444",
+            "borderColor": "#dc2626",
+            "extendedProps": {"deviceId": id, "isMaintenance": True},
+        })
+        current += timedelta(days=1)
+
+    return events

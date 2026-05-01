@@ -42,14 +42,6 @@ def get_by_device_id(db: DbSession, device_id: int):
     return db_experiments
 
 
-@router.get("/{id}/devices", response_model=list[DevicePublic])
-def get_experiment_devices(db: DbSession, id: int):
-    db_experiment = db.get(Experiment, id)
-    if not db_experiment:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {id} not found!")
-    return db_experiment.devices
-
-
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, experiment: ExperimentCreate, _: AuthUser = Permission("olm.experiment.create")):
     requested_device_ids = []

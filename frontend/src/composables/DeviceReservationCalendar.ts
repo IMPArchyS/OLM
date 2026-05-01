@@ -1,5 +1,5 @@
 import { computed, ref, watch } from 'vue';
-import type { CalendarOptions, DateSelectArg, EventClickArg } from '@fullcalendar/core';
+import type { CalendarOptions, DateSelectArg, DatesSetArg, EventClickArg } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
@@ -10,7 +10,7 @@ import type { Device, Reservation } from '@/types/api';
 import type { ReservationForm } from '@/types/forms';
 import { useToastStore } from '@/stores/toast';
 import { useReservations } from '@/composables/useReservations';
-import { buildMaintenanceEvents, formatDateTimeLocal, getMaintenanceConflictMessage } from '@/composables/reservationCalendarUtils';
+import { fetchMaintenanceEvents, formatDateTimeLocal, getMaintenanceConflictMessage } from '@/composables/reservationCalendarUtils';
 
 interface Props {
     selectedDeviceId?: number | null;
@@ -28,9 +28,28 @@ export function useDeviceReservationCalendar(props: Props) {
         updateReservation,
         deleteReservation: removeReservation,
     } = useReservations();
+    const maintenanceEvents = ref<any[]>([]);
+    const currentDateRange = ref<{ start: Date; end: Date } | null>(null);
     const isModalOpen = ref(false);
     const editingReservation = ref<Reservation | null>(null);
     const reservationForm = ref<ReservationForm>({ device_id: 0, start: '', end: '' });
+
+    async function refreshMaintenanceEvents() {
+        if (!props.selectedDeviceId || !currentDateRange.value) {
+            maintenanceEvents.value = [];
+            return;
+        }
+        maintenanceEvents.value = await fetchMaintenanceEvents(
+            props.selectedDeviceId,
+            currentDateRange.value.start,
+            currentDateRange.value.end,
+        );
+    }
+
+    async function handleDatesSet(dateInfo: DatesSetArg) {
+        currentDateRange.value = { start: dateInfo.start, end: dateInfo.end };
+        await refreshMaintenanceEvents();
+    }
 
     async function refreshReservations() {
         if (!props.selectedDeviceId) {
@@ -45,8 +64,13 @@ export function useDeviceReservationCalendar(props: Props) {
     watch(
         () => props.selectedDeviceId,
         async (newDeviceId) => {
-            if (newDeviceId) await refreshReservations();
-            else reservations.value = [];
+            if (newDeviceId) {
+                await refreshReservations();
+                await refreshMaintenanceEvents();
+            } else {
+                reservations.value = [];
+                maintenanceEvents.value = [];
+            }
         },
         { immediate: true },
     );
@@ -60,7 +84,7 @@ export function useDeviceReservationCalendar(props: Props) {
             backgroundColor: undefined,
             extendedProps: { deviceId: r.device_id, isMaintenance: false },
         }));
-        return [...reservationEvents, ...buildMaintenanceEvents(props.selectedDeviceData)];
+        return [...reservationEvents, ...maintenanceEvents.value];
     });
 
     function checkMaintenanceConflict(startDate: Date, endDate: Date, messagePrefix: string) {
@@ -152,6 +176,10 @@ export function useDeviceReservationCalendar(props: Props) {
             toast.error('Cannot create reservation in the past');
             return;
         }
+        if (endDate <= startDate) {
+            toast.error(t('validation.endAfterStart'));
+            return;
+        }
         if (endDate.getTime() - startDate.getTime() > MAX_DURATION_MS) {
             toast.error('Reservation cannot be longer than 30 minutes');
             return;
@@ -209,6 +237,7 @@ export function useDeviceReservationCalendar(props: Props) {
         dayMaxEvents: true,
         weekends: true,
         events: calendarEvents.value,
+        datesSet: handleDatesSet,
         select: handleDateSelect,
         selectAllow: (selectInfo) => selectInfo.allDay || selectInfo.end.getTime() - selectInfo.start.getTime() <= MAX_DURATION_MS,
         eventClick: handleEventClick,

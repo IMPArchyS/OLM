@@ -163,7 +163,7 @@ export function useWebRtc() {
                     throw e;
                 }
 
-                response = await apiClient.post<GrantToken>(`/webrtc/${serverId}/${encodedDeviceName}/grants/refresh/`, refreshBody);
+                response = await apiClient.post<GrantToken>(`/webrtc/${serverId}/${encodedDeviceName}/grants/refresh`, refreshBody);
             }
 
             grantToken.value = response.data;

@@ -1,6 +1,4 @@
-import type { Device } from '@/types/api';
-
-const MAINTENANCE_EVENT_RANGE_DAYS = 365;
+import { apiClient } from '@/lib/apiClient';
 
 function parseMaintenanceWindow(maintenanceStart?: string, maintenanceEnd?: string) {
     if (!maintenanceStart || !maintenanceEnd) {
@@ -70,42 +68,17 @@ export function getMaintenanceConflictMessage(
     return null;
 }
 
-export function buildMaintenanceEvents(device?: Device | null) {
-    if (!device?.maintenance_start || !device?.maintenance_end) {
+export async function fetchMaintenanceEvents(deviceId: number, from: Date, to: Date): Promise<any[]> {
+    try {
+        const fromStr = from.toISOString().split('T')[0];
+        const toStr = to.toISOString().split('T')[0];
+        const response = await apiClient.get(`/device/${deviceId}/maintenance-events`, {
+            params: { from: fromStr, to: toStr },
+        });
+        return response.data;
+    } catch {
         return [];
     }
-
-    const maintenanceWindow = parseMaintenanceWindow(device.maintenance_start, device.maintenance_end);
-    if (!maintenanceWindow) {
-        return [];
-    }
-
-    const today = new Date();
-
-    return Array.from({ length: MAINTENANCE_EVENT_RANGE_DAYS * 2 }, (_, index) => {
-        const offset = index - MAINTENANCE_EVENT_RANGE_DAYS;
-        const eventDate = new Date(today);
-        eventDate.setDate(today.getDate() + offset);
-
-        const startDateTime = new Date(eventDate);
-        startDateTime.setHours(maintenanceWindow.startHour, maintenanceWindow.startMinute, 0, 0);
-
-        const endDateTime = new Date(eventDate);
-        endDateTime.setHours(maintenanceWindow.endHour, maintenanceWindow.endMinute, 0, 0);
-
-        return {
-            id: `maintenance-${offset}`,
-            title: 'Maintenance',
-            start: startDateTime.toISOString(),
-            end: endDateTime.toISOString(),
-            backgroundColor: '#ef4444',
-            borderColor: '#dc2626',
-            extendedProps: {
-                deviceId: device.id,
-                isMaintenance: true,
-            },
-        };
-    });
 }
 
 export function formatDateTimeLocal(date: Date): string {
