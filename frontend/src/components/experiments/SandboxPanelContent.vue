@@ -2,12 +2,11 @@
 import { useI18n } from 'vue-i18n';
 import type { Experiment, DeviceVisualConfig } from '@/types/api';
 import type { ExperimentFormData } from '@/types/forms';
+import type { SandboxPanelId } from '@/composables/useSandboxLayout';
 import ExperimentSelector from './ExperimentSelector.vue';
 import SimpleOutputChart from './SimpleOutputChart.vue';
 import CameraView from '@/components/dashboard/CameraView.vue';
 import DeviceAnimationPanel from './DeviceAnimationPanel.vue';
-
-type SandboxPanelId = 'control' | 'chart' | 'camera' | 'animation';
 type OutputRow = Record<string, unknown>;
 
 interface Props {

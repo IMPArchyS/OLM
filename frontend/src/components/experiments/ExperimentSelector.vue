@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth';
-import type { Command, Experiment, InputArgSpec, Step } from '@/types/api';
+import type { Command, Experiment, InputArgSpec } from '@/types/api';
 import type { ExperimentFormData } from '@/types/forms';
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, watchEffect } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useSetpointEditor } from '@/composables/useSetpointEditor';
+import SetpointEditor from './SetpointEditor.vue';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
@@ -26,18 +28,18 @@ const selectedExperimentId = ref<number | null>(null);
 const simTime = ref<number>(1);
 const sampleRate = ref<number>(1);
 const selectedCommand = ref<Command | null>(null);
-const useSetpoints = ref<boolean>(false);
-const setpointStartValue = ref<number>(0);
-const setpointSteps = ref<Step[]>([]);
 const inputArguments = ref<Record<string, InputArgSpec>>({});
 
 const selectedExperiment = computed(() => {
     return props.experiments.find((exp) => exp.id === selectedExperimentId.value) || null;
 });
 
-const inputDensity = computed(() => {
+const inputDensity = computed<'compact' | 'comfortable'>(() => {
     return props.compact ? 'compact' : 'comfortable';
 });
+
+const { useSetpoints, setpointStartValue, setpointSteps, addSetpointStep, removeSetpointStep, setpointChanges } =
+    useSetpointEditor(selectedExperiment);
 
 watch(
     () => props.experiments,
@@ -81,88 +83,22 @@ watch(
 watch(
     selectedExperiment,
     (experiment) => {
-        if (!experiment) {
-            inputArguments.value = {};
-            useSetpoints.value = false;
-            setpointStartValue.value = 0;
-            setpointSteps.value = [];
-            return;
-        }
-        inputArguments.value = Object.fromEntries(Object.entries(experiment.input_arguments).map(([key, spec]) => [key, { ...spec }]));
-        useSetpoints.value = false;
-        setpointStartValue.value = 0;
-        setpointSteps.value = [];
+        inputArguments.value = experiment
+            ? Object.fromEntries(Object.entries(experiment.input_arguments).map(([key, spec]) => [key, { ...spec }]))
+            : {};
     },
     { immediate: true },
 );
-
-watch(
-    useSetpoints,
-    (enabled) => {
-        if (!enabled) {
-            setpointStartValue.value = 0;
-            setpointSteps.value = [];
-            return;
-        }
-
-        if (setpointSteps.value.length === 0) {
-            setpointSteps.value = [
-                {
-                    duration: 0,
-                    value: 0,
-                },
-            ];
-        }
-    },
-    { immediate: true },
-);
-
-const canAddSetpointStep = computed(() => {
-    return !!selectedExperiment.value && useSetpoints.value;
-});
-
-const addSetpointStep = () => {
-    if (!canAddSetpointStep.value) {
-        return;
-    }
-
-    setpointSteps.value.push({
-        duration: 0,
-        value: 0,
-    });
-};
-
-const removeSetpointStep = (index: number) => {
-    if (setpointSteps.value.length <= 1) {
-        return;
-    }
-
-    setpointSteps.value.splice(index, 1);
-};
-
-const selectedSetpointChanges = computed<ExperimentFormData['setpoint_changes']>(() => {
-    if (!useSetpoints.value || setpointSteps.value.length === 0) {
-        return {} as Record<string, never>;
-    }
-
-    return {
-        start_value: setpointStartValue.value,
-        steps: setpointSteps.value,
-    };
-});
 
 const experimentPrimaryDevice = (e: Experiment | null) => {
-    if (!e) {
-        return null;
-    }
-
+    if (!e) return null;
     const selectedDevice = e.devices?.find((device) => device.id === props.selectedDeviceId);
     return selectedDevice ?? e.devices?.[0] ?? null;
 };
 
 const experimentTitle = (e: Experiment) => {
     const primaryDevice = experimentPrimaryDevice(e);
-    const deviceName = primaryDevice ? primaryDevice.name : 'No device';
+    const deviceName = primaryDevice ? primaryDevice.name : t('dashboard.no_device');
     return `Experiment Id: ${e.id} - ${deviceName} | ${e.software.name}`;
 };
 
@@ -171,10 +107,6 @@ const inputLabel = (key: string, spec: InputArgSpec) => {
     return spec.unit ? `${label} (${spec.unit})` : label;
 };
 
-const hasOddGridCell = computed(() => {
-    return (Object.keys(inputArguments.value).length + 2) % 2 !== 0;
-});
-
 const formData = computed<ExperimentFormData>(() => {
     return {
         user_id: authStore.user?.id ?? null,
@@ -182,7 +114,7 @@ const formData = computed<ExperimentFormData>(() => {
         command: selectedCommand.value,
         input_arguments: inputArguments.value,
         output_arguments: selectedExperiment.value?.output_arguments ?? [],
-        setpoint_changes: selectedSetpointChanges.value,
+        setpoint_changes: setpointChanges.value,
         device_id: props.selectedDeviceId ?? experimentPrimaryDevice(selectedExperiment.value)?.id ?? null,
         software_name: selectedExperiment.value?.software.name ?? null,
         simulation_time: simTime.value,
@@ -190,14 +122,9 @@ const formData = computed<ExperimentFormData>(() => {
     };
 });
 
-watch(
-    formData,
-    (newData) => {
-        emit('update:formData', newData);
-    },
-    { deep: true },
-);
-
+watchEffect(() => {
+    emit('update:formData', formData.value);
+});
 </script>
 
 <template>
@@ -231,66 +158,16 @@ watch(
                 />
             </div>
 
-            <v-checkbox
+            <SetpointEditor
                 v-if="selectedExperiment"
-                v-model="useSetpoints"
-                :label="t('dashboard.enable_setpoints')"
+                v-model:enabled="useSetpoints"
+                v-model:start-value="setpointStartValue"
+                :steps="setpointSteps"
                 :density="inputDensity"
-                class="experiment-selector__checkbox"
+                @add="addSetpointStep"
+                @remove="removeSetpointStep"
+                @update-step="(i, field, val) => (setpointSteps[i]![field] = val)"
             />
-
-            <div v-if="selectedExperiment && useSetpoints" class="experiment-selector__setpoint-box">
-                <div class="experiment-selector__setpoint-list">
-                    <div class="experiment-selector__setpoint-item experiment-selector__setpoint-item--start">
-                        <v-number-input
-                            :model-value="0"
-                            :label="`${t('dashboard.setpoint_step_duration')} #0`"
-                            variant="outlined"
-                            :density="inputDensity"
-                            disabled
-                        />
-                        <v-number-input
-                            v-model="setpointStartValue"
-                            :label="t('dashboard.setpoint_start_value')"
-                            variant="outlined"
-                            :density="inputDensity"
-                        />
-                    </div>
-
-                    <div v-for="(step, index) in setpointSteps" :key="`setpoint-step-${index}`" class="experiment-selector__setpoint-item">
-                        <v-number-input
-                            :model-value="step.duration"
-                            @update:model-value="(value) => (step.duration = Number(value ?? 0))"
-                            :label="`${t('dashboard.setpoint_step_duration')} #${index + 1}`"
-                            :min="0"
-                            variant="outlined"
-                            :density="inputDensity"
-                        />
-                        <v-number-input
-                            :model-value="step.value"
-                            @update:model-value="(value) => (step.value = Number(value ?? 0))"
-                            :label="`${t('dashboard.setpoint_step_value')} #${index + 1}`"
-                            variant="outlined"
-                            :density="inputDensity"
-                        />
-                        <div class="experiment-selector__setpoint-item-action">
-                            <v-btn
-                                color="error"
-                                variant="text"
-                                icon="mdi-trash-can"
-                                :disabled="setpointSteps.length <= 1"
-                                @click="removeSetpointStep(index)"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="experiment-selector__setpoint-action">
-                    <v-btn :disabled="!canAddSetpointStep" color="info" prepend-icon="mdi-plus" @click="addSetpointStep">
-                        {{ t('dashboard.add_setpoint_step') }}
-                    </v-btn>
-                </div>
-            </div>
 
             <div v-if="selectedExperiment" class="experiment-selector__args-grid">
                 <div v-for="(spec, key) in inputArguments" :key="key" class="experiment-selector__grid-cell">
@@ -301,13 +178,13 @@ watch(
                         variant="outlined"
                         :density="inputDensity"
                     />
-                    <v-text-field
+                    <v-number-input
                         v-else-if="spec.type === 'number'"
                         :label="inputLabel(key, spec)"
                         :model-value="Number(spec.value)"
-                        @update:model-value="(value) => (spec.value = Number(value ?? 0))"
                         variant="outlined"
                         :density="inputDensity"
+                        @update:model-value="(value) => (spec.value = Number(value ?? 0))"
                     />
                 </div>
 
@@ -315,7 +192,7 @@ watch(
                     <v-text-field v-model="simTime" :label="t('dashboard.simulation_time')" variant="outlined" :density="inputDensity" />
                 </div>
 
-                <div :class="['experiment-selector__grid-cell', { 'experiment-selector__grid-cell--orphan': hasOddGridCell }]">
+                <div class="experiment-selector__grid-cell">
                     <v-text-field v-model="sampleRate" :label="t('dashboard.sampling_rate')" variant="outlined" :density="inputDensity" />
                 </div>
             </div>
@@ -354,60 +231,18 @@ watch(
     gap: 12px;
 }
 
-.experiment-selector__checkbox {
-    margin-top: -4px;
-}
-
-.experiment-selector__setpoint-box {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    border-radius: 10px;
-    padding: 12px;
-}
-
-.experiment-selector__setpoint-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-}
-
-.experiment-selector__setpoint-item {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-    align-items: start;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid rgba(128, 128, 128, 0.3);
-}
-
-.experiment-selector__setpoint-item--start {
-    border-style: dashed;
-}
-
-.experiment-selector__setpoint-item-action {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.experiment-selector__setpoint-action {
-    display: flex;
-    justify-content: flex-start;
-}
-
 .experiment-selector__args-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
 }
 
-.experiment-selector__grid-cell {
-    min-width: 0;
+.experiment-selector__args-grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
 }
 
-.experiment-selector__grid-cell--orphan {
-    grid-column: 1 / -1;
+.experiment-selector__grid-cell {
+    min-width: 0;
 }
 
 .experiment-selector--compact :deep(.v-input) {
