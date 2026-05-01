@@ -130,9 +130,14 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    const updateProfile = async (data: any): Promise<{ success: boolean; message?: string }> => {
+    const updateProfile = async (data: { name: string }): Promise<{ success: boolean; message?: string }> => {
         try {
-            const response = await apiClient.patch<User>('auth/update-user', data);
+            const payload = {
+                jwt_token: localStorage.getItem('OLMAccessToken'),
+                ...data,
+            };
+            console.log(JSON.stringify(payload, null, 2));
+            const response = await apiClient.patch<User>('auth/update-user', payload);
             if (user.value) {
                 user.value.name = response.data.name;
             }
@@ -146,9 +151,17 @@ export const useAuthStore = defineStore('auth', () => {
         }
     };
 
-    const updatePassword = async (data: any): Promise<{ success: boolean; message?: string }> => {
+    const updatePassword = async (data: {
+        password_old: string;
+        password_new: string;
+        password_new_repeat: string;
+    }): Promise<{ success: boolean; message?: string }> => {
         try {
-            const response = await apiClient.patch<boolean>('auth/change-password', data);
+            const payload = {
+                jwt_token: localStorage.getItem('OLMAccessToken'),
+                ...data,
+            };
+            await apiClient.patch<boolean>('auth/change-password', payload);
             return { success: true };
         } catch (e: any) {
             console.error('Error updating user password:', e);

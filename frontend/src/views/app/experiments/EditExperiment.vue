@@ -3,18 +3,13 @@ import { useDevices } from '@/composables/useDevices';
 import { useExperiments } from '@/composables/useExperiments';
 import router from '@/router';
 import { useToastStore } from '@/stores/toast';
-import type { InputArgSpec } from '@/types/api';
 import type { EditExperimentForm } from '@/types/forms';
+import { buildInputArguments } from '@/utils/inputArguments';
+import type { InputArgumentRow } from '@/utils/inputArguments';
+import InputArgumentEditor from '@/components/experiments/InputArgumentEditor.vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
-
-interface InputArgumentRow {
-    key: string;
-    type: InputArgSpec['type'];
-    value: number | string;
-    unit: string;
-}
 
 const { t } = useI18n();
 const toast = useToastStore();
@@ -69,59 +64,6 @@ watch(selectedSoftwareId, (newSoftwareId, oldSoftwareId) => {
         selectedDeviceIds.value = selectedDeviceIds.value.filter((deviceId) => availableDevices.value.some((device) => device.id === deviceId));
     }
 });
-
-const addInputArgument = () => {
-    inputArgumentRows.value.push({
-        key: '',
-        type: 'number',
-        value: 0,
-        unit: '',
-    });
-};
-
-const removeInputArgument = (index: number) => {
-    inputArgumentRows.value.splice(index, 1);
-};
-
-const buildInputArguments = (): Record<string, InputArgSpec> | null => {
-    const inputArguments: Record<string, InputArgSpec> = {};
-
-    for (const row of inputArgumentRows.value) {
-        const key = row.key.trim();
-
-        if (!key) {
-            continue;
-        }
-
-        if (inputArguments[key]) {
-            toast.error(t('experiments.inputArgDuplicate'));
-            return null;
-        }
-
-        if (row.type === 'number') {
-            const numericValue = Number(row.value);
-            if (Number.isNaN(numericValue)) {
-                toast.error(t('experiments.inputArgInvalidNumber'));
-                return null;
-            }
-
-            inputArguments[key] = {
-                type: row.type,
-                value: numericValue,
-                unit: row.unit.trim(),
-            };
-            continue;
-        }
-
-        inputArguments[key] = {
-            type: row.type,
-            value: String(row.value ?? ''),
-            unit: row.unit.trim(),
-        };
-    }
-
-    return inputArguments;
-};
 
 const hydrateForm = async () => {
     loading.value = true;
@@ -186,15 +128,20 @@ const handleSave = async () => {
         return;
     }
 
-    const inputArguments = buildInputArguments();
-    if (inputArguments === null) {
+    const buildResult = buildInputArguments(inputArgumentRows.value);
+    if (buildResult.error) {
+        const errorMessages = {
+            duplicate: t('experiments.inputArgDuplicate'),
+            invalid_number: t('experiments.inputArgInvalidNumber'),
+        };
+        toast.error(errorMessages[buildResult.error]);
         return;
     }
 
     const payload: EditExperimentForm = {
         id: experimentId,
         commands: defaultCommands,
-        input_arguments: inputArguments,
+        input_arguments: buildResult.data,
         output_arguments: outputArguments.value.filter((item) => item.trim().length > 0),
         device_ids: selectedDeviceIds.value,
         software_id: Number(selectedSoftwareId.value),
@@ -299,44 +246,7 @@ onMounted(async () => {
                     closable-chips
                 />
 
-                <div class="d-flex justify-space-between align-center mt-6 mb-2">
-                    <div class="text-subtitle-1">{{ t('experiments.inputArguments') }}</div>
-                    <v-btn color="info" variant="tonal" prepend-icon="mdi-plus" @click="addInputArgument">
-                        {{ t('experiments.addInputArgument') }}
-                    </v-btn>
-                </div>
-
-                <v-row v-for="(row, index) in inputArgumentRows" :key="`input-arg-${index}`" class="mb-2">
-                    <v-col cols="12" md="3">
-                        <v-text-field v-model="row.key" :label="t('experiments.argName')" variant="outlined" density="comfortable" required />
-                    </v-col>
-                    <v-col cols="12" md="2">
-                        <v-select
-                            v-model="row.type"
-                            :items="['number', 'string']"
-                            :label="t('experiments.argType')"
-                            variant="outlined"
-                            density="comfortable"
-                        />
-                    </v-col>
-                    <v-col cols="12" md="3">
-                        <v-text-field
-                            v-if="row.type === 'number'"
-                            v-model.number="row.value"
-                            type="number"
-                            :label="t('experiments.argValue')"
-                            variant="outlined"
-                            density="comfortable"
-                        />
-                        <v-text-field v-else v-model="row.value" :label="t('experiments.argValue')" variant="outlined" density="comfortable" />
-                    </v-col>
-                    <v-col cols="12" md="3">
-                        <v-text-field v-model="row.unit" :label="t('experiments.argUnit')" variant="outlined" density="comfortable" />
-                    </v-col>
-                    <v-col cols="12" md="1" class="d-flex justify-end align-center">
-                        <v-btn icon="mdi-trash-can" color="error" variant="text" @click="removeInputArgument(index)" />
-                    </v-col>
-                </v-row>
+                <InputArgumentEditor v-model="inputArgumentRows" />
             </v-form>
         </v-card-text>
 

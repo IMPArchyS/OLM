@@ -30,7 +30,6 @@ export function useDeviceReservationCalendar(props: Props) {
     } = useReservations();
     const isModalOpen = ref(false);
     const editingReservation = ref<Reservation | null>(null);
-    const fullCalendar = ref();
     const reservationForm = ref<ReservationForm>({ device_id: 0, start: '', end: '' });
 
     async function refreshReservations() {
@@ -168,7 +167,6 @@ export function useDeviceReservationCalendar(props: Props) {
         }
         const refreshResult = await refreshReservations();
         if (!refreshResult.success) return;
-        updateCalendarEvents();
         closeModal();
     }
 
@@ -181,15 +179,7 @@ export function useDeviceReservationCalendar(props: Props) {
         }
         const refreshResult = await refreshReservations();
         if (!refreshResult.success) return;
-        updateCalendarEvents();
         closeModal();
-    }
-
-    function updateCalendarEvents() {
-        if (!fullCalendar.value) return;
-        const calendarApi = fullCalendar.value.getApi();
-        calendarApi.removeAllEvents();
-        calendarApi.addEventSource(calendarEvents.value);
     }
 
     function closeModal() {
@@ -243,7 +233,6 @@ export function useDeviceReservationCalendar(props: Props) {
         reservations,
         isModalOpen,
         editingReservation,
-        fullCalendar,
         reservationForm,
         calendarOptions,
         calendarEvents,
@@ -253,7 +242,6 @@ export function useDeviceReservationCalendar(props: Props) {
         handleEventClick,
         saveReservation,
         deleteReservation,
-        updateCalendarEvents,
         closeModal,
     };
 }

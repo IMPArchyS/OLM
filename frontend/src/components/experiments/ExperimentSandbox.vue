@@ -4,16 +4,12 @@ import { GridItem, GridLayout, type Layout } from 'grid-layout-plus';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave } from 'vue-router';
 import { Command, type DeviceType, type Reservation } from '@/types/api';
-import ExperimentSelector from './ExperimentSelector.vue';
 import type { ExperimentFormData } from '@/types/forms';
 import { useExperiments } from '@/composables/useExperiments';
 import { useReservationStream } from '@/composables/useReservationStream';
-import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
-import CameraView from '@/components/dashboard/CameraView.vue';
-import SimpleOutputChart from './SimpleOutputChart.vue';
-import DeviceAnimationPanel from './DeviceAnimationPanel.vue';
+import SandboxPanelContent from './SandboxPanelContent.vue';
 
 interface Props {
     reservation: Reservation;
@@ -30,12 +26,10 @@ const props = withDefaults(defineProps<Props>(), {
     resolvingCameraTarget: false,
 });
 
-const { t } = useI18n();
 const authStore = useAuthStore();
 const toast = useToastStore();
 const { experimentsByDevice, loading, fetchExperimentsByDevice } = useExperiments();
-const { outputHistory, statusMessage, warningMessage, activate, deactivate, sendCommand, isSocketOnline, isReservationActive } =
-    useReservationStream();
+const { outputHistory, activate, deactivate, sendCommand, isReservationActive } = useReservationStream();
 
 type SandboxPanelId = 'control' | 'chart' | 'camera' | 'animation';
 
@@ -309,21 +303,6 @@ const handleLayoutUpdate = (layout: Layout) => {
 watch(panelLayout, persistLayoutState, { deep: true });
 watch(panelVisibility, persistLayoutState, { deep: true });
 
-// ! TODO: remove debug toasts once WebSocket/stream reporting is stable
-watch(isSocketOnline, (online, wasOnline) => {
-    if (wasOnline !== undefined) {
-        online ? toast.info('WebSocket online.') : toast.warning('WebSocket offline. Pulling stream buffer.');
-    }
-});
-
-watch(statusMessage, (msg) => {
-    if (msg) toast.info(msg);
-});
-
-watch(warningMessage, (msg) => {
-    if (msg) toast.warning(msg);
-});
-
 useResizeObserver(gridContainerRef, (entries) => {
     const width = entries[0]?.contentRect.width ?? 0;
     isMobile.value = width > 0 && width <= MOBILE_BREAKPOINT;
@@ -335,6 +314,19 @@ useResizeObserver(gridContainerRef, (entries) => {
         gridRowHeight.value = 10;
     }
     updateGridHeight();
+});
+
+const formData = ref<ExperimentFormData>({
+    user_id: authStore.user?.id ?? null,
+    id: null,
+    command: Command.START,
+    input_arguments: {},
+    output_arguments: [],
+    setpoint_changes: {},
+    device_id: null,
+    software_name: null,
+    simulation_time: 0,
+    sample_rate: 0,
 });
 
 const canRunExperiment = computed(() => {
@@ -358,8 +350,6 @@ function runExperiment() {
     const selectedExperiment = experimentsByDevice.value.find((exp) => exp.id === formData.value.id);
     formData.value.output_arguments = selectedExperiment?.output_arguments ?? [];
 
-    console.log(JSON.stringify(formData.value, null, 2));
-
     const accessToken = authStore.accessToken || localStorage.getItem('OLMAccessToken');
     if (!accessToken) {
         toast.error('Authentication required before starting the experiment.');
@@ -371,19 +361,6 @@ function runExperiment() {
         toast.error(sendResult.message ?? 'Failed to send command.');
     }
 }
-
-const formData = ref<ExperimentFormData>({
-    user_id: authStore.user?.id ?? null,
-    id: null,
-    command: Command.START,
-    input_arguments: {},
-    output_arguments: [],
-    setpoint_changes: {},
-    device_id: null,
-    software_name: null,
-    simulation_time: 0,
-    sample_rate: 0,
-});
 
 onMounted(async () => {
     const result = await fetchExperimentsByDevice(props.reservation.device_id);
@@ -466,55 +443,20 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                                 </div>
 
                                 <v-card-text class="sandbox-section-body d-flex flex-column grow">
-                                    <div v-if="panelId === 'control'" class="sandbox-panel-content">
-                                        <ExperimentSelector
-                                            fixed-command=""
-                                            :loading="loading"
-                                            :experiments="experimentsByDevice"
-                                            :selected-device-id="props.reservation.device_id"
-                                            compact
-                                            @update:formData="handleFormDataUpdate"
-                                        />
-                                        <v-btn color="info" prepend-icon="mdi-play" :disabled="!canRunExperiment" @click="runExperiment">
-                                            {{ t('dashboard.run_experiment') }}
-                                        </v-btn>
-                                    </div>
-
-                                    <div v-else-if="panelId === 'chart'" class="sandbox-chart-panel">
-                                        <SimpleOutputChart
-                                            :output-history="outputHistory"
-                                            hide-title
-                                            compact
-                                            :height="280"
-                                            class="h-100"
-                                        />
-                                    </div>
-
-                                    <div v-else-if="panelId === 'camera'" class="sandbox-camera-panel">
-                                        <v-alert v-if="props.resolvingCameraTarget" type="info" variant="tonal" density="compact">
-                                            Resolving camera target...
-                                        </v-alert>
-                                        <v-alert
-                                            v-else-if="!props.cameraDeviceName || !props.cameraServerId"
-                                            type="warning"
-                                            variant="tonal"
-                                            density="compact"
-                                        >
-                                            Unable to resolve server/device for camera stream from this reservation.
-                                        </v-alert>
-                                        <CameraView
-                                            v-else
-                                            :device_name="props.cameraDeviceName"
-                                            :server_id="props.cameraServerId"
-                                            compact
-                                            hide-title
-                                            class="h-100"
-                                        />
-                                    </div>
-
-                                    <div v-else class="sandbox-animation-panel">
-                                        <DeviceAnimationPanel :visual-config="deviceVisualConfig" :output-history="outputHistory" class="h-100" />
-                                    </div>
+                                    <SandboxPanelContent
+                                        :panel-id="panelId"
+                                        :loading="loading"
+                                        :experiments-by-device="experimentsByDevice"
+                                        :selected-device-id="props.reservation.device_id"
+                                        :output-history="outputHistory"
+                                        :resolving-camera-target="props.resolvingCameraTarget"
+                                        :camera-device-name="props.cameraDeviceName"
+                                        :camera-server-id="props.cameraServerId"
+                                        :visual-config="deviceVisualConfig"
+                                        :can-run-experiment="canRunExperiment"
+                                        @update:formData="handleFormDataUpdate"
+                                        @run="runExperiment"
+                                    />
                                 </v-card-text>
                             </v-card>
                         </template>
@@ -574,57 +516,21 @@ const handleFormDataUpdate = (data: typeof formData.value) => {
                                 </div>
 
                                 <v-card-text v-show="!isPanelCollapsed(itemPanelId(item.i))" class="sandbox-section-body d-flex flex-column grow">
-                                    <div v-if="itemPanelId(item.i) === 'control'" class="sandbox-panel-content">
-                                        <ExperimentSelector
-                                            fixed-command=""
-                                            :loading="loading"
-                                            :experiments="experimentsByDevice"
-                                            :selected-device-id="props.reservation.device_id"
-                                            compact
-                                            @update:formData="handleFormDataUpdate"
-                                        />
-
-                                        <v-btn color="info" prepend-icon="mdi-play" @click="runExperiment" :disabled="!canRunExperiment">
-                                            {{ t('dashboard.run_experiment') }}
-                                        </v-btn>
-                                    </div>
-
-                                    <div v-else-if="itemPanelId(item.i) === 'chart'" class="sandbox-chart-panel">
-                                        <SimpleOutputChart
-                                            :output-history="outputHistory"
-                                            hide-title
-                                            compact
-                                            :height="240"
-                                            fill-container
-                                            class="h-100"
-                                        />
-                                    </div>
-
-                                    <div v-else-if="itemPanelId(item.i) === 'camera'" class="sandbox-camera-panel">
-                                        <v-alert v-if="props.resolvingCameraTarget" type="info" variant="tonal" density="compact">
-                                            Resolving camera target...
-                                        </v-alert>
-                                        <v-alert
-                                            v-else-if="!props.cameraDeviceName || !props.cameraServerId"
-                                            type="warning"
-                                            variant="tonal"
-                                            density="compact"
-                                        >
-                                            Unable to resolve server/device for camera stream from this reservation.
-                                        </v-alert>
-                                        <CameraView
-                                            v-else
-                                            :device_name="props.cameraDeviceName"
-                                            :server_id="props.cameraServerId"
-                                            compact
-                                            hide-title
-                                            class="h-100"
-                                        />
-                                    </div>
-
-                                    <div v-else class="sandbox-animation-panel">
-                                        <DeviceAnimationPanel :visual-config="deviceVisualConfig" :output-history="outputHistory" class="h-100" />
-                                    </div>
+                                    <SandboxPanelContent
+                                        :panel-id="itemPanelId(item.i)"
+                                        :loading="loading"
+                                        :experiments-by-device="experimentsByDevice"
+                                        :selected-device-id="props.reservation.device_id"
+                                        :output-history="outputHistory"
+                                        :resolving-camera-target="props.resolvingCameraTarget"
+                                        :camera-device-name="props.cameraDeviceName"
+                                        :camera-server-id="props.cameraServerId"
+                                        :visual-config="deviceVisualConfig"
+                                        :can-run-experiment="canRunExperiment"
+                                        fill-container
+                                        @update:formData="handleFormDataUpdate"
+                                        @run="runExperiment"
+                                    />
                                 </v-card-text>
                             </v-card>
                         </GridItem>

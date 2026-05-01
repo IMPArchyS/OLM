@@ -69,7 +69,7 @@ export function useExperiments() {
         loading.value = true;
 
         try {
-            const response = await apiClient.post(`/experiment/queue`, experiment);
+            await apiClient.post(`/experiment/queue`, experiment);
             return { success: true };
         } catch (e: any) {
             console.error('Error fetching experimentsByDevice:', e);

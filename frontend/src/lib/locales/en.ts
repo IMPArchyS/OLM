@@ -66,6 +66,12 @@ export default {
         enabled: 'Enabled',
         deleted: 'Server deleted',
         restored: 'Server restored',
+        synced: 'Server synced',
+        unreachable: 'Server unreachable',
+        syncAllAvailable: 'All {total} servers are available',
+        syncAllUnavailable: 'All {total} servers are unavailable',
+        syncAllResult: 'Synced {total} servers: {available} available, {unavailable} unavailable',
+        syncAllErrors: 'Synced {total} servers: {available} available, {unavailable} unavailable, {errors} errors',
     },
     devices: {
         selectServer: 'Select a server to view its devices',
@@ -132,6 +138,8 @@ export default {
         setpoint_step_duration: 'Step Duration',
         setpoint_step_value: 'Step Value',
         no_commands_available: 'No commands available',
+        xLabel: 'time',
+        yLabel: 'values',
     },
     reports: {
         showAll: 'Show All',
@@ -190,6 +198,12 @@ export default {
         sin_frequency: 'Sinus frequency',
         cos_amplitude: 'Cosinus amplitude',
         cos_frequency: 'Cosinus frequency',
+    },
+    camera: {
+        title: 'Camera Stream',
+        start: 'Start Stream',
+        stop: 'Stop Stream',
+        missingProps: 'Missing device or server for camera stream',
     },
     calendar: {
         today: 'Today',

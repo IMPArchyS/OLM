@@ -34,17 +34,19 @@ watch(
         }
     },
 );
+
+const tableHeaders = [
+    { title: t('common.id'), key: 'id', sortable: true },
+    { title: t('common.name'), key: 'name', sortable: true },
+    { title: t('devices.type'), key: 'device_type.name', sortable: true },
+    { title: t('devices.software'), key: 'software', sortable: false },
+];
 </script>
 
 <template>
     <v-data-table
         v-if="selectedServer"
-        :headers="[
-            { title: t('common.id'), key: 'id', sortable: true },
-            { title: t('common.name'), key: 'name', sortable: true },
-            { title: t('devices.type'), key: 'device_type.name', sortable: true },
-            { title: t('devices.software'), key: 'software', sortable: false },
-        ]"
+        :headers="tableHeaders"
         :items="filteredDevices"
         :loading="loading"
         :row-props="({ item }) => ({ class: item.deleted_at ? 'text-error' : '' })"

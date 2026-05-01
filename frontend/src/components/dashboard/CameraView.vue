@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { useWebRtc } from '@/composables/useWebRtc';
 import { useToastStore } from '@/stores/toast';
+import { useI18n } from 'vue-i18n';
 
 interface Props {
     device_name: string;
@@ -22,22 +23,15 @@ let grantRefreshIntervalId: number | null = null;
 
 const { remoteStream, loading, error, requestGrant, refreshGrant, startVideoStream, stopVideoStream } = useWebRtc();
 const toast = useToastStore();
+const { t } = useI18n();
 
-const canToggle = computed(() => {
-    return !loading.value && props.server_id > 0 && props.device_name.length > 0;
-});
+const canToggle = computed(() => !loading.value && props.server_id > 0 && props.device_name.length > 0);
 
-const toggleLabel = computed(() => {
-    return isStreaming.value ? 'Stop Stream' : 'Start Stream';
-});
-
-const toggleColor = computed(() => {
-    return isStreaming.value ? 'error' : 'primary';
-});
-
-const toggleIcon = computed(() => {
-    return isStreaming.value ? 'mdi-video-off' : 'mdi-video';
-});
+const toggleState = computed(() =>
+    isStreaming.value
+        ? { label: t('camera.stop'), color: 'error', icon: 'mdi-video-off' }
+        : { label: t('camera.start'), color: 'primary', icon: 'mdi-video' },
+);
 
 watch(remoteStream, (stream) => {
     if (videoRef.value) {
@@ -66,7 +60,7 @@ watch(
 
 async function handleStart(): Promise<void> {
     if (!props.device_name || props.server_id <= 0) {
-        toast.error('Missing device_name or server_id for camera stream');
+        toast.error(t('camera.missingProps'));
         return;
     }
 
@@ -130,7 +124,7 @@ onBeforeUnmount(() => {
 
 <template>
     <v-card :class="['camera-view', { 'camera-view--compact': props.compact }]" :variant="props.compact ? 'flat' : undefined">
-        <v-card-title v-if="!props.hideTitle">Camera Stream</v-card-title>
+        <v-card-title v-if="!props.hideTitle">{{ t('camera.title') }}</v-card-title>
         <v-card-text class="camera-content">
             <div class="camera-stage">
                 <video ref="videoRef" autoplay playsinline muted class="camera-video"></video>
@@ -138,21 +132,17 @@ onBeforeUnmount(() => {
 
             <div class="camera-controls">
                 <v-btn
-                    :color="toggleColor"
+                    :color="toggleState.color"
                     :size="props.compact ? 'small' : 'default'"
-                    :prepend-icon="toggleIcon"
+                    :prepend-icon="toggleState.icon"
                     :loading="loading"
                     :disabled="!canToggle"
                     block
                     @click="handleToggleStream"
                 >
-                    {{ toggleLabel }}
+                    {{ toggleState.label }}
                 </v-btn>
             </div>
-
-            <v-alert v-if="error" type="error" variant="tonal" class="mt-3">
-                {{ error }}
-            </v-alert>
         </v-card-text>
     </v-card>
 </template>

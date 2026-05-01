@@ -37,7 +37,6 @@ const handlePasswordUpdate = async () => {
     isSubmitting.value = true;
 
     const result = await authStore.updatePassword({
-        jwt_token: localStorage.getItem('OLMAccessToken'),
         password_old: oldPassword.value,
         password_new: newPassword.value,
         password_new_repeat: repeatPassword.value,
@@ -60,7 +59,7 @@ const handlePasswordUpdate = async () => {
     <v-card>
         <v-card-title class="bg-card-title">
             <v-icon icon="mdi-lock-reset" class="mr-2" />
-            <span>{{ t('profile.updatePassword') }}</span>
+            <span>{{ t('auth.updatePassword') }}</span>
         </v-card-title>
         <v-card-text class="mt-5">
             <v-form @submit.prevent="handlePasswordUpdate">

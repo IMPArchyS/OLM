@@ -20,21 +20,17 @@ const reservationDeviceType = ref<DeviceType | null>(null);
 let refreshInterval: number | null = null;
 let reservationRefreshInterval: number | null = null;
 
-const now = computed(() => currentTime.value);
-
-// Find active reservation (current time is between start and end)
 const activeReservation = computed(() => {
     return reservations.value.find((reservation) => {
         const start = new Date(reservation.start);
         const end = new Date(reservation.end);
-        return now.value >= start && now.value <= end;
+        return currentTime.value >= start && currentTime.value <= end;
     });
 });
 
-// Find next upcoming reservation
 const nextReservation = computed(() => {
     const upcoming = reservations.value
-        .filter((reservation) => new Date(reservation.start) > now.value)
+        .filter((reservation) => new Date(reservation.start) > currentTime.value)
         .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
     return upcoming[0] || null;
 });
@@ -109,12 +105,10 @@ onMounted(async () => {
     await fetchReservations();
     loading.value = false;
 
-    // Keep active/next reservation visibility in sync with wall-clock time.
     refreshInterval = window.setInterval(() => {
         currentTime.value = new Date();
     }, 1000);
 
-    // Pull reservation updates periodically so dashboard transitions without manual refresh.
     reservationRefreshInterval = window.setInterval(() => {
         void fetchReservations();
     }, 60000);

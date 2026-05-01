@@ -91,10 +91,6 @@ export function useReservationStream() {
         toast[level](message);
     };
 
-    const persistNextIndex = (_value: number) => {
-        // Keep cursor only in-memory for current page lifetime.
-    };
-
     const parseNumericTime = (payload: OutputRow): number | null => {
         const rawTime = payload.time;
         if (typeof rawTime === 'number' && Number.isFinite(rawTime)) {
@@ -125,10 +121,6 @@ export function useReservationStream() {
         }
 
         return null;
-    };
-
-    const restoreNextIndex = () => {
-        return 0;
     };
 
     const connectionStateText = computed(() => {
@@ -172,7 +164,7 @@ export function useReservationStream() {
     };
 
     const appendSingleRow = (row: OutputRow) => {
-        outputHistory.value = [...outputHistory.value, row];
+        appendRows([row]);
     };
 
     const clearPolling = () => {
@@ -264,7 +256,6 @@ export function useReservationStream() {
 
             const serverNext = Number.isFinite(response.data.next_index) ? response.data.next_index : nextIndex.value + rows.length;
             nextIndex.value = Math.max(0, Math.floor(serverNext));
-            persistNextIndex(nextIndex.value);
         } catch (error: unknown) {
             let detail = 'Failed to pull stream buffer.';
 
@@ -319,7 +310,6 @@ export function useReservationStream() {
 
             appendSingleRow(payload);
             nextIndex.value += 1;
-            persistNextIndex(nextIndex.value);
         }
 
         if (Object.prototype.hasOwnProperty.call(payload, 'error')) {
@@ -406,7 +396,7 @@ export function useReservationStream() {
         isActive.value = true;
         isReservationActive.value = true;
         accessToken.value = token;
-        nextIndex.value = restoreNextIndex();
+        nextIndex.value = 0;
         connectWebSocket(token);
         void pullStreamBuffer();
     };
@@ -425,7 +415,6 @@ export function useReservationStream() {
         outputHistory.value = [];
         finalPacket.value = null;
         nextIndex.value = 0;
-        persistNextIndex(nextIndex.value);
     };
 
     const sendCommand = (payload: ExperimentFormData): { success: boolean; message?: string } => {

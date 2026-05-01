@@ -86,8 +86,7 @@ export function useWebRtc() {
                 return 'http:';
             }
         })();
-        const defaultProtocol = apiBaseProtocol || 'http:';
-        const normalized = hasProtocol ? rawDomain : `${defaultProtocol}//${rawDomain}`;
+        const normalized = hasProtocol ? rawDomain : `${apiBaseProtocol}//${rawDomain}`;
 
         const parsedUrl = new URL(normalized);
         parsedUrl.port = String(server.port);
@@ -111,7 +110,7 @@ export function useWebRtc() {
         return serviceBaseUrl;
     }
 
-    async function requestGrant(serverId: number, deviceName: string, ttlSeconds = 300): Promise<GrantToken | null> {
+    async function requestGrant(serverId: number, deviceName: string): Promise<GrantToken | null> {
         loading.value = true;
         error.value = null;
 

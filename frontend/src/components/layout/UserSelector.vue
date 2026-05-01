@@ -35,11 +35,10 @@ const handleRegister = () => {
 
 <template>
     <div>
-        <!-- Logged In: User Dropdown -->
         <v-menu v-if="authStore.accessToken" v-model="isOpen" :close-on-content-click="false">
             <template v-slot:activator="{ props }">
-                <v-btn v-bind="props" variant="text" style="margin-right: 20px">
-                    <span style="font-weight: 500">{{ authStore.user?.name }}</span>
+                <v-btn v-bind="props" variant="text" class="mr-5">
+                    <span class="font-weight-medium">{{ authStore.user?.name }}</span>
                     <v-icon
                         :style="{
                             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -72,15 +71,14 @@ const handleRegister = () => {
                     <template v-slot:prepend>
                         <v-icon color="error">mdi-logout</v-icon>
                     </template>
-                    <v-list-item-title style="color: rgb(var(--v-theme-error))">
+                    <v-list-item-title class="text-error">
                         {{ t('auth.logOut') }}
                     </v-list-item-title>
                 </v-list-item>
             </v-list>
         </v-menu>
 
-        <!-- Logged Out: Login & Register Links -->
-        <div v-else style="display: flex; align-items: center; gap: 16px; margin-right: 24px">
+        <div v-else class="d-flex align-center ga-4 mr-6">
             <v-btn @click="handleLogin" variant="text">
                 {{ t('auth.login') }}
             </v-btn>

@@ -33,5 +33,5 @@ export function useQueueTarget(selectedExperiment: Ref<Experiment | null>, lastU
         if (mode !== 'pick-device') manualDeviceId.value = null;
     });
 
-    return { queueTargetMode, manualDeviceId, resolvedDeviceId, compatibleDevices, lastUsedDeviceId };
+    return { queueTargetMode, manualDeviceId, resolvedDeviceId, compatibleDevices };
 }

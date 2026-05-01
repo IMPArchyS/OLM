@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
 import FullCalendar from '@fullcalendar/vue3';
 import { useDeviceReservationCalendar } from '@/composables/DeviceReservationCalendar';
 import type { Device } from '@/types/api';
@@ -9,21 +8,8 @@ const props = defineProps<{
     selectedDeviceData?: Device | null;
 }>();
 
-const {
-    isModalOpen,
-    editingReservation,
-    reservationForm,
-    calendarOptions,
-    loading,
-    saveReservation,
-    deleteReservation,
-    updateCalendarEvents,
-    closeModal,
-} = useDeviceReservationCalendar(props);
-
-onMounted(() => {
-    updateCalendarEvents();
-});
+const { isModalOpen, editingReservation, reservationForm, calendarOptions, loading, saveReservation, deleteReservation, closeModal } =
+    useDeviceReservationCalendar(props);
 </script>
 
 <template>
@@ -68,10 +54,12 @@ onMounted(() => {
                 </v-card-text>
 
                 <v-card-actions>
-                    <v-btn color="grey" variant="text" @click="closeModal"> Cancel </v-btn>
+                    <v-btn prepend-icon="mdi-close" color="grey" variant="outlined" @click="closeModal"> {{ $t('actions.cancel') }} </v-btn>
                     <v-spacer />
-                    <v-btn v-if="editingReservation" color="error" variant="outlined" @click="deleteReservation"> Delete </v-btn>
-                    <v-btn color="primary" variant="elevated" @click="saveReservation"> Save </v-btn>
+                    <v-btn v-if="editingReservation" prepend-icon="mdi-trash-can" color="error" variant="outlined" @click="deleteReservation">
+                        {{ $t('actions.delete') }}
+                    </v-btn>
+                    <v-btn prepend-icon="mdi-plus" color="primary" variant="elevated" @click="saveReservation"> {{ $t('actions.save') }} </v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>

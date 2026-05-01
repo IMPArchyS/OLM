@@ -5,6 +5,8 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 interface Props {
     outputHistory: Record<string, unknown>[];
     xKey?: string;
+    xLabel?: string;
+    yLabel?: string;
     title?: string;
     height?: number;
     emptyText?: string;
@@ -15,6 +17,8 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     xKey: 'time',
+    xLabel: 'time',
+    yLabel: 'values',
     title: 'Output history',
     height: 220,
     emptyText: 'No output data available yet.',
@@ -23,10 +27,11 @@ const props = withDefaults(defineProps<Props>(), {
     compact: false,
 });
 
+const emptyTicks = [0, 1, 2, 3, 4, 5];
+
 const plotContainer = ref<HTMLElement | null>(null);
 let resizeObserver: ResizeObserver | null = null;
 let renderAnimationFrameId: number | null = null;
-const emptyTicks = [0, 1, 2, 3, 4, 5];
 
 const colors = ['#00897B', '#F4511E', '#1E88E5', '#D81B60', '#6D4C41', '#546E7A'];
 
@@ -125,14 +130,14 @@ const layout = computed(() => {
         },
         xaxis: {
             title: {
-                text: 'time',
+                text: props.xLabel,
             },
             type: hasSeries.value ? 'category' : 'linear',
             range: hasSeries.value ? undefined : [0, 5],
         },
         yaxis: {
             title: {
-                text: 'values',
+                text: props.yLabel,
             },
             automargin: true,
             zeroline: false,
@@ -195,13 +200,7 @@ const scheduleRender = () => {
     });
 };
 
-watch(
-    [() => props.outputHistory, () => props.xKey, hasSeries, numericKeys, labels],
-    () => {
-        scheduleRender();
-    },
-    { deep: true },
-);
+watch([() => props.outputHistory, () => props.xKey], scheduleRender, { deep: true });
 
 onMounted(() => {
     scheduleRender();

@@ -15,7 +15,7 @@ const handleProfileUpdate = async () => {
 
     isSubmitting.value = true;
 
-    const result = await authStore.updateProfile({ jwt_token: localStorage.getItem('OLMAccessToken'), name: username.value });
+    const result = await authStore.updateProfile({ name: username.value });
     if (!result.success) {
         toast.error(result.message || 'Failed');
     } else {

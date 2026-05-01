@@ -3,6 +3,7 @@ import type { Server, ServerStatus } from '@/types/api';
 import { apiClient } from '../lib/apiClient';
 import type { CreateServerForm, EditServerForm } from '@/types/forms';
 import { useI18n } from 'vue-i18n';
+import { useToastStore } from '@/stores/toast';
 
 export function useServers() {
     const servers = ref<Server[]>([]);
@@ -10,6 +11,7 @@ export function useServers() {
     const error = ref<string | null>(null);
 
     const { t } = useI18n();
+    const toast = useToastStore();
     const nameRules = [(v: string) => !!v || `${t('common.name')} ${t('validation.required')}`];
 
     const ipRules = [
@@ -136,6 +138,20 @@ export function useServers() {
         return null;
     }
 
+    async function syncServerWithToast(id: number): Promise<ServerStatus | null> {
+        const result = await syncServer(id);
+        if (result === null) {
+            toast.error(t('common.error'));
+            return null;
+        }
+        if (result.available) {
+            toast.success(t('servers.synced'));
+        } else {
+            toast.warning(t('servers.unreachable'));
+        }
+        return result;
+    }
+
     return {
         servers,
         loading,
@@ -150,6 +166,7 @@ export function useServers() {
         getServer,
         getServerById,
         syncServer,
+        syncServerWithToast,
         syncAllServers,
         createServer,
         softDeleteServer,

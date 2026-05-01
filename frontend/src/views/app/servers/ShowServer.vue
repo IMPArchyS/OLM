@@ -18,7 +18,7 @@ const currentServer = ref<Server>({
     api_domain: '',
     port: 0,
 });
-const { getServerById, syncServer, restoreServer } = useServers();
+const { getServerById, syncServerWithToast, restoreServer } = useServers();
 const { params } = useRoute();
 
 const serverId = +(params.id as string);
@@ -51,26 +51,15 @@ onMounted(async () => {
 const handleRestore = async () => {
     const result = await restoreServer(currentServer.value.id);
     if (result.success) {
-        toast.success(result.message || 'Success');
+        toast.success(result.message || t('common.success'));
         await router.push({ name: 'servers' });
     } else {
-        toast.error(result.message || 'Failed');
+        toast.error(result.message || t('common.error'));
     }
 };
 
 const handleSync = async (item: Server) => {
-    const result = await syncServer(item.id);
-
-    if (result === null) {
-        toast.error('Fatal error');
-        return;
-    }
-
-    if (result.available) {
-        toast.success('Server synced');
-    } else {
-        toast.warning('Server unreachable');
-    }
+    await syncServerWithToast(item.id);
 };
 
 const handleBack = () => {

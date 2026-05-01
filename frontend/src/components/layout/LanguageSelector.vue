@@ -27,7 +27,7 @@ onMounted(() => {
     <v-menu v-model="isOpen" :close-on-content-click="false">
         <template v-slot:activator="{ props }">
             <v-btn v-bind="props" variant="text">
-                <span style="font-weight: 500">
+                <span class="font-weight-medium">
                     {{ current.toUpperCase() }}
                 </span>
                 <v-icon

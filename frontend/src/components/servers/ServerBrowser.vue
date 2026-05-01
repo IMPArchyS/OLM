@@ -7,7 +7,7 @@ import router from '@/router';
 import { useToastStore } from '@/stores/toast';
 
 const { t } = useI18n();
-const { servers, loading, fetchServers, syncServer, syncAllServers, softDeleteServer, restoreServer } = useServers();
+const { servers, loading, fetchServers, syncServerWithToast, syncAllServers, softDeleteServer, restoreServer } = useServers();
 const toast = useToastStore();
 
 const props = defineProps<{
@@ -77,19 +77,9 @@ const handleRestore = async (item: Server) => {
 const syncedAvailability = ref<Record<number, boolean>>({});
 
 const handleSync = async (item: Server) => {
-    const result = await syncServer(item.id);
-
-    if (result === null) {
-        toast.error('Fatal error');
-        return;
-    }
-
-    syncedAvailability.value[result.id] = result.available;
-
-    if (result.available) {
-        toast.success('Server synced');
-    } else {
-        toast.warning('Server unreachable');
+    const result = await syncServerWithToast(item.id);
+    if (result !== null) {
+        syncedAvailability.value[result.id] = result.available;
     }
 };
 
@@ -97,7 +87,7 @@ const handleSyncAll = async () => {
     const results = await syncAllServers();
 
     if (results === null) {
-        toast.error('Fatal error');
+        toast.error(t('common.error'));
         return;
     }
 
@@ -108,63 +98,36 @@ const handleSyncAll = async () => {
     const availableCount = results.filter((r) => r.available).length;
     const unavailableCount = results.filter((r) => !r.available).length;
     const errorCount = results.filter((r) => r.error).length;
+    const total = results.length;
 
     if (errorCount > 0) {
-        toast.warning(`Synced ${results.length} servers: ${availableCount} available, ${unavailableCount} unavailable, ${errorCount} errors`);
-    } else if (availableCount === results.length) {
-        toast.success(`All ${results.length} servers are available`);
-    } else if (unavailableCount === results.length) {
-        toast.warning(`All ${results.length} servers are unavailable`);
+        toast.warning(t('servers.syncAllErrors', { total, available: availableCount, unavailable: unavailableCount, errors: errorCount }));
+    } else if (availableCount === total) {
+        toast.success(t('servers.syncAllAvailable', { total }));
+    } else if (unavailableCount === total) {
+        toast.warning(t('servers.syncAllUnavailable', { total }));
     } else {
-        toast.success(`Synced ${results.length} servers: ${availableCount} available, ${unavailableCount} unavailable`);
+        toast.success(t('servers.syncAllResult', { total, available: availableCount, unavailable: unavailableCount }));
     }
 };
+
+const tableHeaders = [
+    { title: t('common.id'), key: 'id', sortable: true },
+    { title: t('common.name'), key: 'name', sortable: true },
+    { title: t('servers.ipAddress'), key: 'ip_address', sortable: true },
+    { title: t('servers.apiDomain'), key: 'api_domain', sortable: true },
+    { title: t('servers.available'), key: 'available', sortable: false },
+    { title: t('servers.production'), key: 'production', sortable: false },
+    { title: t('servers.enabled'), key: 'enabled', sortable: false },
+    { title: t('common.actions'), key: 'actions', sortable: false, align: 'center' as const },
+];
 
 defineExpose({ handleSyncAll });
 </script>
 
 <template>
     <v-data-table
-        :headers="[
-            {
-                title: t('common.id'),
-                key: 'id',
-                sortable: true,
-            },
-            {
-                title: t('common.name'),
-                key: 'name',
-                sortable: true,
-            },
-            {
-                title: t('servers.ipAddress'),
-                key: 'ip_address',
-                sortable: true,
-            },
-            {
-                title: t('servers.apiDomain'),
-                key: 'api_domain',
-                sortable: true,
-            },
-            {
-                title: t('servers.available'),
-                key: 'available',
-            },
-            {
-                title: t('servers.production'),
-                key: 'production',
-            },
-            {
-                title: t('servers.enabled'),
-                key: 'enabled',
-            },
-            {
-                title: t('common.actions'),
-                key: 'actions',
-                sortable: false,
-                align: 'center' as const,
-            },
-        ]"
+        :headers="tableHeaders"
         :items="filteredServers"
         :loading="loading"
         :row-props="({ item }) => ({ class: item.deleted_at ? 'text-error' : '' })"

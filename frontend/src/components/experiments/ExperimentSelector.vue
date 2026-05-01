@@ -198,9 +198,6 @@ watch(
     { deep: true },
 );
 
-defineExpose({
-    formData,
-});
 </script>
 
 <template>

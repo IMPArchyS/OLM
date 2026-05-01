@@ -66,6 +66,12 @@ export default {
         enabled: 'Povolený',
         deleted: 'Server vymazaný',
         restored: 'Server obnovený',
+        synced: 'Server synchronizovaný',
+        unreachable: 'Server nedostupný',
+        syncAllAvailable: 'Všetkých {total} serverov je dostupných',
+        syncAllUnavailable: 'Všetkých {total} serverov je nedostupných',
+        syncAllResult: 'Synchronizovaných {total} serverov: {available} dostupných, {unavailable} nedostupných',
+        syncAllErrors: 'Synchronizovaných {total} serverov: {available} dostupných, {unavailable} nedostupných, {errors} chýb',
     },
     devices: {
         selectServer: 'Vyberte server pre zobrazenie jeho zariadení',
@@ -132,6 +138,8 @@ export default {
         setpoint_step_duration: 'Dĺžka kroku',
         setpoint_step_value: 'Hodnota kroku',
         no_commands_available: 'Nie sú k dispozícii žiadne príkazy',
+        xLabel: 'čas',
+        yLabel: 'hodnoty',
     },
     reports: {
         showAll: 'Zobraziť všetky',
@@ -190,6 +198,12 @@ export default {
         sin_frequency: 'Sínus frekvencia',
         cos_amplitude: 'Kosínus amplitúda',
         cos_frequency: 'Kosínus frekvencia',
+    },
+    camera: {
+        title: 'Kamerový stream',
+        start: 'Spustiť stream',
+        stop: 'Zastaviť stream',
+        missingProps: 'Chýba zariadenie alebo server pre kamerový stream',
     },
     calendar: {
         today: 'Dnes',

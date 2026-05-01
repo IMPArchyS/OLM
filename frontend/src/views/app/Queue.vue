@@ -97,7 +97,7 @@ const addToQueue = async () => {
             />
         </v-card-text>
         <v-card-actions class="queue-action" v-if="selectableExperiments.length > 0">
-            <v-spacer> </v-spacer>
+            <v-spacer />
             <v-btn
                 color="info"
                 variant="elevated"
