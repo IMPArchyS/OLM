@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import ReportLogItem from '@/components/reports/ReportLogItem.vue';
 import { useExperimentLogs } from '@/composables/useExperimentLogs';
-import { apiClient } from '@/lib/apiClient';
 import { useAuthStore } from '@/stores/auth';
 import { useToastStore } from '@/stores/toast';
 import type { ExperimentLog } from '@/types/api';
@@ -72,22 +71,6 @@ watch(allLogs, () => { currentPage.value = 1; });
 watch(pageSize, () => { currentPage.value = 1; });
 watch(deletedFilter, () => { currentPage.value = 1; });
 
-const userNames = ref(new Map<number, string>());
-
-const fetchUserNames = async (logList: ExperimentLog[]) => {
-    const uniqueIds = [...new Set(logList.map((l) => l.user_id))];
-    const results = await Promise.allSettled(uniqueIds.map((id) => apiClient.get(`/auth/user/${id}`)));
-    const map = new Map<number, string>();
-    results.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-            const id = uniqueIds[index];
-            const name: string | undefined = result.value.data?.name;
-            if (id !== undefined && name) map.set(id, name);
-        }
-    });
-    userNames.value = map;
-};
-
 const loadLogs = async () => {
     if (showAllLogs.value) {
         if (!canReadAll.value) {
@@ -96,14 +79,9 @@ const loadLogs = async () => {
             return;
         }
         const result = await fetchExperimentLogs();
-        if (!result.success) {
-            toast.error(result.message || t('reports.fetchError'));
-            return;
-        }
-        await fetchUserNames(experimentLogs.value);
+        if (!result.success) toast.error(result.message || t('reports.fetchError'));
         return;
     }
-    userNames.value = new Map();
     const result = await fetchExperimentLogsByUser(authStore.user?.id);
     if (!result.success) toast.error(result.message || t('reports.fetchError'));
 };
@@ -165,7 +143,7 @@ onMounted(async () => { await loadLogs(); });
                         :key="log.id"
                         :log="log"
                         :show-user-name="showAllLogs"
-                        :user-name="userNames.get(log.user_id)"
+                        :user-name="log.username"
                         @delete="handleDelete"
                         @restore="handleRestore"
                     />

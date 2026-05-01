@@ -120,6 +120,7 @@ class ExperimentLogPublicEnriched(ExperimentLogPublic):
     server_name: str | None = None
     device_name: str | None = None
     software_name: str | None = None
+    username: str | None = None
 
 
 class ExperimentLogUpdate(ExperimentLogBase):

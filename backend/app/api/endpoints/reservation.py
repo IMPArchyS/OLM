@@ -1,19 +1,34 @@
-from fastapi import APIRouter, HTTPException, status
+import asyncio
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import select, asc
-from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission, check_permission
+from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission, check_permission, fetch_username
 
 from app.models.device import Device
-from app.models.reservation import Reservation, ReservationCreate, ReservationPublic, ReservationUpdate
+from app.models.reservation import Reservation, ReservationCreate, ReservationPublic, ReservationUpdate, ReservationWithUsername
 from app.models.utils import now
 
 
 router = APIRouter()
 
 
-@router.get("/")
-def get_all(db: DbSession): 
+@router.get("/", response_model=list[ReservationWithUsername])
+async def get_all(db: DbSession, device_id: int | None = Query(default=None)):
     stmt = select(Reservation)
-    return db.exec(stmt).all()
+    if device_id is not None:
+        stmt = stmt.where(Reservation.device_id == device_id)
+    reservations = db.exec(stmt).all()
+
+    unique_user_ids = list({r.user_id for r in reservations})
+
+    user_map: dict[int, str] = {}
+    if unique_user_ids:
+        results = await asyncio.gather(*[fetch_username(uid) for uid in unique_user_ids])
+        user_map = dict(results)
+
+    return [
+        ReservationWithUsername(**r.model_dump(), username=user_map.get(r.user_id, "Unknown User"))
+        for r in reservations
+    ]
 
 
 @router.get("/me")

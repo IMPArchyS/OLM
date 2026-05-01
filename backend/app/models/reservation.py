@@ -45,3 +45,7 @@ class ReservationUpdate(SQLModel):
     end: datetime | None = None
     device_id: int | None = None
     user_id: int | None = None
+
+
+class ReservationWithUsername(ReservationPublic):
+    username: str

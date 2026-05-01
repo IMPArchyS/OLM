@@ -9,26 +9,6 @@ export function useReservations() {
     const loading = ref(false);
     const { t } = useI18n();
 
-    async function hydrateReservationUsernames(reservationsData: Reservation[]): Promise<Reservation[]> {
-        return Promise.all(
-            reservationsData.map(async (reservation) => {
-                try {
-                    const userResponse = await apiClient.get(`/auth/user/${reservation.user_id}`);
-                    return {
-                        ...reservation,
-                        username: userResponse.data.name,
-                    };
-                } catch (userError) {
-                    console.error(`Error fetching user ${reservation.user_id}:`, userError);
-                    return {
-                        ...reservation,
-                        username: 'Unknown User',
-                    };
-                }
-            }),
-        );
-    }
-
     async function fetchReservations(deviceId?: number | null): Promise<{ success: boolean; message?: string }> {
         loading.value = true;
 
@@ -37,7 +17,7 @@ export function useReservations() {
                 params: deviceId ? { device_id: deviceId } : undefined,
             });
 
-            reservations.value = await hydrateReservationUsernames(response.data);
+            reservations.value = response.data;
             return { success: true };
         } catch (fetchError: any) {
             console.error('Failed to fetch reservations:', fetchError);

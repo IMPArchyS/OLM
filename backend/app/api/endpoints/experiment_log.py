@@ -1,6 +1,7 @@
+import asyncio
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import col, select
-from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission
+from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission, fetch_username
 
 from app.models.experiment_log import ExperimentLog, ExperimentLogCreate, ExperimentLogLatestDevice, ExperimentLogPublic, ExperimentLogPublicEnriched
 from app.models.utils import now
@@ -9,7 +10,7 @@ from app.models.utils import now
 router = APIRouter()
 
 
-def _enrich(log: ExperimentLog) -> ExperimentLogPublicEnriched:
+def _enrich(log: ExperimentLog, username: str | None = None) -> ExperimentLogPublicEnriched:
     software_name: str | None = None
     if log.experiment and log.experiment.software:
         software_name = log.experiment.software.name
@@ -18,13 +19,19 @@ def _enrich(log: ExperimentLog) -> ExperimentLogPublicEnriched:
         server_name=log.server.name if log.server else None,
         device_name=log.device.name if log.device else None,
         software_name=software_name,
+        username=username,
     )
 
 
 @router.get("/", response_model=list[ExperimentLogPublicEnriched])
-def get_all(db: DbSession, _: AuthUser = Permission("olm.experiment_log.read_all")):
-    stmt = select(ExperimentLog)
-    return [_enrich(log) for log in db.exec(stmt).all()]
+async def get_all(db: DbSession, _: AuthUser = Permission("olm.experiment_log.read_all")):
+    logs = db.exec(select(ExperimentLog)).all()
+    unique_user_ids = list({log.user_id for log in logs})
+    user_map: dict[int, str] = {}
+    if unique_user_ids:
+        results = await asyncio.gather(*[fetch_username(uid) for uid in unique_user_ids])
+        user_map = dict(results)
+    return [_enrich(log, username=user_map.get(log.user_id)) for log in logs]
 
 
 @router.get("/{experiment_id}/latest", response_model=ExperimentLogLatestDevice)
@@ -42,9 +49,12 @@ def get_latest_device_by_experiment(db: DbSession, experiment_id: int, user: Cur
 
 
 @router.get("/user/{user_id}", response_model=list[ExperimentLogPublicEnriched])
-def get_all_by_user(db: DbSession, user_id: int):
-    stmt = select(ExperimentLog).where(ExperimentLog.user_id == user_id)
-    return [_enrich(log) for log in db.exec(stmt).all()]
+async def get_all_by_user(db: DbSession, user_id: int):
+    logs = db.exec(select(ExperimentLog).where(ExperimentLog.user_id == user_id)).all()
+    username: str | None = None
+    if logs:
+        _, username = await fetch_username(user_id)
+    return [_enrich(log, username=username) for log in logs]
 
 
 @router.get("/{id}", response_model=ExperimentLogPublicEnriched)

@@ -81,6 +81,7 @@ export interface ExperimentLog {
     server_name?: string;
     device_name?: string;
     software_name?: string;
+    username?: string;
     run: { input_history: ExperimentHistoryItem[]; output_history: Record<string, unknown>[] } | null;
     started_at: string | null;
     finished_at: string | null;

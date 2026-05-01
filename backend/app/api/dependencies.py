@@ -8,6 +8,20 @@ from app.core.config import settings
 import httpx
 
 
+async def fetch_username(user_id: int) -> tuple[int, str]:
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.AUTH_SERVICE_URL}/users/{user_id}",
+                headers={"x-api-key": settings.AUTH_API_KEY},
+                timeout=5.0,
+            )
+        response.raise_for_status()
+        return user_id, response.json()["name"]
+    except Exception:
+        return user_id, "Unknown User"
+
+
 class AuthUser(BaseModel):
     id: int
     username: str
