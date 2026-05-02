@@ -88,6 +88,12 @@ class ExperimentUpdate(ExperimentBase):
     software_id: int | None = None 
 
     
+def _coerce_empty_setpoint(values: dict) -> dict:
+    if values.get("setpoint_changes") == {}:
+        values["setpoint_changes"] = None
+    return values
+
+
 class ExperimentFormQueue(SQLModel):
     id: int
     user_id: int
@@ -96,16 +102,14 @@ class ExperimentFormQueue(SQLModel):
     input_arguments: dict[str, Any]
     output_arguments: list[str]
     simulation_time: int
-    sample_rate: int 
+    sample_rate: int
     software_name: SoftwareName
     device_id: int | None
 
     @model_validator(mode="before")
     @classmethod
     def empty_setpoint_to_none(cls, values):
-        if values.get("setpoint_changes") == {}:
-            values["setpoint_changes"] = None
-        return values
+        return _coerce_empty_setpoint(values)
 
 
 class ExperimentQueuePayload(SQLModel):
@@ -124,6 +128,4 @@ class ExperimentQueuePayload(SQLModel):
     @model_validator(mode="before")
     @classmethod
     def empty_setpoint_to_none(cls, values):
-        if values.get("setpoint_changes") == {}:
-            values["setpoint_changes"] = None
-        return values
+        return _coerce_empty_setpoint(values)

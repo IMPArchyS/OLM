@@ -11,7 +11,7 @@ from app.core.config import settings
 from app.models.experiment_log import ExperimentLog, FinishReason
 from app.models.experiment_queue import ExperimentQueue, QueueStatus
 from app.models.server import Server
-from app.models.utils import now
+from app.models.utils import ensure, now
 from .helpers import normalize_finish_reason, parse_datetime, queue_now
 
 logger = logging.getLogger("uvicorn.error")
@@ -58,7 +58,7 @@ def _prepare_poll(entry_id: int) -> _PollContext | None:
             entry_id=entry_id,
             job_id=entry.job_id,
             url=f"{base_url}{status_path}",
-            experiment_log_id=entry.experiment_log_id,
+            experiment_log_id=ensure(entry.experiment_log_id),
         )
 
 

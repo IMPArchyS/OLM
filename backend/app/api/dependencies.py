@@ -93,14 +93,19 @@ async def check_permission(jwt_token: str, permission: str) -> bool:
 
 
 async def check_permissions(jwt_token: str, permissions: list[str]) -> dict:
-    async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            f"{settings.AUTH_SERVICE_URL}/check-permissions",
-            json={"jwt_token": jwt_token, "permissions": permissions},
-            headers={"x-api-key": settings.AUTH_API_KEY},
-        )
-        resp.raise_for_status()
-        return resp.json()
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{settings.AUTH_SERVICE_URL}/check-permissions",
+                json={"jwt_token": jwt_token, "permissions": permissions},
+                headers={"x-api-key": settings.AUTH_API_KEY},
+            )
+            resp.raise_for_status()
+            return resp.json()
+    except httpx.RequestError:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Auth service unavailable")
+    except (ValueError, httpx.HTTPStatusError):
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Invalid response from auth service")
 
 
 async def get_user(token: str, websocket: WebSocket | None = None) -> AuthUser:

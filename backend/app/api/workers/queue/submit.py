@@ -16,8 +16,8 @@ from app.models.experiment import ExperimentQueuePayload
 from app.models.experiment_log import ExperimentLog
 from app.models.experiment_queue import ExperimentQueue, QueueStatus
 from app.models.server import Server
-from app.models.utils import now
-from .helpers import find_overlapping_reservation, maintenance_overlap_end, mark_retry_or_fail, queue_now
+from app.models.utils import ensure, now
+from .helpers import find_overlapping_reservation, maintenance_overlap_end, mark_retry_or_fail, queue_now, to_naive_utc
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -93,23 +93,23 @@ def _prepare_explicit(session: Session, entry: ExperimentQueue) -> _SubmitContex
     mo_end = maintenance_overlap_end(device, run_start, run_end)
     if mo_end is not None:
         entry.status = QueueStatus.NOT_STARTED
-        entry.next_attempt_at = mo_end.replace(tzinfo=None)
+        entry.next_attempt_at = to_naive_utc(mo_end)
         entry.modified_at = queue_now()
         session.commit()
         logger.info("WORKER: submit deferred queue_id=%s reason=maintenance_overlap", entry_id)
         return None
 
-    overlap = find_overlapping_reservation(session, entry.device_id, run_start, run_end)
+    overlap = find_overlapping_reservation(session, ensure(entry.device_id), run_start, run_end)
     if overlap is not None:
         entry.status = QueueStatus.NOT_STARTED
-        entry.next_attempt_at = overlap.end.replace(tzinfo=None)
+        entry.next_attempt_at = to_naive_utc(overlap.end)
         entry.modified_at = queue_now()
         session.commit()
         logger.info("WORKER: submit deferred queue_id=%s reason=reservation_overlap", entry_id)
         return None
 
     return _SubmitContext(
-        entry_id=entry_id,
+        entry_id=ensure(entry_id),
         url=f"{base_url}{settings.EXPERIMENT_QUEUE_SUBMIT_PATH}",
         payload_json=payload.model_dump(mode="json"),
     )
@@ -165,7 +165,7 @@ def _prepare_any_device(session: Session, entry: ExperimentQueue) -> _SubmitCont
             entry_id, device_id, device.server_id, sim_time,
         )
         return _SubmitContext(
-            entry_id=entry_id,
+            entry_id=ensure(entry_id),
             url=f"{base_url}{settings.EXPERIMENT_QUEUE_SUBMIT_PATH}",
             payload_json=submit_payload.model_dump(mode="json"),
             any_device_mode=True,
@@ -237,7 +237,7 @@ def _on_accepted(
                 user_id=entry.user_id,
                 experiment_id=entry.experiment_id,
                 device_id=locked_device_id,
-                server_id=locked_server_id,
+                server_id=ensure(locked_server_id),
                 started_at=now(),
                 finished_at=None,
                 run=None,

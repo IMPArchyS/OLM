@@ -134,7 +134,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             await refreshAccessToken();
             const payload = {
-                jwt_token: localStorage.getItem('OLMAccessToken'),
+                jwt_token: accessToken.value,
                 ...data,
             };
             const response = await apiClient.patch<User>('auth/update-user', payload);
@@ -159,7 +159,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             await refreshAccessToken();
             const payload = {
-                jwt_token: localStorage.getItem('OLMAccessToken'),
+                jwt_token: accessToken.value,
                 ...data,
             };
             await apiClient.patch<boolean>('auth/change-password', payload);

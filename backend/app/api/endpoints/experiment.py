@@ -218,7 +218,7 @@ def delete(db: DbSession, id: int, _: AuthUser = Permission("olm.experiment.dele
 
 
 @router.post("/{id}/restore", response_model=ExperimentPublic)
-def restore(db: DbSession, id: int, _: AuthUser = Permission("olm.experiment.delete")):
+def restore(db: DbSession, id: int, _: AuthUser = Permission("olm.experiment.update")):
     db_experiment = db.get(Experiment, id)
     if not db_experiment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {id} not found!")

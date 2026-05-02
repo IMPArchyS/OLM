@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlmodel import select
+from sqlmodel import col, select
 from app.api.dependencies import DbSession
 
 from app.models.device import Device, DevicePublic, DeviceWithSoftware
@@ -18,8 +18,15 @@ def get_all(db: DbSession):
 
 @router.get("/available", response_model=list[DeviceWithSoftware])
 def get_all_available(db: DbSession):
-    stmt = select(Device).where((Device.server_id != None) & (Device.deleted_at == None)).join(Server).where(
-        (Server.available == True) & (Server.enabled == True) & (Server.production == True)
+    stmt = (
+        select(Device)
+        .where(col(Device.server_id).is_not(None), col(Device.deleted_at).is_(None))
+        .join(Server)
+        .where(
+            col(Server.available).is_(True),
+            col(Server.enabled).is_(True),
+            col(Server.production).is_(True),
+        )
     )
     return db.exec(stmt).all()
 

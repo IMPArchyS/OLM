@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlmodel import Session, col, select
 
@@ -12,6 +12,12 @@ from app.models.utils import now
 
 def queue_now() -> datetime:
     return now().replace(tzinfo=None)
+
+
+def to_naive_utc(dt: datetime) -> datetime:
+    if dt.tzinfo is not None:
+        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
 
 
 def parse_datetime(raw: object) -> datetime | None:

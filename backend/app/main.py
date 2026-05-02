@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.api import api_router
 from app.api.workers.queue import run_poll_worker, run_submit_worker
+from app.api.workers.sync import run_sync_worker
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -15,19 +16,27 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    stop_event = asyncio.Event()
     tasks: list[asyncio.Task] = []
+
     if settings.EXPERIMENT_QUEUE_WORKER_ENABLED:
-        stop_event = asyncio.Event()
-        tasks = [
+        tasks += [
             asyncio.create_task(run_submit_worker(stop_event)),
             asyncio.create_task(run_poll_worker(stop_event)),
         ]
-        yield
-        stop_event.set()
-        await asyncio.gather(*tasks)
     else:
         logger.info("Experiment queue worker disabled")
-        yield
+
+    if settings.SERVER_SYNC_WORKER_ENABLED:
+        tasks.append(asyncio.create_task(run_sync_worker(stop_event)))
+    else:
+        logger.info("Server sync worker disabled")
+
+    yield
+
+    stop_event.set()
+    if tasks:
+        await asyncio.gather(*tasks)
 
 
 app = FastAPI(lifespan=lifespan)

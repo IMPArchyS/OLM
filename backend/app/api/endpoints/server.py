@@ -52,7 +52,11 @@ def resolve_url(server: Server):
 def ping_remote_server(db: DbSession, server: ServerPublic, health_url: str):
     available = False
     try:
-        response = httpx.get(health_url, headers={"x-api-key": settings.EXPERIMENTAL_API_KEY})
+        response = httpx.get(
+            health_url,
+            headers={"x-api-key": settings.EXPERIMENTAL_API_KEY},
+            timeout=settings.EXPERIMENT_QUEUE_REQUEST_TIMEOUT_SECONDS,
+        )
         if response.status_code < 400:
             body = response.json()
 
@@ -137,13 +141,13 @@ def sync_all(db: DbSession, _: AuthUser = Permission("olm.server.sync")):
     return results
 
 
-@router.get("/")
-def get_all(db: DbSession): 
+@router.get("/")  # intentionally public — server catalog is readable without auth
+def get_all(db: DbSession):
     stmt = select(Server)
     return db.exec(stmt).all()
 
 
-@router.get("/{id}", response_model=ServerPublic)
+@router.get("/{id}", response_model=ServerPublic)  # intentionally public
 def get_by_id(db: DbSession, id: int):
     db_server = db.get(Server, id)
     if not db_server:
@@ -151,7 +155,7 @@ def get_by_id(db: DbSession, id: int):
     return db_server
 
 
-@router.get("/{id}/devices", response_model=List[DeviceWithSoftware])
+@router.get("/{id}/devices", response_model=List[DeviceWithSoftware])  # intentionally public
 def get_server_devices(db: DbSession, id: int):
     db_server = db.get(Server, id)
     if not db_server:

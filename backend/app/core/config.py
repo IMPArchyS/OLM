@@ -1,3 +1,5 @@
+from datetime import time
+
 from pydantic import computed_field
 from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -24,6 +26,8 @@ class Settings(BaseSettings):
     AUTH_API_KEY: str = "devapikey"
     EXPERIMENTAL_API_KEY: str = "experimentalapikey"
     EXPERIMENTAL_HEALTH_PATH: str = "/api/server/sync"
+    SERVER_SYNC_WORKER_ENABLED: bool = True
+    SERVER_SYNC_WORKER_TIME: time = time(4, 0)
     EXPERIMENT_QUEUE_WORKER_ENABLED: bool = True
     EXPERIMENT_QUEUE_WORKER_INTERVAL_SECONDS: int = 5
     EXPERIMENT_QUEUE_REQUEST_TIMEOUT_SECONDS: float = 10.0

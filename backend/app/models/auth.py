@@ -17,23 +17,27 @@ class TokenResponse(BaseModel):
     refresh_token: str
     refresh_token_expires_at: datetime
 
+
 class LoginRequest(BaseModel):
     username: str
     password: str
     remember_me: bool
 
+
 class RegisterRequest(BaseModel):
-    name: str  
+    name: str
     username: str
     password: str
+
 
 class ChangeNameRequest(BaseModel):
     jwt_token: str
     name: str
 
+
 class ChangePasswordRequest(BaseModel):
     jwt_token: str
-    password_old: str  
+    password_old: str
     password_new: str
     password_new_repeat: str
 

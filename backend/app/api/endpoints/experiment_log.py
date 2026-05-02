@@ -68,18 +68,22 @@ async def get_all_by_user(db: DbSession, user: CurrentUser):
 
 
 @router.get("/{id}", response_model=ExperimentLogPublicEnriched)
-def get_by_id(db: DbSession, id: int, _: CurrentUser):
+def get_by_id(db: DbSession, id: int, user: CurrentUser):
     db_exp_log = db.get(ExperimentLog, id)
     if not db_exp_log:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment Log with {id} not found!")
+    if db_exp_log.user_id != user.id and not user.admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     return _enrich(db_exp_log)
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete(db: DbSession, id: int, _: CurrentUser):
+def delete(db: DbSession, id: int, user: CurrentUser):
     db_exp_log = db.get(ExperimentLog, id)
     if not db_exp_log:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment Log with {id} not found!")
+    if db_exp_log.user_id != user.id and not user.admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     if db_exp_log.deleted_at is not None:
         raise HTTPException(status_code=status.HTTP_410_GONE, detail="Experiment Log already deleted")
     db_exp_log.deleted_at = now()
@@ -90,10 +94,12 @@ def delete(db: DbSession, id: int, _: CurrentUser):
 
 
 @router.patch("/{id}/restore", response_model=ExperimentLogPublicEnriched)
-def restore(db: DbSession, id: int, _: CurrentUser):
+def restore(db: DbSession, id: int, user: CurrentUser):
     db_exp_log = db.get(ExperimentLog, id)
     if not db_exp_log:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment Log with {id} not found!")
+    if db_exp_log.user_id != user.id and not user.admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     if db_exp_log.deleted_at is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Experiment Log is not deleted")
     db_exp_log.deleted_at = None

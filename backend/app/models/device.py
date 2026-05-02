@@ -69,6 +69,13 @@ class DeviceSyncPayload(BaseModel):
 
     @model_validator(mode="after")
     def validate_maintenance_window(self):
-        if self.maintenance_start and self.maintenance_end and self.maintenance_start > self.maintenance_end:
-            raise ValueError("maintenance_start cannot be after maintenance_end")
+        has_start = self.maintenance_start is not None
+        has_end = self.maintenance_end is not None
+        if has_start != has_end:
+            raise ValueError("maintenance_start and maintenance_end must both be set or both be None")
+        if has_start and has_end:
+            start = self.maintenance_start
+            end = self.maintenance_end
+            if start is not None and end is not None and start > end:
+                raise ValueError("maintenance_start cannot be after maintenance_end")
         return self

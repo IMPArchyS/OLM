@@ -197,9 +197,6 @@ async def logout(refresh_token: str | None = Cookie(default=None)):
 
 @router.post("/validate-token")
 async def validate_token(jwt_token: Annotated[str, Cookie(alias="refresh_token")]):
-    if not jwt_token:
-        raise HTTPException(status_code=401, detail="No jwt token")
-    
     async with httpx.AsyncClient() as client:
         response = await client.post(
             f"{settings.AUTH_SERVICE_URL}/validate-token",
