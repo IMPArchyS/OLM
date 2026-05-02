@@ -43,11 +43,6 @@ class Device(DeviceBase, table=True):
     reservations: List["Reservation"] = Relationship(back_populates="device", cascade_delete=True)
 
 
-class DeviceCreate(DeviceBase):
-    device_type_id: int
-    server_id: int
-
-
 class DevicePublic(DeviceBase):
     id: int
     server_id: int
@@ -56,14 +51,6 @@ class DevicePublic(DeviceBase):
     deleted_at: datetime | None
     device_type: DeviceTypePublic
     softwares: list[SoftwarePublic]
-
-
-class DeviceUpdate(SQLModel):
-    name: str | None = None
-    maintenance_start: time | None = None
-    maintenance_end: time | None = None
-    device_type_id: int | None = None
-    server_id: int | None = None
 
 
 class DeviceWithSoftware(DeviceBase):

@@ -24,16 +24,8 @@ class Software(SoftwareBase, table=True):
     experiments: List["Experiment"] = Relationship(back_populates="software")
 
 
-class SoftwareCreate(SoftwareBase):
-    pass
-
-
 class SoftwarePublic(SoftwareBase):
     id: int 
-
-
-class SoftwareUpdate(SoftwareBase):
-    pass 
 
 
 class SoftwareSyncPayload(BaseModel):

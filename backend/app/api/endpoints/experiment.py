@@ -1,7 +1,7 @@
-from typing import List
+from typing import List, Sequence
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import col, select
-from app.api.dependencies import AuthUser, DbSession, Permission
+from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission
 from app.api.endpoints.server import resolve_url
 
 from app.models.device import Device, DevicePublic
@@ -17,13 +17,13 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[ExperimentPublic])
-def get_all(db: DbSession, _: AuthUser = Permission("olm.experiment.read")): 
+def get_all(db: DbSession, _: AuthUser = Permission("olm.experiment.read")) -> Sequence[Experiment]: 
     stmt = select(Experiment)
     return db.exec(stmt).all()
 
 
 @router.get("/{id}", response_model=ExperimentPublic)
-def get_by_id(db: DbSession, id: int):
+def get_by_id(db: DbSession, id: int, _: AuthUser = Permission("olm.experiment.read")):
     db_experiment = db.get(Experiment, id)
     if not db_experiment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {id} not found!")
@@ -31,7 +31,7 @@ def get_by_id(db: DbSession, id: int):
 
 
 @router.get("/device/{device_id}", response_model=List[ExperimentPublic])
-def get_by_device_id(db: DbSession, device_id: int):
+def get_by_device_id(db: DbSession, device_id: int, _: CurrentUser):
     stmt = (
         select(Experiment)
         .join(ExperimentDevice, col(ExperimentDevice.experiment_id) == Experiment.id)
@@ -66,7 +66,7 @@ def create(db: DbSession, experiment: ExperimentCreate, _: AuthUser = Permission
 
 
 @router.post("/queue", status_code=status.HTTP_201_CREATED)
-async def queue(db: DbSession, experiment: ExperimentFormQueue,  _: AuthUser = Permission("olm.queue.run")):
+def queue(db: DbSession, experiment: ExperimentFormQueue,  _: AuthUser = Permission("olm.queue.run")):
     if experiment.simulation_time < 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="simulation_time must be >= 0")
 
@@ -116,7 +116,6 @@ async def queue(db: DbSession, experiment: ExperimentFormQueue,  _: AuthUser = P
         started_at=None,
         finished_at=None,
         run=None,
-        note=None,
     )
     db.add(db_experiment_log)
     db.flush()

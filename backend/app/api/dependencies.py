@@ -76,14 +76,20 @@ async def validate_token(token: str) -> dict:
 
 
 async def check_permission(jwt_token: str, permission: str) -> bool:
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{settings.AUTH_SERVICE_URL}/check-permission",
-            json={"jwt_token": jwt_token, "permission": permission},
-            headers={"x-api-key": settings.AUTH_API_KEY},
-        )
-        data = response.json()
-        return data["valid"]
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.AUTH_SERVICE_URL}/check-permission",
+                json={"jwt_token": jwt_token, "permission": permission},
+                headers={"x-api-key": settings.AUTH_API_KEY},
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data["valid"]
+    except httpx.RequestError:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Auth service unavailable")
+    except (KeyError, ValueError):
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Invalid response from auth service")
 
 
 async def check_permissions(jwt_token: str, permissions: list[str]) -> dict:
@@ -128,7 +134,7 @@ def require_permission(permission: str):
     async def checker(user: AuthUser = Depends(get_current_user)):
         allowed = await check_permission(user.access_token, permission)
         if not allowed:
-            raise HTTPException(status_code=403, detail="Forbidden")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
         return user
     return checker
 

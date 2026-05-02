@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, List
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
 from app.models.utils import now
 
 if TYPE_CHECKING:
@@ -12,10 +12,11 @@ class ServerBase(SQLModel):
     name: str = Field(index=True)
     ip_address: str = Field(index=True, unique=True)
     api_domain: str = Field(index=True, unique=True)
-    port: int = Field(index=True, unique=True)
+    port: int = Field(index=True)
 
 
 class Server(ServerBase, table=True):
+    __table_args__ = (UniqueConstraint("ip_address", "port", name="uq_server_ip_port"),)
     id: int | None = Field(default=None, primary_key=True)
     available: bool = Field(default=False)
     production: bool = Field(default=False)
@@ -40,10 +41,6 @@ class ServerPublic(ServerBase):
     created_at: datetime 
     modified_at: datetime 
     deleted_at: datetime | None
-
-
-class ServerPubDetailed(ServerPublic):
-    devices: List["DevicePublic"] = []
 
 
 class ServerUpdate(SQLModel):

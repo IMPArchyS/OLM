@@ -28,15 +28,11 @@ export function useExperimentLogs() {
         }
     }
 
-    async function fetchExperimentLogsByUser(userId?: number): Promise<{ success: boolean; message?: string }> {
+    async function fetchExperimentLogsByUser(): Promise<{ success: boolean; message?: string }> {
         error.value = null;
-        if (!userId) {
-            error.value = t('error.fetch');
-            return { success: false, message: error.value };
-        }
         loading.value = true;
         try {
-            const response = await apiClient.get(`/experiment_log/user/${userId}`);
+            const response = await apiClient.get(`/experiment_log/me`);
             userExperimentLogs.value = response.data;
             return { success: true };
         } catch (e: any) {

@@ -67,9 +67,15 @@ const paginationTo = computed(() => {
     return Math.min(currentPage.value * pageSize.value, logs.value.length);
 });
 
-watch(allLogs, () => { currentPage.value = 1; });
-watch(pageSize, () => { currentPage.value = 1; });
-watch(deletedFilter, () => { currentPage.value = 1; });
+watch(allLogs, () => {
+    currentPage.value = 1;
+});
+watch(pageSize, () => {
+    currentPage.value = 1;
+});
+watch(deletedFilter, () => {
+    currentPage.value = 1;
+});
 
 const loadLogs = async () => {
     if (showAllLogs.value) {
@@ -82,7 +88,7 @@ const loadLogs = async () => {
         if (!result.success) toast.error(result.message || t('reports.fetchError'));
         return;
     }
-    const result = await fetchExperimentLogsByUser(authStore.user?.id);
+    const result = await fetchExperimentLogsByUser();
     if (!result.success) toast.error(result.message || t('reports.fetchError'));
 };
 
@@ -106,8 +112,12 @@ const handleRestore = async (id: number) => {
     }
 };
 
-watch(showAllLogs, async () => { await loadLogs(); });
-onMounted(async () => { await loadLogs(); });
+watch(showAllLogs, async () => {
+    await loadLogs();
+});
+onMounted(async () => {
+    await loadLogs();
+});
 </script>
 
 <template>

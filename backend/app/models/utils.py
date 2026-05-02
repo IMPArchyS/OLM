@@ -8,5 +8,5 @@ def now() -> datetime:
 
 def ensure(value: int | None) -> int:
     """Check if the passed in Id field is not None."""
-    assert value is not None
+    if value is None: raise ValueError("Value is None")
     return value

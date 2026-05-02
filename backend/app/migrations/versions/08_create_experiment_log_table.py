@@ -25,7 +25,6 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('run', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    sa.Column('note', sa.String(), nullable=True),
     sa.Column('started_at', sa.DateTime(), nullable=True),
     sa.Column('finished_at', sa.DateTime(), nullable=True),
     sa.Column(
@@ -53,10 +52,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['server_id'], ['server.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_experiment_log_note'), 'experiment_log', ['note'], unique=False)
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_index(op.f('ix_experiment_log_note'), table_name='experiment_log')
     op.drop_table('experiment_log')

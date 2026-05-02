@@ -11,8 +11,6 @@ from app.models.server import Server, ServerCreate, ServerPublic, ServerUpdate
 from app.models.utils import ensure, now
 from app.core.config import settings
 
-# ServerPubDetailed.model_rebuild()
-
 
 router = APIRouter()
 
@@ -85,7 +83,7 @@ def sync(db: DbSession, id: int,  _: AuthUser = Permission("olm.server.sync")):
         if not health_url:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Server missing domain!")
         
-        health_url += "/api/server/sync"
+        health_url += settings.EXPERIMENTAL_HEALTH_PATH
         db_server.available = ping_remote_server(db, ServerPublic.model_validate(db_server), health_url)
 
         db.add(db_server)
@@ -122,7 +120,7 @@ def sync_all(db: DbSession, _: AuthUser = Permission("olm.server.sync")):
                 results.append({"id": db_server.id, "available": False, "error": "Server missing domain"})
                 continue
             
-            health_url += "/api/server/sync"
+            health_url += settings.EXPERIMENTAL_HEALTH_PATH
             db_server.available = ping_remote_server(db, ServerPublic.model_validate(db_server), health_url)
 
             db.add(db_server)

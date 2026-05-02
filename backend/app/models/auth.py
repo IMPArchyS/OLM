@@ -44,7 +44,7 @@ class ProviderResponse(BaseModel):
     logo_url: str
 
 
-class LogoutReponse(BaseModel):
+class LogoutResponse(BaseModel):
     success: bool
     
     

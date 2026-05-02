@@ -252,7 +252,6 @@ def _create_experiment_log_for_payload(
             started_at=now(),
             finished_at=None,
             run=None,
-            note=None,
         )
         session.add(db_experiment_log)
         session.commit()

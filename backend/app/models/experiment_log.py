@@ -54,14 +54,13 @@ class FinishReason(str, Enum):
 
 class ExperimentLogBase(SQLModel):
     run: ExperimentRun | None = Field(default=None, sa_column=Column(PydanticJSONB)) 
-    note: str | None = Field(default=None, index=True)
 
 
 class ExperimentLog(ExperimentLogBase, table=True):
     __tablename__ = "experiment_log" # type: ignore
 
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(default=None)
+    user_id: int = Field()
 
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
@@ -93,16 +92,6 @@ class ExperimentLog(ExperimentLogBase, table=True):
     server: "Server" = Relationship(back_populates="experiment_logs")
 
 
-class ExperimentLogCreate(ExperimentLogBase):
-    user_id: int
-    experiment_id: int
-    device_id: int
-    server_id: int
-    started_at: datetime | None
-    finished_at: datetime | None
-    finish_reason: FinishReason = FinishReason.REASON_NONE
-
-
 class ExperimentLogPublic(ExperimentLogBase):
     id: int
     user_id: int
@@ -121,10 +110,6 @@ class ExperimentLogPublicEnriched(ExperimentLogPublic):
     device_name: str | None = None
     software_name: str | None = None
     username: str | None = None
-
-
-class ExperimentLogUpdate(ExperimentLogBase):
-    finished_at: datetime
 
 
 class ExperimentLogLatestDevice(BaseModel):

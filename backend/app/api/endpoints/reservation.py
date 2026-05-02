@@ -2,6 +2,7 @@ import asyncio
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import select, asc
 from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission, check_permission, fetch_username
+from app.core.config import settings
 
 from app.models.device import Device
 from app.models.reservation import Reservation, ReservationCreate, ReservationPublic, ReservationUpdate, ReservationWithUsername
@@ -12,7 +13,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[ReservationWithUsername])
-async def get_all(db: DbSession, device_id: int | None = Query(default=None)):
+async def get_all(db: DbSession, _: AuthUser = Permission("olm.reservation.read"), device_id: int | None = Query(default=None)):
     stmt = select(Reservation)
     if device_id is not None:
         stmt = stmt.where(Reservation.device_id == device_id)
@@ -52,14 +53,11 @@ def get_current(db: DbSession, user: CurrentUser):
 
 
 @router.get("/{id}", response_model=ReservationPublic)
-def get_by_id(db: DbSession, id: int): 
+def get_by_id(db: DbSession, id: int, _: AuthUser = Permission("olm.reservation.read")):
     db_reservation = db.get(Reservation, id)
     if not db_reservation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Reservation with {id} not found!")
     return db_reservation
-
-
-MAX_RESERVATION_MINUTES = 30
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -74,10 +72,10 @@ def create(db: DbSession, reservation: ReservationCreate, user: CurrentUser, _: 
         )
 
     duration_minutes = (reservation.end - reservation.start).total_seconds() / 60
-    if duration_minutes > MAX_RESERVATION_MINUTES:
+    if duration_minutes > settings.RESERVATION_MAX_MINUTES:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Reservation cannot be longer than {MAX_RESERVATION_MINUTES} minutes"
+            detail=f"Reservation cannot be longer than {settings.RESERVATION_MAX_MINUTES} minutes"
         )
 
     if not db.get(Device, reservation.device_id):
@@ -122,10 +120,10 @@ async def update(db: DbSession, id: int, reservation: ReservationUpdate, user: C
         )
 
     duration_minutes = (new_end - new_start).total_seconds() / 60
-    if duration_minutes > MAX_RESERVATION_MINUTES:
+    if duration_minutes > settings.RESERVATION_MAX_MINUTES:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Reservation cannot be longer than {MAX_RESERVATION_MINUTES} minutes"
+            detail=f"Reservation cannot be longer than {settings.RESERVATION_MAX_MINUTES} minutes"
         )
 
     reservation_data = reservation.model_dump(exclude_unset=True)
@@ -134,7 +132,7 @@ async def update(db: DbSession, id: int, reservation: ReservationUpdate, user: C
     new_device_id = reservation.device_id if reservation.device_id is not None else db_reservation.device_id
 
     if not db.get(Device, new_device_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {reservation.device_id} not found!")    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {new_device_id} not found!")    
 
     if reservation.start is not None or reservation.end is not None:
         overlapping_stmt = select(Reservation).where(

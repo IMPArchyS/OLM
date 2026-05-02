@@ -35,17 +35,9 @@ class DeviceType(DeviceTypeBase, table=True):
     devices: List["Device"] = Relationship(back_populates="device_type", cascade_delete=True)
 
 
-class DeviceTypeCreate(DeviceTypeBase):
-    pass
-
-
 class DeviceTypePublic(DeviceTypeBase):
     id: int
     visual_config: dict[str, Any] | None
-
-
-class DeviceTypeUpdate(DeviceTypeBase):
-    pass 
 
 
 class DeviceTypeSyncPayload(BaseModel):

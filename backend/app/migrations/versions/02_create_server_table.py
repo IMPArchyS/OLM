@@ -37,11 +37,13 @@ def upgrade() -> None:
     op.create_index(op.f('ix_server_api_domain'), 'server', ['api_domain'], unique=True)
     op.create_index(op.f('ix_server_ip_address'), 'server', ['ip_address'], unique=True)
     op.create_index(op.f('ix_server_name'), 'server', ['name'], unique=False)
-    op.create_index(op.f('ix_server_port'), 'server', ['port'], unique=True)
+    op.create_index(op.f('ix_server_port'), 'server', ['port'], unique=False)
+    op.create_unique_constraint('uq_server_ip_port', 'server', ['ip_address', 'port'])
 
 
 def downgrade() -> None:
     """Downgrade schema."""
+    op.drop_constraint('uq_server_ip_port', 'server', type_='unique')
     op.drop_index(op.f('ix_server_port'), table_name='server')
     op.drop_index(op.f('ix_server_name'), table_name='server')
     op.drop_index(op.f('ix_server_ip_address'), table_name='server')

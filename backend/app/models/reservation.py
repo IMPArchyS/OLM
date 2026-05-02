@@ -13,23 +13,17 @@ class ReservationBase(SQLModel):
 
 class Reservation(ReservationBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(default=None)
+    user_id: int = Field()
     
     created_at: datetime = Field(default_factory=now)
     modified_at: datetime = Field(default_factory=now)
     # relationships
-    device_id: int | None = Field(default=None, foreign_key="device.id")
+    device_id: int = Field(foreign_key="device.id")
     device: "Device" = Relationship(back_populates="reservations")
 
 
 class ReservationCreate(ReservationBase):
     device_id: int
-
-
-class ReservationQueue(SQLModel):
-    device_id: int
-    simulation_time: int
-    timezone: str
 
 
 class ReservationPublic(ReservationBase):
