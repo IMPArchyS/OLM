@@ -1,38 +1,36 @@
 import asyncio
+import logging
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import logging
 
 from app.api.api import api_router
-from app.api.workers.experiment_queue_worker import run_experiment_queue_worker
+from app.api.workers.queue import run_poll_worker, run_submit_worker
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
-worker_stop_event = asyncio.Event()
-worker_task: asyncio.Task | None = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    tasks: list[asyncio.Task] = []
+    if settings.EXPERIMENT_QUEUE_WORKER_ENABLED:
+        stop_event = asyncio.Event()
+        tasks = [
+            asyncio.create_task(run_submit_worker(stop_event)),
+            asyncio.create_task(run_poll_worker(stop_event)),
+        ]
+        yield
+        stop_event.set()
+        await asyncio.gather(*tasks)
+    else:
+        logger.info("Experiment queue worker disabled")
+        yield
 
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
-    method = request.scope.get("method", "websocket")
-    path = request.scope.get("path", str(request.url.path))
-    client = request.client.host if request.client else "unknown"
-
-    logger.error(
-        f"HTTPException: {exc.status_code} {exc.detail} | "
-        f"Method: {method} | "
-        f"URL: {path} | "
-        f"Client: {client}"
-    )
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail}
-    )
-
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,25 +43,13 @@ app.add_middleware(
 app.include_router(api_router)
 
 
-@app.on_event("startup")
-async def startup_experiment_queue_worker() -> None:
-    global worker_task
-
-    if not settings.EXPERIMENT_QUEUE_WORKER_ENABLED:
-        logger.info("Experiment queue worker disabled")
-        return
-
-    worker_stop_event.clear()
-    worker_task = asyncio.create_task(run_experiment_queue_worker(worker_stop_event))
-
-
-@app.on_event("shutdown")
-async def shutdown_experiment_queue_worker() -> None:
-    global worker_task
-
-    if worker_task is None:
-        return
-
-    worker_stop_event.set()
-    await worker_task
-    worker_task = None
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    method = request.scope.get("method", "websocket")
+    path = request.scope.get("path", str(request.url.path))
+    client = request.client.host if request.client else "unknown"
+    logger.error(
+        "HTTPException: %s %s | Method: %s | URL: %s | Client: %s",
+        exc.status_code, exc.detail, method, path, client,
+    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})

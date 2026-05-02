@@ -70,12 +70,49 @@ def queue(db: DbSession, experiment: ExperimentFormQueue,  _: AuthUser = Permiss
     if experiment.simulation_time < 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="simulation_time must be >= 0")
 
-    if experiment.device_id is None:
-        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="not_implemented")
-
     db_experiment = db.get(Experiment, experiment.id)
     if not db_experiment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Experiment with {experiment.id} not found!")
+
+    any_device_mode = experiment.device_id is None
+
+    if any_device_mode:
+        candidate_devices = [d for d in db_experiment.devices if d.deleted_at is None]
+        if not candidate_devices:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No active devices assigned to this experiment",
+            )
+        payload = ExperimentQueuePayload.model_validate(
+            {
+                **experiment.model_dump(),
+                "device_name": None,
+                "candidate_device_ids": [ensure(d.id) for d in candidate_devices],
+            }
+        )
+        queue_entry = ExperimentQueue(
+            user_id=experiment.user_id,
+            experiment_id=ensure(db_experiment.id),
+            device_id=None,
+            server_id=None,
+            experiment_log_id=None,
+            status=QueueStatus.NOT_STARTED,
+            payload=payload,
+            attempts=0,
+            job_id=None,
+            next_attempt_at=now(),
+            created_at=now(),
+            modified_at=now(),
+        )
+        db.add(queue_entry)
+        db.commit()
+        db.refresh(queue_entry)
+        return {
+            "queue_id": queue_entry.id,
+            "experiment_log_id": None,
+            "status": queue_entry.status,
+            "attempts": queue_entry.attempts,
+        }
 
     db_device = db.get(Device, experiment.device_id)
     if not db_device:
@@ -84,7 +121,7 @@ def queue(db: DbSession, experiment: ExperimentFormQueue,  _: AuthUser = Permiss
     if not any(d.id == db_device.id for d in db_experiment.devices):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Device {db_device.id} is not assigned to experiment {db_experiment.id}!"
+            detail=f"Device {db_device.id} is not assigned to experiment {db_experiment.id}!",
         )
 
     db_server = db.get(Server, db_device.server_id)
@@ -94,7 +131,7 @@ def queue(db: DbSession, experiment: ExperimentFormQueue,  _: AuthUser = Permiss
     if not (db_server.available and db_server.enabled and db_server.production):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Server with {db_server.id} is not available, enabled, and in production!"
+            detail=f"Server with {db_server.id} is not available, enabled, and in production!",
         )
 
     base_url = resolve_url(db_server)

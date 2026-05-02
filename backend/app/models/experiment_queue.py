@@ -25,9 +25,9 @@ class ExperimentQueue(SQLModel, table=True):
     __tablename__ = "experiment_queue" # type: ignore
     id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(nullable=False)
-    device_id: int = Field(foreign_key="device.id")
-    server_id: int = Field(foreign_key="server.id")
-    experiment_log_id: int = Field(foreign_key="experiment_log.id")
+    device_id: int | None = Field(default=None, foreign_key="device.id")
+    server_id: int | None = Field(default=None, foreign_key="server.id")
+    experiment_log_id: int | None = Field(default=None, foreign_key="experiment_log.id")
     job_id: str | None = Field(default=None)
     attempts: int = Field(default=0)
     next_attempt_at: datetime | None = Field(default=None)

@@ -30,7 +30,9 @@ class Settings(BaseSettings):
     EXPERIMENT_QUEUE_BATCH_SIZE: int = 20
     EXPERIMENT_QUEUE_RETRY_BASE_SECONDS: int = 30
     EXPERIMENT_QUEUE_RETRY_MAX_SECONDS: int = 600
-    EXPERIMENT_QUEUE_POLL_INTERVAL_SECONDS: int = 5
+    EXPERIMENT_QUEUE_MAX_SUBMIT_ATTEMPTS: int = 3
+    EXPERIMENT_QUEUE_POLL_RATE_PER_SECOND: int = 1
+    EXPERIMENT_QUEUE_MAX_POLL_ATTEMPTS: int = 1000
     EXPERIMENT_QUEUE_SUBMIT_PATH: str = "/api/server/experiments/queue"
     EXPERIMENT_QUEUE_STATUS_PATH: str = "/api/server/experiments/{job_id}"
     EXPERIMENT_WS_PATH: str = "/ws/server/experiments"

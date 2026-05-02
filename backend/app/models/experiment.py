@@ -116,10 +116,11 @@ class ExperimentQueuePayload(SQLModel):
     input_arguments: dict[str, Any]
     output_arguments: list[str]
     simulation_time: int
-    sample_rate: int 
+    sample_rate: int
     software_name: SoftwareName
-    device_name: str
-    
+    device_name: str | None = None
+    candidate_device_ids: list[int] | None = None
+
     @model_validator(mode="before")
     @classmethod
     def empty_setpoint_to_none(cls, values):

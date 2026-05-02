@@ -57,7 +57,7 @@ export function useDeviceReservationCalendar(props: Props) {
             return { success: true };
         }
         const result = await fetchReservations(props.selectedDeviceId);
-        if (!result.success) toast.error(result.message || 'Failed to fetch reservations');
+        if (!result.success) toast.error(result.message || t('reservations.failedFetch'));
         return result;
     }
 
@@ -78,7 +78,7 @@ export function useDeviceReservationCalendar(props: Props) {
     const calendarEvents = computed(() => {
         const reservationEvents = reservations.value.map((r) => ({
             id: String(r.id),
-            title: r.username || 'Reserved',
+            title: r.username || t('reservations.reserved'),
             start: r.start,
             end: r.end,
             backgroundColor: undefined,
@@ -126,7 +126,7 @@ export function useDeviceReservationCalendar(props: Props) {
             end = slot.end;
         }
 
-        if (checkMaintenanceConflict(start, end, 'Cannot create reservation during maintenance period')) return;
+        if (checkMaintenanceConflict(start, end, t('reservations.cannotCreateDuringMaintenance'))) return;
         reservationForm.value = {
             device_id: props.selectedDeviceId,
             start: formatDateTimeLocal(start),
@@ -141,7 +141,7 @@ export function useDeviceReservationCalendar(props: Props) {
         if (event.extendedProps.isMaintenance) {
             if (clickInfo.view.type === 'dayGridMonth' && props.selectedDeviceId && event.start) {
                 const slot = resolveAllDaySlot(event.start);
-                if (checkMaintenanceConflict(slot.start, slot.end, 'Cannot create reservation during maintenance period')) return;
+                if (checkMaintenanceConflict(slot.start, slot.end, t('reservations.cannotCreateDuringMaintenance'))) return;
                 reservationForm.value = {
                     device_id: props.selectedDeviceId,
                     start: formatDateTimeLocal(slot.start),
@@ -151,13 +151,13 @@ export function useDeviceReservationCalendar(props: Props) {
                 isModalOpen.value = true;
                 return;
             }
-            toast.warning('Maintenance periods cannot be edited');
+            toast.warning(t('reservations.maintenanceCannotEdit'));
             return;
         }
         const reservation = reservations.value.find((r) => r.id === Number(event.id));
         if (!reservation) return;
         if (new Date(reservation.end) < new Date()) {
-            toast.warning('Cannot edit past reservations');
+            toast.warning(t('reservations.cannotEditPast'));
             return;
         }
         editingReservation.value = reservation;
@@ -173,7 +173,7 @@ export function useDeviceReservationCalendar(props: Props) {
         const startDate = new Date(reservationForm.value.start);
         const endDate = new Date(reservationForm.value.end);
         if (startDate < new Date() || endDate < new Date()) {
-            toast.error('Cannot create reservation in the past');
+            toast.error(t('reservations.cannotCreateInPast'));
             return;
         }
         if (endDate <= startDate) {
@@ -181,16 +181,16 @@ export function useDeviceReservationCalendar(props: Props) {
             return;
         }
         if (endDate.getTime() - startDate.getTime() > MAX_DURATION_MS) {
-            toast.error('Reservation cannot be longer than 30 minutes');
+            toast.error(t('reservations.maxDuration'));
             return;
         }
-        if (checkMaintenanceConflict(startDate, endDate, 'Reservation conflicts with daily maintenance period')) return;
+        if (checkMaintenanceConflict(startDate, endDate, t('reservations.conflictWithMaintenance'))) return;
         const reservationData = { device_id: reservationForm.value.device_id, start: startDate.toISOString(), end: endDate.toISOString() };
         const result = editingReservation.value
             ? await updateReservation(editingReservation.value.id, reservationData)
             : await createReservation(reservationData);
         if (!result.success) {
-            toast.error(result.message || 'Failed to save reservation');
+            toast.error(result.message || t('reservations.failedSave'));
             return;
         }
         const refreshResult = await refreshReservations();
@@ -202,7 +202,7 @@ export function useDeviceReservationCalendar(props: Props) {
         if (!editingReservation.value) return;
         const result = await removeReservation(editingReservation.value.id);
         if (!result.success) {
-            toast.error(result.message || 'Failed to delete reservation');
+            toast.error(result.message || t('reservations.failedDelete'));
             return;
         }
         const refreshResult = await refreshReservations();

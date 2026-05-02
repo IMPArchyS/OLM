@@ -32,7 +32,7 @@ const { isModalOpen, editingReservation, reservationForm, calendarOptions, loadi
                                 <v-text-field
                                     v-model="reservationForm.start"
                                     type="datetime-local"
-                                    label="Start Date"
+                                    :label="$t('reservations.startDate')"
                                     variant="outlined"
                                     density="comfortable"
                                     required
@@ -43,7 +43,7 @@ const { isModalOpen, editingReservation, reservationForm, calendarOptions, loadi
                                 <v-text-field
                                     v-model="reservationForm.end"
                                     type="datetime-local"
-                                    label="End Date"
+                                    :label="$t('reservations.endDate')"
                                     variant="outlined"
                                     density="comfortable"
                                     required
