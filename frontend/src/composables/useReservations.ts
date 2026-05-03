@@ -57,7 +57,7 @@ export function useReservations() {
 
     async function deleteReservation(reservationId: number): Promise<{ success: boolean; message?: string }> {
         try {
-            await apiClient.delete(`/reservation/${reservationId}/`);
+            await apiClient.delete(`/reservation/${reservationId}`);
             reservations.value = reservations.value.filter((reservation) => reservation.id !== reservationId);
             return { success: true };
         } catch (deleteError: any) {

@@ -62,7 +62,7 @@ def get_by_id(db: DbSession, id: int, _: AuthUser = Permission("olm.reservation.
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create(db: DbSession, reservation: ReservationCreate, user: AuthUser = Permission("olm.reservation.create")):
-    db_reservation = Reservation.model_validate(reservation)
+    db_reservation = Reservation.model_validate({**reservation.model_dump(), "user_id": user.id})
     db_reservation.user_id = user.id
 
     if reservation.end <= reservation.start:

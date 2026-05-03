@@ -88,10 +88,7 @@ export function useExperiments() {
 
     async function createExperiment(experiment: CreateExperimentForm): Promise<{ success: boolean; message?: string }> {
         try {
-            const response = await apiClient.post('/experiment/', experiment);
-            experiments.value.push(normalizeExperiment(response.data));
-            // TODO ask if this also refreshes the items on page
-            // await fetchExperiments();
+            await apiClient.post('/experiment/', experiment);
             return { success: true };
         } catch (e: any) {
             console.error('Error creating experiment:', e);

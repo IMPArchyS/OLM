@@ -33,12 +33,10 @@ const blinkFromRow = (row: OutputRow) => {
         return;
     }
 
-    if (hasFiniteNumber(row, 'sin_y')) {
-        controller.triggerAnimation('led_transmitter', true);
-    }
-
-    if (hasFiniteNumber(row, 'cos_y')) {
-        controller.triggerAnimation('led_receiver', true);
+    for (const key of Object.keys(row)) {
+        if (hasFiniteNumber(row, key)) {
+            controller.triggerAnimation(key, row[key] as number);
+        }
     }
 };
 
@@ -83,11 +81,13 @@ watch(
 );
 
 watch(
-    () => props.outputHistory,
-    (rows) => {
+    () => props.outputHistory.length,
+    () => {
         if (!sceneController.value) {
             return;
         }
+
+        const rows = props.outputHistory;
 
         if (rows.length < processedIndex.value) {
             processedIndex.value = 0;
@@ -102,7 +102,6 @@ watch(
 
         processedIndex.value = rows.length;
     },
-    { deep: false },
 );
 
 onBeforeUnmount(() => {

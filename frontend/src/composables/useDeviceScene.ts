@@ -3,7 +3,7 @@ import { Scene } from '@babylonjs/core/scene';
 import { ArcRotateCamera } from '@babylonjs/core/Cameras/arcRotateCamera';
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
-import { Color3 } from '@babylonjs/core/Maths/math.color';
+import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { SceneLoader } from '@babylonjs/core/Loading/sceneLoader';
 import type { DeviceVisualConfig } from '@/types/api';
 import '@babylonjs/loaders/glTF';
@@ -11,14 +11,12 @@ import '@babylonjs/loaders/glTF';
 const BLINK_DURATION_MS = 180;
 const MIN_CAMERA_BETA = 0.2;
 const MAX_CAMERA_BETA = Math.PI - 0.2;
-const MIN_CAMERA_RADIUS = 1.6;
-const MAX_CAMERA_RADIUS = 18;
 const ZOOM_DELTA_PERCENTAGE = 0.004;
 
 export function useDeviceScene(canvas: HTMLCanvasElement, visualConfig: DeviceVisualConfig) {
     let engine: Engine | null = null;
     let scene: Scene | null = null;
-    let resizeHandler: (() => void) | null = null;
+    let resizeObserver: ResizeObserver | null = null;
     const blinkTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
     const toColor3 = (color: [number, number, number]): Color3 => {
@@ -43,6 +41,19 @@ export function useDeviceScene(canvas: HTMLCanvasElement, visualConfig: DeviceVi
         material.emissiveColor = color;
     };
 
+    const setMeshPosition = (meshName: string, axis: 'x' | 'y' | 'z', value: number) => {
+        if (!scene) {
+            return;
+        }
+
+        const mesh = scene.getMeshByName(meshName);
+        if (!mesh) {
+            return;
+        }
+
+        mesh.position[axis] = value;
+    };
+
     const clearBlinkTimer = (signalKey: string) => {
         const timer = blinkTimers.get(signalKey);
         if (!timer) {
@@ -60,56 +71,72 @@ export function useDeviceScene(canvas: HTMLCanvasElement, visualConfig: DeviceVi
 
         engine = new Engine(canvas, true);
         scene = new Scene(engine);
+        scene.clearColor = new Color4(0, 0, 0, 0);
 
         const camera = new ArcRotateCamera('cam', -Math.PI / 2, Math.PI / 3, 5, Vector3.Zero(), scene);
         camera.lowerBetaLimit = MIN_CAMERA_BETA;
         camera.upperBetaLimit = MAX_CAMERA_BETA;
-        camera.lowerRadiusLimit = MIN_CAMERA_RADIUS;
-        camera.upperRadiusLimit = MAX_CAMERA_RADIUS;
         camera.wheelDeltaPercentage = ZOOM_DELTA_PERCENTAGE;
         camera.pinchDeltaPercentage = Math.abs(ZOOM_DELTA_PERCENTAGE);
         camera.attachControl(canvas, false);
 
-        new HemisphericLight('light', new Vector3(0, 1, 0), scene);
+        const light = new HemisphericLight('light', new Vector3(0, 1, 0), scene);
+        light.intensity = 1.4;
 
         await SceneLoader.ImportMeshAsync('', '/models/', visualConfig.model_file, scene);
+
+        const { min, max } = scene.getWorldExtends();
+        const center = Vector3.Center(min, max);
+        const diagonal = max.subtract(min).length();
+        camera.setTarget(center);
+        camera.radius = diagonal * 1.2;
+        camera.lowerRadiusLimit = diagonal * 0.3;
+        camera.upperRadiusLimit = diagonal * 5;
 
         engine.runRenderLoop(() => {
             scene?.render();
         });
 
-        resizeHandler = () => {
+        resizeObserver = new ResizeObserver(() => {
             engine?.resize();
-        };
-        window.addEventListener('resize', resizeHandler);
+        });
+        resizeObserver.observe(canvas);
     }
 
-    function triggerAnimation(signalKey: string, active: boolean) {
+    function triggerAnimation(signalKey: string, value: number) {
         const target = visualConfig.animations[signalKey];
         if (!target) {
             return;
         }
 
-        const emissiveColor = toColor3(target.color);
+        if (target.type === 'position') {
+            setMeshPosition(target.mesh, target.axis ?? 'y', value);
+            return;
+        }
+
         const offColor = Color3.Black();
+        clearBlinkTimer(signalKey);
 
-        if (target.type === 'emissive' || target.type === 'blink') {
-            clearBlinkTimer(signalKey);
+        if (value === 0) {
+            setMeshEmissiveColor(target.mesh, offColor);
+            return;
+        }
 
-            if (!active) {
+        const baseColor = toColor3(target.color);
+
+        if (target.type === 'blink') {
+            setMeshEmissiveColor(target.mesh, baseColor);
+            const timer = setTimeout(() => {
                 setMeshEmissiveColor(target.mesh, offColor);
-                return;
-            }
-
-            setMeshEmissiveColor(target.mesh, emissiveColor);
-
-            if (target.type === 'blink') {
-                const timer = setTimeout(() => {
-                    setMeshEmissiveColor(target.mesh, offColor);
-                    blinkTimers.delete(signalKey);
-                }, BLINK_DURATION_MS);
-                blinkTimers.set(signalKey, timer);
-            }
+                blinkTimers.delete(signalKey);
+            }, BLINK_DURATION_MS);
+            blinkTimers.set(signalKey, timer);
+        } else {
+            const intensity = Math.min(Math.abs(value), 1);
+            setMeshEmissiveColor(
+                target.mesh,
+                new Color3(baseColor.r * intensity, baseColor.g * intensity, baseColor.b * intensity),
+            );
         }
     }
 
@@ -117,9 +144,9 @@ export function useDeviceScene(canvas: HTMLCanvasElement, visualConfig: DeviceVi
         blinkTimers.forEach((timer) => clearTimeout(timer));
         blinkTimers.clear();
 
-        if (resizeHandler) {
-            window.removeEventListener('resize', resizeHandler);
-            resizeHandler = null;
+        if (resizeObserver) {
+            resizeObserver.disconnect();
+            resizeObserver = null;
         }
 
         scene?.dispose();

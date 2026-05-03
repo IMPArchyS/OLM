@@ -28,8 +28,9 @@ export interface Reservation {
 
 export interface DeviceVisualAnimationTarget {
     mesh: string;
-    type: 'emissive' | 'blink';
+    type: 'emissive' | 'blink' | 'position';
     color: [number, number, number];
+    axis?: 'x' | 'y' | 'z';
 }
 
 export interface DeviceVisualConfig {
