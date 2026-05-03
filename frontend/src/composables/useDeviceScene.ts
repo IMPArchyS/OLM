@@ -110,7 +110,8 @@ export function useDeviceScene(canvas: HTMLCanvasElement, visualConfig: DeviceVi
         }
 
         if (target.type === 'position') {
-            setMeshPosition(target.mesh, target.axis ?? 'y', value);
+            const v = target.abs ? Math.abs(value) : value;
+            setMeshPosition(target.mesh, target.axis ?? 'y', (target.offset ?? 0) + v);
             return;
         }
 

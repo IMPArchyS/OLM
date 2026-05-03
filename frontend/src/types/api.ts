@@ -31,6 +31,8 @@ export interface DeviceVisualAnimationTarget {
     type: 'emissive' | 'blink' | 'position';
     color: [number, number, number];
     axis?: 'x' | 'y' | 'z';
+    offset?: number;
+    abs?: boolean;
 }
 
 export interface DeviceVisualConfig {

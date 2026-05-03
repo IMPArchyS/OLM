@@ -181,19 +181,38 @@ watchEffect(() => {
                     <v-number-input
                         v-else-if="spec.type === 'number'"
                         :label="inputLabel(key, spec)"
+                        :step="0.001"
                         :model-value="Number(spec.value)"
                         variant="outlined"
                         :density="inputDensity"
-                        @update:model-value="(value) => (spec.value = Number(value ?? 0))"
+                        @update:model-value="(value) => (spec.value = Math.round((value ?? 0) * 1000) / 1000)"
                     />
                 </div>
 
                 <div class="experiment-selector__grid-cell">
-                    <v-text-field v-model="simTime" :label="t('dashboard.simulation_time')" variant="outlined" :density="inputDensity" />
+                    <v-number-input
+                        :step="0.001"
+                        :min="0.001"
+                        :rules="[(v: number) => v > 0 || t('dashboard.must_be_positive')]"
+                        :model-value="simTime"
+                        :label="t('dashboard.simulation_time')"
+                        variant="outlined"
+                        :density="inputDensity"
+                        @update:model-value="(v) => (simTime = Math.round((v ?? 0) * 1000) / 1000)"
+                    />
                 </div>
 
                 <div class="experiment-selector__grid-cell">
-                    <v-text-field v-model="sampleRate" :label="t('dashboard.sampling_rate')" variant="outlined" :density="inputDensity" />
+                    <v-number-input
+                        :step="0.001"
+                        :min="0.001"
+                        :rules="[(v: number) => v > 0 || t('dashboard.must_be_positive')]"
+                        :model-value="sampleRate"
+                        :label="t('dashboard.sampling_rate')"
+                        variant="outlined"
+                        :density="inputDensity"
+                        @update:model-value="(v) => (sampleRate = Math.round((v ?? 0) * 1000) / 1000)"
+                    />
                 </div>
             </div>
 

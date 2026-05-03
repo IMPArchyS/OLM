@@ -95,15 +95,18 @@ const handleCancel = () => {
                     required
                 ></v-text-field>
 
-                <v-text-field
-                    v-model.number="formData.port"
+                <v-number-input
+                    :model-value="formData.port"
                     label="Port"
                     :rules="portRules"
-                    type="number"
+                    :step="1"
+                    :min="1"
+                    :max="65535"
                     variant="outlined"
                     density="comfortable"
                     required
-                ></v-text-field>
+                    @update:model-value="(v) => (formData.port = v ?? 0)"
+                />
 
                 <v-switch v-model="formData.production" :label="t('servers.production')" color="primary" hide-details></v-switch>
                 <v-switch v-model="formData.enabled" :label="t('servers.enabled')" color="primary" hide-details></v-switch>

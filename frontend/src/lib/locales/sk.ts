@@ -153,6 +153,7 @@ export default {
         run_experiment: 'Spustiť experiment',
         simulation_time: 'Doba simulácie',
         sampling_rate: 'Vzorkovacia frekvencia',
+        must_be_positive: 'Musí byť väčšie ako 0',
         enable_setpoints: 'Použiť krokové hodnoty',
         add_setpoint_step: 'Pridať krok',
         setpoint_start_value: 'Počiatočná hodnota',

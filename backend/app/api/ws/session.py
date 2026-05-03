@@ -159,7 +159,7 @@ class _ReservationUpstreamSession:
             if remaining_seconds is None or remaining_seconds <= 0:
                 raise ValueError("reservation expired")
 
-            requested_simulation_seconds = float(normalized_payload.simulation_time)
+            requested_simulation_seconds = normalized_payload.simulation_time
             if requested_simulation_seconds > remaining_seconds:
                 raise ValueError(
                     f"simulation_time {requested_simulation_seconds:g}s exceeds remaining reservation window {remaining_seconds:.1f}s"

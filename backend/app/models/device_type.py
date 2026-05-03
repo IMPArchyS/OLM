@@ -10,9 +10,12 @@ if TYPE_CHECKING:
 
 
 class AnimationTarget(SQLModel):
-    mesh: str                    # name of the mesh in the .glb file
-    type: str                    # 'emissive' | 'pulse' | 'rotate' | 'blink'
-    color: list[float]           # RGB e.g. [0.0, 1.0, 0.0]
+    mesh: str
+    type: str                    # 'emissive' | 'blink' | 'position'
+    color: list[float]           # RGB [r, g, b]
+    axis: str | None = None      # 'x' | 'y' | 'z' — for position type
+    offset: float | None = None  # position offset — for position type
+    abs: bool | None = None      # use abs(value) — for position type
 
 
 class ModelConfig(SQLModel):

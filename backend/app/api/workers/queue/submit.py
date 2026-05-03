@@ -83,7 +83,7 @@ def _prepare_explicit(session: Session, entry: ExperimentQueue) -> _SubmitContex
         return None
 
     run_start = now()
-    sim_time = max(0, int(payload.simulation_time))
+    sim_time = max(0.0, payload.simulation_time)
     run_end = run_start + timedelta(seconds=sim_time)
     logger.info(
         "WORKER: submit try queue_id=%s server=%s device=%s attempts=%s sim_time=%s",
@@ -137,7 +137,7 @@ def _prepare_any_device(session: Session, entry: ExperimentQueue) -> _SubmitCont
         return None
 
     run_start = now()
-    sim_time = max(0, int(payload.simulation_time))
+    sim_time = max(0.0, payload.simulation_time)
     run_end = run_start + timedelta(seconds=sim_time)
 
     for device_id in candidates:

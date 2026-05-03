@@ -101,8 +101,8 @@ class ExperimentFormQueue(SQLModel):
     setpoint_changes: StepSequence | None
     input_arguments: dict[str, Any]
     output_arguments: list[str]
-    simulation_time: int
-    sample_rate: int
+    simulation_time: float
+    sample_rate: float
     software_name: SoftwareName
     device_id: int | None
 
@@ -119,8 +119,8 @@ class ExperimentQueuePayload(SQLModel):
     setpoint_changes: StepSequence | None
     input_arguments: dict[str, Any]
     output_arguments: list[str]
-    simulation_time: int
-    sample_rate: int
+    simulation_time: float
+    sample_rate: float
     software_name: SoftwareName
     device_name: str | None = None
     candidate_device_ids: list[int] | None = None

@@ -153,6 +153,7 @@ export default {
         run_experiment: 'Run Experiment',
         simulation_time: 'Simulation Time',
         sampling_rate: 'Sample Rate',
+        must_be_positive: 'Must be greater than 0',
         enable_setpoints: 'Use Setpoint Changes',
         add_setpoint_step: 'Add Setpoint Step',
         setpoint_start_value: 'Setpoint Start Value',
