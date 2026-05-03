@@ -36,6 +36,7 @@ const emit = defineEmits<{
             <div class="setpoint-editor__item setpoint-editor__item--start">
                 <v-number-input
                     :model-value="0"
+                    :precision="3"
                     :label="`${t('dashboard.setpoint_step_duration')} #0`"
                     variant="outlined"
                     :density="props.density"
@@ -43,6 +44,7 @@ const emit = defineEmits<{
                 />
                 <v-number-input
                     :model-value="props.startValue"
+                    :precision="3"
                     :label="t('dashboard.setpoint_start_value')"
                     variant="outlined"
                     :density="props.density"
@@ -50,34 +52,26 @@ const emit = defineEmits<{
                 />
             </div>
 
-            <div
-                v-for="(step, index) in props.steps"
-                :key="`setpoint-step-${index}`"
-                class="setpoint-editor__item"
-            >
+            <div v-for="(step, index) in props.steps" :key="`setpoint-step-${index}`" class="setpoint-editor__item">
                 <v-number-input
                     :model-value="step.duration"
                     :label="`${t('dashboard.setpoint_step_duration')} #${index + 1}`"
                     :min="0"
                     variant="outlined"
+                    :precision="3"
                     :density="props.density"
                     @update:model-value="(v) => emit('update-step', index, 'duration', Number(v ?? 0))"
                 />
                 <v-number-input
                     :model-value="step.value"
+                    :precision="3"
                     :label="`${t('dashboard.setpoint_step_value')} #${index + 1}`"
                     variant="outlined"
                     :density="props.density"
                     @update:model-value="(v) => emit('update-step', index, 'value', Number(v ?? 0))"
                 />
                 <div class="setpoint-editor__item-action">
-                    <v-btn
-                        color="error"
-                        variant="text"
-                        icon="mdi-trash-can"
-                        :disabled="props.steps.length <= 1"
-                        @click="emit('remove', index)"
-                    />
+                    <v-btn color="error" variant="text" icon="mdi-trash-can" :disabled="props.steps.length <= 1" @click="emit('remove', index)" />
                 </div>
             </div>
         </div>

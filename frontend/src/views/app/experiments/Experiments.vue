@@ -34,11 +34,11 @@ onMounted(async () => {
     const [experimentsResult, devicesResult] = await Promise.all([fetchExperiments(), fetchDevices()]);
 
     if (!experimentsResult.success) {
-        toast.error(experimentsResult.message || 'Failed');
+        toast.error(experimentsResult.message || t('common.error'));
     }
 
     if (!devicesResult.success) {
-        toast.error(devicesResult.message || 'Failed');
+        toast.error(devicesResult.message || t('common.error'));
     }
 });
 
@@ -63,7 +63,7 @@ const handleDelete = async (item: Experiment) => {
     if (result.success) {
         toast.success(result.message || t('experiments.deleted'));
     } else {
-        toast.error(result.message || 'Failed');
+        toast.error(result.message || t('common.error'));
     }
 };
 

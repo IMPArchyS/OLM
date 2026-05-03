@@ -23,10 +23,10 @@ const handleCreate = async () => {
     if (valid.value) {
         const result = await createServer(formData.value);
         if (result.success) {
-            toast.success(result.message || 'Success');
+            toast.success(result.message || t('common.success'));
             await router.push({ name: 'servers' });
         } else {
-            toast.error(result.message || 'Failed');
+            toast.error(result.message || t('common.error'));
         }
     } else {
         toast.error(t('validation.formInvalid'));

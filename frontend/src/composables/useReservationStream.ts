@@ -1,7 +1,8 @@
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { ExperimentFormData } from '@/types/forms';
 import { Command } from '@/types/api';
-import { useToastDedup } from './useToastDedup';
+import { useToastStore } from '@/stores/toast';
 import { useStreamTransport, isRecord } from './useStreamTransport';
 import type { OutputRow } from './useStreamTransport';
 
@@ -31,7 +32,8 @@ const parseNumericTime = (payload: OutputRow): number | null => {
 };
 
 export function useReservationStream() {
-    const showToast = useToastDedup();
+    const toast = useToastStore();
+    const { t } = useI18n();
 
     const outputHistory = ref<OutputRow[]>([]);
     const nextIndex = ref(0);
@@ -70,7 +72,7 @@ export function useReservationStream() {
         isActive.value = false;
         warningMessage.value = reason;
         statusMessage.value = 'Reservation no longer active.';
-        showToast('warning', 'Reservation expired.', 4000);
+        toast.warning(t('dashboard.toast_reservation_expired'));
     };
 
     const transport = useStreamTransport(isActive, accessToken, nextIndex, {
@@ -94,9 +96,9 @@ export function useReservationStream() {
         pendingStartPayload.value = null;
         const commandLabel = String(payload.command ?? '').toUpperCase();
         statusMessage.value = `Experiment ${commandLabel} sent.`;
-        if (payload.command === Command.START) showToast('success', 'Experiment started.', 2500);
-        else if (payload.command === Command.CHANGE) showToast('info', 'Experiment parameters changed.', 2000);
-        else if (payload.command === Command.STOP) showToast('info', 'Experiment stop requested.', 2000);
+        if (payload.command === Command.START) toast.success(t('dashboard.toast_experiment_started'));
+        else if (payload.command === Command.CHANGE) toast.info(t('dashboard.toast_experiment_changed'));
+        else if (payload.command === Command.STOP) toast.info(t('dashboard.toast_experiment_stop_requested'));
     }
 
     function handleIncomingPayload(payload: OutputRow) {
@@ -117,7 +119,7 @@ export function useReservationStream() {
         if (Object.prototype.hasOwnProperty.call(payload, 'error')) {
             const msg = String(payload.error ?? 'Experiment stream warning.');
             warningMessage.value = msg;
-            showToast('error', msg, 1200);
+            toast.error(msg);
             statusMessage.value = 'Command rejected by experiment service.';
             awaitingStartAcceptance.value = false;
             baselineTimeBeforeStart.value = null;
@@ -126,7 +128,7 @@ export function useReservationStream() {
         if (Object.prototype.hasOwnProperty.call(payload, 'run') || Object.prototype.hasOwnProperty.call(payload, 'runs')) {
             finalPacket.value = payload;
             statusMessage.value = 'Final result packet received.';
-            showToast('success', 'Experiment finished.', 2500);
+            toast.success(t('dashboard.toast_experiment_finished'));
             const finalHistory = extractFinalOutputHistory(payload);
             if (finalHistory.length > 0) outputHistory.value = finalHistory;
             awaitingStartAcceptance.value = false;

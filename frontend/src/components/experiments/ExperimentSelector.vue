@@ -181,7 +181,7 @@ watchEffect(() => {
                     <v-number-input
                         v-else-if="spec.type === 'number'"
                         :label="inputLabel(key, spec)"
-                        :step="0.001"
+                        :precision="1"
                         :model-value="Number(spec.value)"
                         variant="outlined"
                         :density="inputDensity"
@@ -191,8 +191,8 @@ watchEffect(() => {
 
                 <div class="experiment-selector__grid-cell">
                     <v-number-input
-                        :step="0.001"
-                        :min="0.001"
+                        :precision="2"
+                        :min="1"
                         :rules="[(v: number) => v > 0 || t('dashboard.must_be_positive')]"
                         :model-value="simTime"
                         :label="t('dashboard.simulation_time')"
@@ -204,8 +204,8 @@ watchEffect(() => {
 
                 <div class="experiment-selector__grid-cell">
                     <v-number-input
-                        :step="0.001"
-                        :min="0.001"
+                        :precision="2"
+                        :min="0.01"
                         :rules="[(v: number) => v > 0 || t('dashboard.must_be_positive')]"
                         :model-value="sampleRate"
                         :label="t('dashboard.sampling_rate')"

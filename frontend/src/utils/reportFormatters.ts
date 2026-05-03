@@ -47,7 +47,8 @@ export const estimateSimulationTime = (log: ExperimentLog): number | null => {
     if (times.length === 0) return null;
     const minTime = Math.min(...times);
     const maxTime = Math.max(...times);
-    const duration = maxTime - minTime + 1;
+    const step = estimateSampleInterval(log) ?? 0;
+    const duration = maxTime - minTime + step;
     return Number((duration > 0 ? duration : maxTime).toFixed(3));
 };
 

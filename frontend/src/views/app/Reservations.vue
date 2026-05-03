@@ -18,7 +18,7 @@ const selectedDeviceData = computed(() => {
 
 onMounted(async () => {
     const result = await fetchAvailableDevices();
-    if (!result.success) toast.error(result.message || 'Failed');
+    if (!result.success) toast.error(result.message || t('common.error'));
 });
 </script>
 

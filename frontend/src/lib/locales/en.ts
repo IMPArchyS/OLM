@@ -110,6 +110,7 @@ export default {
         restore: 'Restore',
         sync: 'Sync',
         syncAll: 'Sync All',
+        queued: 'Queued',
     },
     experiments: {
         viewExperiment: 'Experiment Details',
@@ -168,6 +169,11 @@ export default {
         liveOutput: 'Live Output',
         cameraStream: 'Video Stream',
         animation: 'Animation',
+        toast_reservation_expired: 'Reservation expired.',
+        toast_experiment_started: 'Experiment started.',
+        toast_experiment_changed: 'Experiment parameters changed.',
+        toast_experiment_stop_requested: 'Experiment stop requested.',
+        toast_experiment_finished: 'Experiment finished.',
     },
     reports: {
         showAll: 'Show All',

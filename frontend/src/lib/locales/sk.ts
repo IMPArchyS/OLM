@@ -75,6 +75,7 @@ export default {
         id: 'Id',
         showDeleted: 'Zobraziť vymazané',
         actions: 'Akcie',
+        queued: 'Pridaný do fronty',
     },
     servers: {
         devices: 'Zariadenia serveru',
@@ -168,6 +169,11 @@ export default {
         liveOutput: 'Živý výstup',
         cameraStream: 'Video prenos',
         animation: 'Animácia',
+        toast_reservation_expired: 'Platnosť rezervácie vypršala.',
+        toast_experiment_started: 'Experiment spustený.',
+        toast_experiment_changed: 'Parametre experimentu zmenené.',
+        toast_experiment_stop_requested: 'Zastavenie experimentu požiadané.',
+        toast_experiment_finished: 'Experiment dokončený.',
     },
     reports: {
         showAll: 'Zobraziť všetky',

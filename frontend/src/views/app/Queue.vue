@@ -48,7 +48,7 @@ watch(
 
 onMounted(async () => {
     const experimentsResult = await fetchExperiments();
-    if (!experimentsResult.success) toast.error(experimentsResult.message || 'Failed to fetch available experiments');
+    if (!experimentsResult.success) toast.error(experimentsResult.message || t('common.errorLoadingData'));
 });
 
 const addToQueue = async () => {
@@ -57,7 +57,7 @@ const addToQueue = async () => {
         device_id: resolvedDeviceId.value,
         output_arguments: selectedExperiment.value?.output_arguments ?? [],
     });
-    result.success ? toast.success(result.message ?? 'queued') : toast.error(result.message ?? 'failed');
+    result.success ? toast.success(result.message ?? t('common.queued')) : toast.error(result.message ?? t('common.error'));
 };
 </script>
 
