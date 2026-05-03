@@ -70,7 +70,7 @@ const resolveCameraTarget = async (deviceId: number): Promise<void> => {
     resolvingCameraTarget.value = true;
 
     try {
-        const response = await apiClient.get<Device>(`/device/${deviceId}/`);
+        const response = await apiClient.get<Device>(`/device/${deviceId}`);
         const device = response.data;
         cameraDeviceName.value = device.name;
         cameraServerId.value = device.server_id;
