@@ -9,6 +9,7 @@ import { useI18n } from 'vue-i18n';
 import type { Device, Reservation } from '@/types/api';
 import type { ReservationForm } from '@/types/forms';
 import { useToastStore } from '@/stores/toast';
+import { useAuthStore } from '@/stores/auth';
 import { useReservations } from '@/composables/useReservations';
 import { fetchMaintenanceEvents, formatDateTimeLocal, getMaintenanceConflictMessage } from '@/composables/reservationCalendarUtils';
 
@@ -19,6 +20,7 @@ interface Props {
 
 export function useDeviceReservationCalendar(props: Props) {
     const toast = useToastStore();
+    const auth = useAuthStore();
     const { locale, t } = useI18n();
     const {
         reservations,
@@ -43,6 +45,7 @@ export function useDeviceReservationCalendar(props: Props) {
             props.selectedDeviceId,
             currentDateRange.value.start,
             currentDateRange.value.end,
+            t('reservations.maintenance'),
         );
     }
 
@@ -156,6 +159,9 @@ export function useDeviceReservationCalendar(props: Props) {
         }
         const reservation = reservations.value.find((r) => r.id === Number(event.id));
         if (!reservation) return;
+        const isOwner = auth.user?.id === reservation.user_id;
+        const canManageAll = auth.can('olm.reservation.update_all') && auth.can('olm.reservation.delete_all');
+        if (!isOwner && !canManageAll) return;
         if (new Date(reservation.end) < new Date()) {
             toast.warning(t('reservations.cannotEditPast'));
             return;
@@ -249,6 +255,15 @@ export function useDeviceReservationCalendar(props: Props) {
             } else if (eventEnd && eventEnd < new Date()) {
                 info.el.style.opacity = '0.6';
                 info.el.style.cursor = 'not-allowed';
+            } else {
+                const reservation = reservations.value.find((r) => r.id === Number(info.event.id));
+                if (reservation) {
+                    const isOwner = auth.user?.id === reservation.user_id;
+                    const canManageAll = auth.can('olm.reservation.update_all') && auth.can('olm.reservation.delete_all');
+                    if (!isOwner && !canManageAll) {
+                        info.el.style.cursor = 'not-allowed';
+                    }
+                }
             }
         },
         height: '100%',

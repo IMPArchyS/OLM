@@ -124,9 +124,7 @@ export function useWebRtc() {
 
             try {
                 await resolveServiceBaseUrl(serverId);
-            } catch {
-                // Service URL is also resolved lazily in start/stop and can fail independently.
-            }
+            } catch {}
 
             return response.data;
         } catch (e: any) {

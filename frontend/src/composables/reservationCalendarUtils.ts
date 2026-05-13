@@ -68,13 +68,16 @@ export function getMaintenanceConflictMessage(
     return null;
 }
 
-export async function fetchMaintenanceEvents(deviceId: number, from: Date, to: Date): Promise<any[]> {
+export async function fetchMaintenanceEvents(deviceId: number, from: Date, to: Date, title?: string): Promise<any[]> {
     try {
         const fromStr = from.toISOString().split('T')[0];
         const toStr = to.toISOString().split('T')[0];
         const response = await apiClient.get(`/device/${deviceId}/maintenance-events`, {
             params: { from: fromStr, to: toStr },
         });
+        if (title) {
+            return response.data.map((event: any) => ({ ...event, title }));
+        }
         return response.data;
     } catch {
         return [];

@@ -11,6 +11,7 @@ import {
     getLogTitle,
     getRunStatus,
 } from '@/utils/reportFormatters';
+import { exportLogToXlsx } from '@/utils/xlsxExport';
 import { useI18n } from 'vue-i18n';
 
 const props = defineProps<{
@@ -24,7 +25,11 @@ const emit = defineEmits<{
     restore: [id: number];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+const handleExport = () => {
+    exportLogToXlsx(props.log, t, locale.value, props.showUserName);
+};
 </script>
 
 <template>
@@ -43,6 +48,14 @@ const { t } = useI18n();
                     </div>
                 </div>
                 <div class="d-flex align-center ga-1">
+                    <v-btn
+                        :title="t('reports.exportXlsx')"
+                        icon="mdi-download"
+                        size="x-small"
+                        variant="text"
+                        color="primary"
+                        @click.stop="handleExport"
+                    />
                     <v-btn
                         v-if="!log.deleted_at"
                         :title="t('reports.deleteLog')"

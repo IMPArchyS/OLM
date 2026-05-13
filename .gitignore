@@ -7,3 +7,5 @@ debug/
 .env
 *.key
 *.pem
+docs/
+.claude/

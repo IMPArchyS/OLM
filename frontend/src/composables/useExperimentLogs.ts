@@ -15,7 +15,7 @@ export function useExperimentLogs() {
         error.value = null;
 
         try {
-            const response = await apiClient.get('/experiment_log');
+            const response = await apiClient.get('/experiment_log/');
             experimentLogs.value = response.data;
             return { success: true };
         } catch (e: any) {

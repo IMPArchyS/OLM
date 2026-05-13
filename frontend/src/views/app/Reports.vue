@@ -175,7 +175,13 @@ onMounted(async () => {
                         <span class="text-caption text-medium-emphasis">
                             {{ paginationFrom }}&ndash;{{ paginationTo }} {{ t('reports.of') }} {{ logs.length }}
                         </span>
-                        <v-pagination v-if="pageSize !== -1 && totalPages > 1" v-model="currentPage" :length="totalPages" :total-visible="7" density="compact" />
+                        <v-pagination
+                            v-if="pageSize !== -1 && totalPages > 1"
+                            v-model="currentPage"
+                            :length="totalPages"
+                            :total-visible="7"
+                            density="compact"
+                        />
                     </div>
                 </div>
             </template>

@@ -81,18 +81,28 @@ def create(db: DbSession, reservation: ReservationCreate, user: AuthUser = Permi
     if not db.get(Device, reservation.device_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {reservation.device_id} not found!")
 
-    overlapping_stmt = select(Reservation).where(
+    device_overlap_stmt = select(Reservation).where(
         Reservation.device_id == reservation.device_id,
         Reservation.start < reservation.end,
         Reservation.end > reservation.start
     )
-    overlapping_reservation = db.exec(overlapping_stmt).first()
-    if overlapping_reservation:
+    if db.exec(device_overlap_stmt).first():
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, 
+            status_code=status.HTTP_409_CONFLICT,
             detail=f"Device {reservation.device_id} is already reserved during this time period!"
         )
-    
+
+    user_overlap_stmt = select(Reservation).where(
+        Reservation.user_id == user.id,
+        Reservation.start < reservation.end,
+        Reservation.end > reservation.start
+    )
+    if db.exec(user_overlap_stmt).first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You already have a reservation during this time period!"
+        )
+
     db.add(db_reservation)
     db.commit()
     db.refresh(db_reservation)
@@ -135,17 +145,28 @@ async def update(db: DbSession, id: int, reservation: ReservationUpdate, user: C
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {new_device_id} not found!")    
 
     if reservation.start is not None or reservation.end is not None:
-        overlapping_stmt = select(Reservation).where(
+        device_overlap_stmt = select(Reservation).where(
             Reservation.id != id,
             Reservation.device_id == new_device_id,
             Reservation.start < new_end,
             Reservation.end > new_start
         )
-        overlapping_reservation = db.exec(overlapping_stmt).first()
-        if overlapping_reservation:
+        if db.exec(device_overlap_stmt).first():
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT, 
+                status_code=status.HTTP_409_CONFLICT,
                 detail=f"Device {new_device_id} is already reserved during this time period!"
+            )
+
+        user_overlap_stmt = select(Reservation).where(
+            Reservation.id != id,
+            Reservation.user_id == db_reservation.user_id,
+            Reservation.start < new_end,
+            Reservation.end > new_start
+        )
+        if db.exec(user_overlap_stmt).first():
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User already has a reservation during this time period!"
             )
         
     db.add(db_reservation)
