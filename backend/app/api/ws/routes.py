@@ -72,7 +72,6 @@ async def reservation_proxy(
     db: DbSession,
     websocket: WebSocket,
     user: CurrentUserWs,
-    _: AuthUser = PermissionWs("olm.experiment.run"),
 ):
     await websocket.accept()
 

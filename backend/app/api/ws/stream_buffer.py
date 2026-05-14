@@ -4,8 +4,6 @@ from typing import Any
 from app.core.config import settings
 
 
-# threading.Lock (not asyncio.Lock) is intentional — _read_stream_samples is called
-# from a sync FastAPI route handler, making asyncio.Lock incompatible here.
 _stream_buffer_lock = Lock()
 _stream_buffers: dict[int, list[dict[str, Any]]] = {}
 

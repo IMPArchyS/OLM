@@ -21,8 +21,7 @@ class Settings(BaseSettings):
     DB_PORT: str | int | None = None
     DB_PATH: str | None = None
 
-    AUTH_SERVICE_URL: str = "http://host.docker.internal:8080/internal/api" # "http://node124.webte.fei.stuba.sk:8080/internal/api"
-    OAUTH_SERVICE_URL: str = "http://host.docker.internal:8080/api/auth/oauth"
+    AUTH_SERVICE_URL: str = "http://host.docker.internal:8080/internal/api"
     AUTH_API_KEY: str = "devapikey"
     EXPERIMENTAL_API_KEY: str = "experimentalapikey"
     EXPERIMENTAL_HEALTH_PATH: str = "/api/server/sync"

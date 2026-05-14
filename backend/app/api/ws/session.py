@@ -33,8 +33,6 @@ from app.api.ws.stream_buffer import (
 
 logger = logging.getLogger(__name__)
 
-# threading.Lock (not asyncio.Lock) — called from both async handlers and sync context;
-# asyncio.Lock cannot be used across threads.
 _reservation_sessions_lock = Lock()
 _reservation_sessions: dict[int, "_ReservationUpstreamSession"] = {}
 
@@ -107,7 +105,6 @@ class _ReservationUpstreamSession:
         self.runner_task = asyncio.create_task(self._run())
 
     async def set_client(self, ws: WebSocket) -> bool:
-        """Attach ws as the active client. Returns False if another client is already connected."""
         if self.client is not None:
             return False
 
@@ -215,8 +212,6 @@ class _ReservationUpstreamSession:
                     await self._send_text(message)
                     continue
 
-                # first run-signal message after START confirms the experiment was accepted upstream;
-                # promote the log id from pending_start_attempt_ids → pending_log_ids for terminal sync
                 has_run_signal = (
                     "time" in payload
                     or "run" in payload

@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import col, select
-from app.api.dependencies import DbSession
+from app.api.dependencies import CurrentUser, DbSession
 
 from app.models.device import Device, DevicePublic, DeviceWithSoftware
 from app.models.server import Server
@@ -11,13 +11,13 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[DeviceWithSoftware])
-def get_all(db: DbSession): 
+def get_all(db: DbSession, _: CurrentUser):
     stmt = select(Device)
     return db.exec(stmt).all()
 
 
 @router.get("/available", response_model=list[DeviceWithSoftware])
-def get_all_available(db: DbSession):
+def get_all_available(db: DbSession, _: CurrentUser):
     stmt = (
         select(Device)
         .where(col(Device.server_id).is_not(None), col(Device.deleted_at).is_(None))
@@ -32,7 +32,7 @@ def get_all_available(db: DbSession):
 
 
 @router.get("/{id}", response_model=DevicePublic)
-def get_by_id(db: DbSession, id: int): 
+def get_by_id(db: DbSession, id: int, _: CurrentUser):
     db_device = db.get(Device, id)
     if not db_device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {id} not found!")
@@ -40,7 +40,7 @@ def get_by_id(db: DbSession, id: int):
 
 
 @router.get("/{id}/software")
-def get_device_software(db: DbSession, id: int):
+def get_device_software(db: DbSession, id: int, _: CurrentUser):
     db_device = db.get(Device, id)
     if not db_device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Device with {id} not found!")
@@ -51,6 +51,7 @@ def get_device_software(db: DbSession, id: int):
 def get_maintenance_events(
     db: DbSession,
     id: int,
+    _: CurrentUser,
     from_date: date = Query(..., alias="from"),
     to_date: date = Query(..., alias="to"),
 ):

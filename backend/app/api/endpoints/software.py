@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
-from app.api.dependencies import DbSession
+from app.api.dependencies import CurrentUser, DbSession
 
 from app.models.software import Software, SoftwarePublic
 
@@ -9,13 +9,13 @@ router = APIRouter()
 
 
 @router.get("/")
-def get_all(db: DbSession): 
+def get_all(db: DbSession, _: CurrentUser):
     stmt = select(Software)
     return db.exec(stmt).all()
 
 
 @router.get("/{id}", response_model=SoftwarePublic)
-def get_by_id(db: DbSession, id: int): 
+def get_by_id(db: DbSession, id: int, _: CurrentUser):
     db_software = db.get(Software, id)
     if not db_software:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Software with {id} not found!")
@@ -23,7 +23,7 @@ def get_by_id(db: DbSession, id: int):
 
 
 @router.get("/{name}", response_model=SoftwarePublic)
-def get_by_name(db: DbSession, name: str):
+def get_by_name(db: DbSession, name: str, _: CurrentUser):
     db_software = db.exec(select(Software).where(Software.name == name)).first()
     if not db_software:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Software with {name} not found!")

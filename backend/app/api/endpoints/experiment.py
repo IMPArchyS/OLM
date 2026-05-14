@@ -17,7 +17,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[ExperimentPublic])
-def get_all(db: DbSession, _: AuthUser = Permission("olm.experiment.read")) -> Sequence[Experiment]: 
+def get_all(db: DbSession, _: CurrentUser) -> Sequence[Experiment]: 
     stmt = select(Experiment)
     return db.exec(stmt).all()
 
@@ -66,7 +66,7 @@ def create(db: DbSession, experiment: ExperimentCreate, _: AuthUser = Permission
 
 
 @router.post("/queue", status_code=status.HTTP_201_CREATED)
-def queue(db: DbSession, experiment: ExperimentFormQueue,  _: AuthUser = Permission("olm.queue.run")):
+def queue(db: DbSession, experiment: ExperimentFormQueue,  user: CurrentUser):
     if experiment.simulation_time < 0:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="simulation_time must be >= 0")
 
@@ -91,7 +91,7 @@ def queue(db: DbSession, experiment: ExperimentFormQueue,  _: AuthUser = Permiss
             }
         )
         queue_entry = ExperimentQueue(
-            user_id=experiment.user_id,
+            user_id=user.id,
             experiment_id=ensure(db_experiment.id),
             device_id=None,
             server_id=None,
@@ -146,7 +146,7 @@ def queue(db: DbSession, experiment: ExperimentFormQueue,  _: AuthUser = Permiss
     )
 
     db_experiment_log = ExperimentLog(
-        user_id=experiment.user_id,
+        user_id=user.id,
         experiment_id=ensure(db_experiment.id),
         device_id=ensure(db_device.id),
         server_id=ensure(db_server.id),
@@ -158,7 +158,7 @@ def queue(db: DbSession, experiment: ExperimentFormQueue,  _: AuthUser = Permiss
     db.flush()
 
     queue_entry = ExperimentQueue(
-        user_id=experiment.user_id,
+        user_id=user.id,
         experiment_id=ensure(db_experiment.id),
         device_id=ensure(db_device.id),
         server_id=ensure(db_server.id),

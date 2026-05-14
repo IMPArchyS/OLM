@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status
 import httpx
 import threading
 from sqlmodel import select
-from app.api.dependencies import AuthUser, DbSession, Permission
+from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission
 
 from app.api.endpoints.sync import sync_add_server_stack
 from app.models.device import DeviceWithSoftware
@@ -141,22 +141,22 @@ def sync_all(db: DbSession, _: AuthUser = Permission("olm.server.sync")):
     return results
 
 
-@router.get("/")  # intentionally public — server catalog is readable without auth
-def get_all(db: DbSession):
+@router.get("/")
+def get_all(db: DbSession, _: CurrentUser):
     stmt = select(Server)
     return db.exec(stmt).all()
 
 
-@router.get("/{id}", response_model=ServerPublic)  # intentionally public
-def get_by_id(db: DbSession, id: int):
+@router.get("/{id}", response_model=ServerPublic)
+def get_by_id(db: DbSession, id: int, _: CurrentUser):
     db_server = db.get(Server, id)
     if not db_server:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")
     return db_server
 
 
-@router.get("/{id}/devices", response_model=List[DeviceWithSoftware])  # intentionally public
-def get_server_devices(db: DbSession, id: int):
+@router.get("/{id}/devices", response_model=List[DeviceWithSoftware])
+def get_server_devices(db: DbSession, id: int, _: CurrentUser):
     db_server = db.get(Server, id)
     if not db_server:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Server with {id} not found!")

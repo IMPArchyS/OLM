@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[ReservationWithUsername])
-async def get_all(db: DbSession, _: AuthUser = Permission("olm.reservation.read"), device_id: int | None = Query(default=None)):
+async def get_all(db: DbSession, _: CurrentUser, device_id: int | None = Query(default=None)):
     stmt = select(Reservation)
     if device_id is not None:
         stmt = stmt.where(Reservation.device_id == device_id)
@@ -53,7 +53,7 @@ def get_current(db: DbSession, user: CurrentUser):
 
 
 @router.get("/{id}", response_model=ReservationPublic)
-def get_by_id(db: DbSession, id: int, _: AuthUser = Permission("olm.reservation.read")):
+def get_by_id(db: DbSession, id: int, _: CurrentUser):
     db_reservation = db.get(Reservation, id)
     if not db_reservation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Reservation with {id} not found!")
@@ -61,7 +61,7 @@ def get_by_id(db: DbSession, id: int, _: AuthUser = Permission("olm.reservation.
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create(db: DbSession, reservation: ReservationCreate, user: AuthUser = Permission("olm.reservation.create")):
+def create(db: DbSession, reservation: ReservationCreate, user: CurrentUser):
     db_reservation = Reservation.model_validate({**reservation.model_dump(), "user_id": user.id})
     db_reservation.user_id = user.id
 

@@ -87,7 +87,7 @@ def _upsert_device(
     db_device = existing_by_name.get(p.name)
     if db_device is None:
         db_device = _create_device(db, server_id, p, device_type_id)
-        existing_by_name[p.name] = db_device  # guard against duplicate names in payload
+        existing_by_name[p.name] = db_device
     else:
         db_device = _update_device(db, db_device, server_id, p, device_type_id)
     return db_device

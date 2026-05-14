@@ -27,7 +27,7 @@ class AuthUser(BaseModel):
     username: str
     name: str
     admin: bool
-    role_id: int
+    role_id: int | None
     deleted_at: datetime | None = None
     access_token: str = ""  
 

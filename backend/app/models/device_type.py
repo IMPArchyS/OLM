@@ -11,16 +11,16 @@ if TYPE_CHECKING:
 
 class AnimationTarget(SQLModel):
     mesh: str
-    type: str                    # 'emissive' | 'blink' | 'position'
-    color: list[float]           # RGB [r, g, b]
-    axis: str | None = None      # 'x' | 'y' | 'z' — for position type
-    offset: float | None = None  # position offset — for position type
-    abs: bool | None = None      # use abs(value) — for position type
+    type: str                    
+    color: list[float]           
+    axis: str | None = None      
+    offset: float | None = None  
+    abs: bool | None = None      
 
 
 class ModelConfig(SQLModel):
-    model_file: str                              # e.g. 'esp32_devkit.glb'
-    animations: dict[str, AnimationTarget]       # signal_name -> target
+    model_file: str                              
+    animations: dict[str, AnimationTarget]       
 
 
 class DeviceTypeBase(SQLModel):
