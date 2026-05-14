@@ -75,6 +75,16 @@ export function useReservationStream() {
         toast.warning(t('dashboard.toast_reservation_expired'));
     };
 
+    const markUpstreamUnavailable = (reason: string) => {
+        isActive.value = false;
+        warningMessage.value = reason;
+        statusMessage.value = 'Device server unavailable.';
+        awaitingStartAcceptance.value = false;
+        baselineTimeBeforeStart.value = null;
+        pendingStartPayload.value = null;
+        toast.error(t('dashboard.toast_device_server_unavailable'));
+    };
+
     const transport = useStreamTransport(isActive, accessToken, nextIndex, {
         onMessage: (payload) => handleIncomingPayload(payload),
         onConnected: () => flushPendingCommandPayload(),
@@ -85,6 +95,7 @@ export function useReservationStream() {
             nextIndex.value = Math.max(0, Math.floor(serverNextIndex ?? fallback));
         },
         onReservationExpired: (reason) => markReservationInactive(reason),
+        onUpstreamUnavailable: (reason) => markUpstreamUnavailable(reason),
         onWarning: (msg) => { warningMessage.value = msg; },
         onStatus: (msg) => { statusMessage.value = msg; },
     });
@@ -96,8 +107,7 @@ export function useReservationStream() {
         pendingStartPayload.value = null;
         const commandLabel = String(payload.command ?? '').toUpperCase();
         statusMessage.value = `Experiment ${commandLabel} sent.`;
-        if (payload.command === Command.START) toast.success(t('dashboard.toast_experiment_started'));
-        else if (payload.command === Command.CHANGE) toast.info(t('dashboard.toast_experiment_changed'));
+        if (payload.command === Command.CHANGE) toast.info(t('dashboard.toast_experiment_changed'));
         else if (payload.command === Command.STOP) toast.info(t('dashboard.toast_experiment_stop_requested'));
     }
 
@@ -110,6 +120,7 @@ export function useReservationStream() {
                     clearGraph();
                     awaitingStartAcceptance.value = false;
                     baselineTimeBeforeStart.value = null;
+                    toast.success(t('dashboard.toast_experiment_started'));
                 }
             }
             appendRows([payload]);

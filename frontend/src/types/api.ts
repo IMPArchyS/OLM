@@ -24,6 +24,9 @@ export interface Reservation {
     server_id?: number;
     user_id: number;
     username?: string;
+    server_available?: boolean;
+    server_enabled?: boolean;
+    server_production?: boolean;
 }
 
 export interface DeviceVisualAnimationTarget {

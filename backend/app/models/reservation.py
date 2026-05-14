@@ -43,3 +43,10 @@ class ReservationUpdate(SQLModel):
 
 class ReservationWithUsername(ReservationPublic):
     username: str
+
+
+class ReservationDashboard(ReservationPublic):
+    server_id: int | None = None
+    server_available: bool = False
+    server_enabled: bool = False
+    server_production: bool = False

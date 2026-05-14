@@ -16,6 +16,7 @@ export interface StreamTransportCallbacks {
     onConnected: () => void;
     onSamplesReceived: (rows: OutputRow[], serverNextIndex: number | null) => void;
     onReservationExpired: (reason: string) => void;
+    onUpstreamUnavailable: (reason: string) => void;
     onWarning: (message: string) => void;
     onStatus: (message: string) => void;
 }
@@ -40,7 +41,16 @@ const parseMessagePayload = (raw: string): OutputRow | null => {
 
 const isReservationEndedReason = (reason: string): boolean => {
     const r = reason.toLowerCase();
-    return r.includes('reservation expired') || r.includes('reservation deleted') || r.includes('no reservation');
+    return (
+        r.includes('reservation expired') ||
+        r.includes('reservation deleted') ||
+        r.includes('no reservation')
+    );
+};
+
+const isUpstreamUnavailableReason = (reason: string): boolean => {
+    const r = reason.toLowerCase();
+    return r.includes('server unavailable') || r.includes('device server');
 };
 
 function buildWebSocketUrl(token: string): string {
@@ -119,7 +129,10 @@ export function useStreamTransport(
         pullInFlight = true;
 
         try {
+            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
+            const rootBaseUrl = apiBaseUrl.replace(/\/api\/?$/, '');
             const response = await apiClient.get<StreamBufferResponse>('/ws/reservation/current/stream-buffer', {
+                baseURL: rootBaseUrl,
                 params: { after_index: nextIndex.value },
                 headers: { Authorization: toAuthHeader(accessToken.value) },
             });
@@ -194,6 +207,13 @@ export function useStreamTransport(
                 clearPolling();
                 clearReconnectTimer();
                 callbacks.onReservationExpired(event.reason);
+                return;
+            }
+
+            if (event.reason && isUpstreamUnavailableReason(event.reason)) {
+                clearPolling();
+                clearReconnectTimer();
+                callbacks.onUpstreamUnavailable(event.reason);
                 return;
             }
 

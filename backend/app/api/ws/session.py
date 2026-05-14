@@ -134,6 +134,9 @@ class _ReservationUpstreamSession:
             self.client = None
 
     async def enqueue_client_payload(self, raw_payload: str) -> None:
+        if self.closed or self.runner_task is None or self.runner_task.done():
+            raise ValueError("device server unavailable")
+
         try:
             payload = json.loads(raw_payload)
         except JSONDecodeError:
@@ -284,26 +287,33 @@ class _ReservationUpstreamSession:
                 pass
             except ConnectionClosed as e:
                 logger.warning("Device server connection lost: %s", e)
-                await self._send_text(f"Device server connection lost: {e}")
                 await self._close_client(
                     close_code=status.WS_1011_INTERNAL_ERROR,
                     close_reason="device server connection lost",
                 )
-            except Exception as e:
+            except Exception:
                 logger.exception("Device server connection failed: %s", self.api_url)
-                await self._send_text(f"Device server unavailable: {e}")
                 await self._close_client(
                     close_code=status.WS_1011_INTERNAL_ERROR,
                     close_reason="device server unavailable",
                 )
         finally:
+            self.closed = True
+
+            while not self.command_queue.empty():
+                try:
+                    queued = self.command_queue.get_nowait()
+                except asyncio.QueueEmpty:
+                    break
+                if queued.experiment_log_id is not None:
+                    _mark_experiment_log_as_error(queued.experiment_log_id)
+
             for pending_log_id in self.pending_start_attempt_ids.drain():
                 _mark_experiment_log_as_error(pending_log_id)
 
             for pending_log_id in self.pending_log_ids.drain():
                 _mark_experiment_log_as_error(pending_log_id)
 
-            self.closed = True
             _clear_stream_buffer(self.reservation_id)
             _remove_reservation_session(self.reservation_id, expected=self)
 

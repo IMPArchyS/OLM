@@ -5,7 +5,8 @@ from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission, c
 from app.core.config import settings
 
 from app.models.device import Device
-from app.models.reservation import Reservation, ReservationCreate, ReservationPublic, ReservationUpdate, ReservationWithUsername
+from app.models.reservation import Reservation, ReservationCreate, ReservationDashboard, ReservationPublic, ReservationUpdate, ReservationWithUsername
+from app.models.server import Server
 from app.models.utils import now
 
 
@@ -32,11 +33,26 @@ async def get_all(db: DbSession, _: CurrentUser, device_id: int | None = Query(d
     ]
 
 
-@router.get("/me")
+@router.get("/me", response_model=list[ReservationDashboard])
 def get_user_all(db: DbSession, user: CurrentUser):
-    stmt = select(Reservation).where(Reservation.user_id == user.id).order_by(asc(Reservation.start))
-    db_reservation = db.exec(stmt).all()
-    return db_reservation
+    stmt = (
+        select(Reservation, Server)
+        .join(Device, Device.id == Reservation.device_id)
+        .join(Server, Server.id == Device.server_id, isouter=True)
+        .where(Reservation.user_id == user.id)
+        .order_by(asc(Reservation.start))
+    )
+    rows = db.exec(stmt).all()
+    return [
+        ReservationDashboard(
+            **r.model_dump(),
+            server_id=s.id if s else None,
+            server_available=bool(s.available) if s else False,
+            server_enabled=bool(s.enabled) if s else False,
+            server_production=bool(s.production) if s else False,
+        )
+        for r, s in rows
+    ]
 
 
 @router.get("/current", response_model=ReservationPublic)

@@ -4,10 +4,12 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import type { Device, DeviceType, Reservation } from '@/types/api';
 import { apiClient } from '@/lib/apiClient';
+import { useToastStore } from '@/stores/toast';
 import ExperimentSandbox from '@/components/experiments/ExperimentSandbox.vue';
 
 const { t } = useI18n();
 const router = useRouter();
+const toast = useToastStore();
 
 const reservations = ref<Reservation[]>([]);
 const loading = ref(true);
@@ -20,19 +22,41 @@ const reservationDeviceType = ref<DeviceType | null>(null);
 let refreshInterval: number | null = null;
 let reservationRefreshInterval: number | null = null;
 
-const activeReservation = computed(() => {
+const isServerValid = (reservation: Reservation) =>
+    reservation.server_available === true &&
+    reservation.server_enabled === true &&
+    reservation.server_production === true;
+
+const currentReservationRaw = computed(() => {
     return reservations.value.find((reservation) => {
         const start = new Date(reservation.start);
         const end = new Date(reservation.end);
         return currentTime.value >= start && currentTime.value <= end;
-    });
+    }) || null;
+});
+
+const activeReservation = computed(() => {
+    const r = currentReservationRaw.value;
+    return r && isServerValid(r) ? r : null;
+});
+
+const hasInvalidActive = computed(() => {
+    const r = currentReservationRaw.value;
+    return r !== null && !isServerValid(r);
 });
 
 const nextReservation = computed(() => {
     const upcoming = reservations.value
         .filter((reservation) => new Date(reservation.start) > currentTime.value)
         .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
-    return upcoming[0] || null;
+    return upcoming.find(isServerValid) || null;
+});
+
+const hasSkippedNext = computed(() => {
+    const upcoming = reservations.value
+        .filter((reservation) => new Date(reservation.start) > currentTime.value)
+        .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+    return upcoming.length > 0 && !upcoming.some(isServerValid);
 });
 
 const formatDateTime = (dateString: string) => {
@@ -56,6 +80,7 @@ const fetchReservations = async () => {
         reservations.value = response.data;
     } catch (e) {
         console.error('Failed to fetch reservations:', e);
+        toast.error(t('dashboard.load_failed'));
     }
 };
 
@@ -174,6 +199,14 @@ onUnmounted(() => {
                 <v-icon icon="mdi-timer-sand" size="52" color="info" class="mb-3" />
                 <p class="text-h6 mb-2">{{ t('dashboard.waiting_title') }}</p>
                 <p class="text-body-1 text-medium-emphasis">{{ t('dashboard.waiting_body') }}</p>
+            </div>
+            <div v-else-if="hasInvalidActive" class="dashboard-empty">
+                <v-icon icon="mdi-server-network-off" size="52" color="error" class="mb-3" />
+                <p class="text-h6 mb-2">{{ t('dashboard.active_unavailable') }}</p>
+            </div>
+            <div v-else-if="hasSkippedNext" class="dashboard-empty">
+                <v-icon icon="mdi-server-network-off" size="52" color="warning" class="mb-3" />
+                <p class="text-h6 mb-2">{{ t('dashboard.next_skipped') }}</p>
             </div>
             <div v-else class="dashboard-empty">
                 <v-icon icon="mdi-calendar-blank-outline" size="52" color="on-surface-variant" class="mb-3" />
