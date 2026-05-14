@@ -1,6 +1,6 @@
 import asyncio
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlmodel import select, asc
+from sqlmodel import col, select, asc
 from app.api.dependencies import AuthUser, CurrentUser, DbSession, Permission, check_permission, fetch_username
 from app.core.config import settings
 
@@ -37,8 +37,8 @@ async def get_all(db: DbSession, _: CurrentUser, device_id: int | None = Query(d
 def get_user_all(db: DbSession, user: CurrentUser):
     stmt = (
         select(Reservation, Server)
-        .join(Device, Device.id == Reservation.device_id)
-        .join(Server, Server.id == Device.server_id, isouter=True)
+        .join(Device, col(Device.id) == col(Reservation.device_id))
+        .join(Server, col(Server.id) == col(Device.server_id), isouter=True)
         .where(Reservation.user_id == user.id)
         .order_by(asc(Reservation.start))
     )
