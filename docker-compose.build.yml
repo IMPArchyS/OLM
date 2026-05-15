@@ -24,6 +24,8 @@ services:
            - ./backend/app/migrations:/app/migrations
         environment:
             - ENVIRONMENT=build
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
 
     frontend:
         build:
