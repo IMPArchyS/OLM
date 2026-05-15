@@ -13,7 +13,6 @@ services:
 
     backend:
         build: ./backend
-        container_name: fastapi_backend
         ports:
             - "8000:8000"
         env_file:
@@ -34,7 +33,6 @@ services:
                 MODE: production
                 VITE_API_BASE_URL: ${VITE_API_BASE_URL}
                 VITE_AUTH_SERVICE_URL: ${VITE_AUTH_SERVICE_URL}
-        container_name: vue_frontend
         ports:
             - '80:80'
             - '443:443'
